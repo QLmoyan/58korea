@@ -18,6 +18,14 @@ export type PostDistance =
   | "2.4km"
   | "3.8km";
 
+export interface PostImage {
+  id: string;
+  url: string;
+  sortOrder: number;
+  width?: number | null;
+  height?: number | null;
+}
+
 export interface Post {
   id: number;
   title: string;
@@ -27,8 +35,9 @@ export interface Post {
   distance: PostDistance;
   likes: number;
   category: PostCategory;
-  imageUrl: string;
-  imageHeight: number;
+  imageUrl: string | null;
+  imageHeight: number | null;
+  images?: PostImage[];
   nearby?: boolean;
   following?: boolean;
   createdAt?: string;

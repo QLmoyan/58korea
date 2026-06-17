@@ -8,16 +8,21 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { Post, PostDistance } from "@/lib/data/posts";
+import type { Post, PostDistance, PostImage } from "@/lib/data/posts";
+import { resolveAuthorName } from "@/lib/auth/author";
 import {
   fetchCommentsByPostId,
+  fetchPostById,
+  fetchPostImagesByPostId,
   fetchPosts,
   insertComment,
   insertPost,
 } from "@/lib/supabase/queries";
+import { uploadCommentImage, uploadPostImages } from "@/lib/supabase/storage";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { createClientId } from "@/lib/utils/create-client-id";
 import {
-  ANONYMOUS_NAMES,
+  type AddCommentInput,
   type Comment,
   type CreatePostInput,
   publishCategoryMap,
@@ -28,9 +33,11 @@ interface PostStoreValue {
   comments: Comment[];
   hydrated: boolean;
   addPost: (input: CreatePostInput) => Promise<Post>;
-  addComment: (postId: number, content: string) => Promise<Comment>;
+  addComment: (postId: number, input: AddCommentInput) => Promise<Comment>;
   loadCommentsForPost: (postId: number) => Promise<void>;
+  loadPostImagesForPost: (postId: number) => Promise<PostImage[]>;
   getPostById: (id: number) => Post | undefined;
+  getPostImagesByPostId: (postId: number) => PostImage[];
   getCommentsByPostId: (postId: number) => Comment[];
 }
 
@@ -52,6 +59,9 @@ function randomItem<T>(items: T[]): T {
 export function PostStoreProvider({ children }: { children: React.ReactNode }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [postImagesByPostId, setPostImagesByPostId] = useState<
+    Record<number, PostImage[]>
+  >({});
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -85,23 +95,40 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addPost = useCallback(async (input: CreatePostInput) => {
-    const imageSeed = Date.now();
+    const author = await resolveAuthorName();
     const newPost = await insertPost({
       title: input.title.trim(),
       content: input.content.trim(),
-      author: "我",
+      author,
       location: "首尔",
       distance: randomItem(distances),
       likes: 0,
       category: publishCategoryMap[input.category],
-      image_url: `https://picsum.photos/seed/post-${imageSeed}/400/480`,
-      image_height: 160 + (imageSeed % 5) * 20,
+      image_url: null,
+      image_height: 180,
       nearby: true,
       following: false,
     });
 
-    setPosts((current) => [newPost, ...current]);
-    return newPost;
+    const images = input.images ?? [];
+
+    if (images.length > 0) {
+      await uploadPostImages(newPost.id, images.slice(0, 9));
+    }
+
+    const savedPost = (await fetchPostById(newPost.id)) ?? newPost;
+    const savedImages = savedPost.images ?? [];
+
+    setPostImagesByPostId((current) => ({
+      ...current,
+      [savedPost.id]: savedImages,
+    }));
+    setPosts((current) => [
+      savedPost,
+      ...current.filter((post) => post.id !== savedPost.id),
+    ]);
+
+    return savedPost;
   }, []);
 
   const loadCommentsForPost = useCallback(async (postId: number) => {
@@ -120,20 +147,74 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const addComment = useCallback(async (postId: number, content: string) => {
-    const newComment = await insertComment({
-      post_id: postId,
-      author: randomItem(ANONYMOUS_NAMES),
-      content: content.trim(),
-    });
+  const loadPostImagesForPost = useCallback(async (postId: number) => {
+    if (!isSupabaseConfigured()) {
+      return [];
+    }
 
-    setComments((current) => [...current, newComment]);
-    return newComment;
+    try {
+      const images = await fetchPostImagesByPostId(postId);
+      setPostImagesByPostId((current) => ({
+        ...current,
+        [postId]: images,
+      }));
+      setPosts((current) =>
+        current.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                images,
+                imageUrl: images[0]?.url ?? post.imageUrl,
+                imageHeight: images[0]?.height ?? post.imageHeight,
+              }
+            : post,
+        ),
+      );
+      return images;
+    } catch (error) {
+      console.error("Failed to load post images:", error);
+      return [];
+    }
   }, []);
+
+  const addComment = useCallback(
+    async (postId: number, input: AddCommentInput) => {
+      const author = await resolveAuthorName();
+      const commentId = createClientId();
+      let imageUrl: string | null = null;
+      let imageStoragePath: string | null = null;
+
+      if (input.image) {
+        const uploaded = await uploadCommentImage(commentId, input.image);
+        imageUrl = uploaded.publicUrl;
+        imageStoragePath = uploaded.storagePath;
+      }
+
+      const newComment = await insertComment({
+        id: commentId,
+        post_id: postId,
+        author,
+        content: input.content.trim(),
+        parent_id: input.reply?.parentId ?? null,
+        reply_to_author: input.reply?.replyToAuthor ?? null,
+        image_url: imageUrl,
+        image_storage_path: imageStoragePath,
+      });
+
+      setComments((current) => [...current, newComment]);
+      return newComment;
+    },
+    [],
+  );
 
   const getPostById = useCallback(
     (id: number) => posts.find((post) => post.id === id),
     [posts],
+  );
+
+  const getPostImagesByPostId = useCallback(
+    (postId: number) => postImagesByPostId[postId] ?? [],
+    [postImagesByPostId],
   );
 
   const getCommentsByPostId = useCallback(
@@ -155,7 +236,9 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       addPost,
       addComment,
       loadCommentsForPost,
+      loadPostImagesForPost,
       getPostById,
+      getPostImagesByPostId,
       getCommentsByPostId,
     }),
     [
@@ -165,7 +248,9 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       addPost,
       addComment,
       loadCommentsForPost,
+      loadPostImagesForPost,
       getPostById,
+      getPostImagesByPostId,
       getCommentsByPostId,
     ],
   );

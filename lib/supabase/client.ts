@@ -17,7 +17,12 @@ export function getSupabaseClient() {
     );
   }
 
-  client = createClient<Database>(url, anonKey);
+  client = createClient<Database>(url, anonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  });
   return client;
 }
 

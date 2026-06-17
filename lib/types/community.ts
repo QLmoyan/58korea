@@ -20,18 +20,33 @@ export const publishCategoryMap: Record<PublishCategory, PostCategory> = {
   搭子: "搭子",
 };
 
+export interface AddCommentReply {
+  parentId: string;
+  replyToAuthor: string;
+}
+
 export interface Comment {
   id: string;
   postId: number;
   author: string;
   content: string;
   createdAt: string;
+  parentId: string | null;
+  replyToAuthor: string | null;
+  imageUrl: string | null;
+}
+
+export interface AddCommentInput {
+  content: string;
+  reply?: AddCommentReply;
+  image?: File;
 }
 
 export interface CreatePostInput {
   title: string;
   content: string;
   category: PublishCategory;
+  images?: File[];
 }
 
 export const ANONYMOUS_NAMES = [

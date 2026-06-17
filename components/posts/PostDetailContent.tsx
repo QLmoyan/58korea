@@ -1,9 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { useParams } from "next/navigation";
+import { useEffect, useMemo } from "react";
 import PageHeader from "@/components/layout/PageHeader";
 import CommentSection from "@/components/posts/CommentSection";
+import PostImageCarousel from "@/components/posts/PostImageCarousel";
+import type { PostImage } from "@/lib/data/posts";
 import { usePostStore } from "@/lib/store/post-store";
 
 function formatLikes(likes: number) {
@@ -16,8 +18,47 @@ function formatLikes(likes: number) {
 export default function PostDetailContent() {
   const params = useParams();
   const postId = Number(params.id);
-  const { getPostById, hydrated } = usePostStore();
+  const {
+    getPostById,
+    getPostImagesByPostId,
+    loadPostImagesForPost,
+    hydrated,
+  } = usePostStore();
   const post = getPostById(postId);
+
+  useEffect(() => {
+    if (Number.isFinite(postId)) {
+      loadPostImagesForPost(postId);
+    }
+  }, [postId, loadPostImagesForPost]);
+
+  const displayImages = useMemo((): PostImage[] => {
+    if (!post) {
+      return [];
+    }
+
+    const loadedImages = getPostImagesByPostId(post.id);
+    if (loadedImages.length > 0) {
+      return loadedImages;
+    }
+
+    if (post.images && post.images.length > 0) {
+      return post.images;
+    }
+
+    if (post.imageUrl) {
+      return [
+        {
+          id: `cover-${post.id}`,
+          url: post.imageUrl,
+          sortOrder: 0,
+          height: post.imageHeight,
+        },
+      ];
+    }
+
+    return [];
+  }, [post, getPostImagesByPostId]);
 
   if (!hydrated) {
     return (
@@ -47,16 +88,9 @@ export default function PostDetailContent() {
 
       <main className="pt-14">
         <article className="bg-white">
-          <div className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-100">
-            <Image
-              src={post.imageUrl}
-              alt={post.title}
-              fill
-              priority
-              sizes="(max-width: 448px) 100vw, 448px"
-              className="object-cover"
-            />
-          </div>
+          {displayImages.length > 0 ? (
+            <PostImageCarousel images={displayImages} title={post.title} />
+          ) : null}
 
           <div className="space-y-4 px-4 py-4">
             <h1 className="text-lg font-bold leading-snug text-zinc-900">

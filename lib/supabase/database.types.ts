@@ -9,6 +9,27 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          nickname: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          nickname: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          nickname?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       posts: {
         Row: {
           id: number;
@@ -19,8 +40,8 @@ export interface Database {
           distance: string;
           likes: number;
           category: string;
-          image_url: string;
-          image_height: number;
+          image_url: string | null;
+          image_height: number | null;
           nearby: boolean;
           following: boolean;
           created_at: string;
@@ -34,8 +55,8 @@ export interface Database {
           distance: string;
           likes?: number;
           category: string;
-          image_url: string;
-          image_height: number;
+          image_url?: string | null;
+          image_height?: number | null;
           nearby?: boolean;
           following?: boolean;
           created_at?: string;
@@ -49,13 +70,54 @@ export interface Database {
           distance?: string;
           likes?: number;
           category?: string;
-          image_url?: string;
-          image_height?: number;
+          image_url?: string | null;
+          image_height?: number | null;
           nearby?: boolean;
           following?: boolean;
           created_at?: string;
         };
         Relationships: [];
+      };
+      post_images: {
+        Row: {
+          id: string;
+          post_id: number;
+          storage_path: string;
+          public_url: string;
+          sort_order: number;
+          width: number | null;
+          height: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: number;
+          storage_path: string;
+          public_url: string;
+          sort_order: number;
+          width?: number | null;
+          height?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          post_id?: number;
+          storage_path?: string;
+          public_url?: string;
+          sort_order?: number;
+          width?: number | null;
+          height?: number | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "post_images_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       comments: {
         Row: {
@@ -64,6 +126,10 @@ export interface Database {
           author: string;
           content: string;
           created_at: string;
+          parent_id: string | null;
+          reply_to_author: string | null;
+          image_url: string | null;
+          image_storage_path: string | null;
         };
         Insert: {
           id?: string;
@@ -71,6 +137,10 @@ export interface Database {
           author: string;
           content: string;
           created_at?: string;
+          parent_id?: string | null;
+          reply_to_author?: string | null;
+          image_url?: string | null;
+          image_storage_path?: string | null;
         };
         Update: {
           id?: string;
@@ -78,8 +148,20 @@ export interface Database {
           author?: string;
           content?: string;
           created_at?: string;
+          parent_id?: string | null;
+          reply_to_author?: string | null;
+          image_url?: string | null;
+          image_storage_path?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "comments_parent_id_fkey";
+            columns: ["parent_id"];
+            isOneToOne: false;
+            referencedRelation: "comments";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: Record<string, never>;

@@ -16,24 +16,28 @@ function formatLikes(likes: number) {
 }
 
 export default function PostCard({ post }: PostCardProps) {
+  const coverHeight = post.imageHeight ?? 240;
+
   return (
     <Link
       href={`/posts/${post.id}`}
       className="mb-2.5 block w-full cursor-pointer break-inside-avoid touch-manipulation"
     >
       <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-100 transition-transform active:scale-[0.98]">
-        <div
-          className="relative w-full overflow-hidden bg-zinc-100"
-          style={{ height: post.imageHeight }}
-        >
-          <Image
-            src={post.imageUrl}
-            alt={post.title}
-            fill
-            sizes="(max-width: 448px) 50vw, 200px"
-            className="pointer-events-none object-cover"
-          />
-        </div>
+        {post.imageUrl ? (
+          <div
+            className="relative w-full overflow-hidden bg-zinc-100"
+            style={{ height: coverHeight }}
+          >
+            <Image
+              src={post.imageUrl}
+              alt={post.title}
+              fill
+              sizes="(max-width: 448px) 50vw, 200px"
+              className="pointer-events-none object-cover"
+            />
+          </div>
+        ) : null}
 
         <div className="space-y-1.5 p-2.5">
           <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900">
