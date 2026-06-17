@@ -21,6 +21,7 @@ import {
 import { uploadCommentImage, uploadPostImages } from "@/lib/supabase/storage";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { createClientId } from "@/lib/utils/create-client-id";
+import { compressImage, compressImages } from "@/lib/utils/compress-image";
 import {
   type AddCommentInput,
   type Comment,
@@ -113,7 +114,8 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
     const images = input.images ?? [];
 
     if (images.length > 0) {
-      await uploadPostImages(newPost.id, images.slice(0, 9));
+      const compressedImages = await compressImages(images.slice(0, 9));
+      await uploadPostImages(newPost.id, compressedImages);
     }
 
     const savedPost = (await fetchPostById(newPost.id)) ?? newPost;
@@ -185,7 +187,8 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       let imageStoragePath: string | null = null;
 
       if (input.image) {
-        const uploaded = await uploadCommentImage(commentId, input.image);
+        const compressedImage = await compressImage(input.image);
+        const uploaded = await uploadCommentImage(commentId, compressedImage);
         imageUrl = uploaded.publicUrl;
         imageStoragePath = uploaded.storagePath;
       }
