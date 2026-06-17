@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import PageHeader from "@/components/layout/PageHeader";
 import CommentSection from "@/components/posts/CommentSection";
 import PostImageCarousel from "@/components/posts/PostImageCarousel";
@@ -17,14 +17,24 @@ function formatLikes(likes: number) {
 
 export default function PostDetailContent() {
   const params = useParams();
+  const router = useRouter();
   const postId = Number(params.id);
   const {
     getPostById,
     getPostImagesByPostId,
     loadPostImagesForPost,
     hydrated,
+    canDeletePost,
+    deletePost,
+    getCommentsByPostId,
   } = usePostStore();
   const post = getPostById(postId);
+  const [deleteConfirming, setDeleteConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  const ownedPost = post ? canDeletePost(post.id) : false;
+  const commentCount = post ? getCommentsByPostId(post.id).length : 0;
 
   useEffect(() => {
     if (Number.isFinite(postId)) {
@@ -60,6 +70,59 @@ export default function PostDetailContent() {
     return [];
   }, [post, getPostImagesByPostId]);
 
+  async function handleConfirmDeletePost() {
+    if (!post) {
+      return;
+    }
+
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
+      await deletePost(post.id);
+      router.push("/");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setDeleteError(`删除失败：${message}`);
+      setDeleteConfirming(false);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const headerAction =
+    ownedPost && !deleteConfirming ? (
+      <button
+        type="button"
+        onClick={() => {
+          setDeleteConfirming(true);
+          setDeleteError("");
+        }}
+        className="touch-manipulation rounded-full px-2 py-1 text-xs font-medium text-rose-500 transition-colors hover:bg-rose-50"
+      >
+        删除帖子
+      </button>
+    ) : ownedPost && deleteConfirming ? (
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setDeleteConfirming(false)}
+          disabled={deleting}
+          className="touch-manipulation rounded-full px-2 py-1 text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-600 disabled:opacity-60"
+        >
+          取消
+        </button>
+        <button
+          type="button"
+          onClick={handleConfirmDeletePost}
+          disabled={deleting}
+          className="touch-manipulation rounded-full px-2 py-1 text-xs font-medium text-rose-500 transition-colors hover:bg-rose-50 disabled:opacity-60"
+        >
+          {deleting ? "删除中" : "确认"}
+        </button>
+      </div>
+    ) : null;
+
   if (!hydrated) {
     return (
       <div className="mx-auto min-h-screen max-w-md bg-zinc-50">
@@ -84,9 +147,22 @@ export default function PostDetailContent() {
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-zinc-50 pb-24">
-      <PageHeader title="帖子详情" />
+      <PageHeader title="帖子详情" action={headerAction} />
 
       <main className="pt-14">
+        {deleteConfirming ? (
+          <div className="border-b border-rose-100 bg-rose-50 px-4 py-2.5 text-xs leading-5 text-rose-600">
+            删除后，{commentCount > 0 ? `${commentCount} 条评论和` : ""}
+            所有图片记录将一并删除，且无法恢复。
+          </div>
+        ) : null}
+
+        {deleteError ? (
+          <div className="border-b border-rose-100 bg-rose-50 px-4 py-2 text-xs text-rose-500">
+            {deleteError}
+          </div>
+        ) : null}
+
         <article className="bg-white">
           {displayImages.length > 0 ? (
             <PostImageCarousel images={displayImages} title={post.title} />

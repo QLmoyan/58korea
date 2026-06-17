@@ -31,11 +31,28 @@ function formatTime(iso: string) {
 interface CommentItemProps {
   comment: Comment;
   isReply?: boolean;
+  canDelete?: boolean;
+  confirmingDelete?: boolean;
+  deleting?: boolean;
   onReply: (comment: Comment) => void;
+  onDeleteClick: (comment: Comment) => void;
+  onDeleteCancel: () => void;
+  onDeleteConfirm: (comment: Comment) => void;
 }
 
-function CommentItem({ comment, isReply = false, onReply }: CommentItemProps) {
+function CommentItem({
+  comment,
+  isReply = false,
+  canDelete = false,
+  confirmingDelete = false,
+  deleting = false,
+  onReply,
+  onDeleteClick,
+  onDeleteCancel,
+  onDeleteConfirm,
+}: CommentItemProps) {
   const hasText = comment.content.trim().length > 0;
+  const isRootComment = !comment.parentId;
 
   return (
     <article className="flex gap-2.5">
@@ -92,7 +109,7 @@ function CommentItem({ comment, isReply = false, onReply }: CommentItemProps) {
           </div>
         ) : null}
 
-        <div className="mt-1 flex items-center gap-3">
+        <div className="mt-1 flex flex-wrap items-center gap-3">
           <time className="text-[11px] text-zinc-400">
             {formatTime(comment.createdAt)}
           </time>
@@ -103,19 +120,66 @@ function CommentItem({ comment, isReply = false, onReply }: CommentItemProps) {
           >
             回复
           </button>
+          {canDelete && !confirmingDelete ? (
+            <button
+              type="button"
+              onClick={() => onDeleteClick(comment)}
+              className="touch-manipulation text-[11px] font-medium text-rose-400 transition-colors hover:text-rose-500"
+            >
+              删除
+            </button>
+          ) : null}
+          {canDelete && confirmingDelete ? (
+            <>
+              <button
+                type="button"
+                onClick={onDeleteCancel}
+                disabled={deleting}
+                className="touch-manipulation text-[11px] font-medium text-zinc-400 transition-colors hover:text-zinc-600 disabled:opacity-60"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={() => onDeleteConfirm(comment)}
+                disabled={deleting}
+                className="touch-manipulation text-[11px] font-medium text-rose-500 transition-colors hover:text-rose-600 disabled:opacity-60"
+              >
+                {deleting ? "删除中" : "确认删除"}
+              </button>
+            </>
+          ) : null}
         </div>
+        {canDelete && confirmingDelete ? (
+          <p className="mt-1 text-[11px] leading-4 text-rose-500">
+            {isRootComment
+              ? "删除后，其下回复也会一起删除，且无法恢复。"
+              : "确定删除这条回复？删除后无法恢复。"}
+          </p>
+        ) : null}
       </div>
     </article>
   );
 }
 
 export default function CommentSection({ postId }: CommentSectionProps) {
-  const { getCommentsByPostId, addComment, loadCommentsForPost } =
-    usePostStore();
+  const {
+    getCommentsByPostId,
+    addComment,
+    loadCommentsForPost,
+    canDeleteComment,
+    deleteComment,
+  } = usePostStore();
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
+    null,
+  );
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(
+    null,
+  );
   const [selectedImage, setSelectedImage] = useState<SelectedCommentImage | null>(
     null,
   );
@@ -165,6 +229,36 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   function cancelReply() {
     setReplyingTo(null);
     setError("");
+  }
+
+  function handleDeleteClick(comment: Comment) {
+    setConfirmingDeleteId(comment.id);
+    setError("");
+  }
+
+  function handleDeleteCancel() {
+    setConfirmingDeleteId(null);
+  }
+
+  async function handleDeleteConfirm(comment: Comment) {
+    setDeletingCommentId(comment.id);
+    setError("");
+
+    try {
+      await deleteComment(postId, comment.id);
+      if (replyingTo?.id === comment.id) {
+        setReplyingTo(null);
+      }
+      setConfirmingDeleteId(null);
+    } catch (deleteError) {
+      const rawMessage =
+        deleteError instanceof Error
+          ? deleteError.message
+          : String(deleteError);
+      setError(`删除失败：${rawMessage}`);
+    } finally {
+      setDeletingCommentId(null);
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -221,7 +315,16 @@ export default function CommentSection({ postId }: CommentSectionProps) {
           <div className="divide-y divide-zinc-100">
             {threads.map(({ root, replies }) => (
               <div key={root.id} className="py-3 first:pt-0 last:pb-0">
-                <CommentItem comment={root} onReply={startReply} />
+                <CommentItem
+                  comment={root}
+                  canDelete={canDeleteComment(root.id)}
+                  confirmingDelete={confirmingDeleteId === root.id}
+                  deleting={deletingCommentId === root.id}
+                  onReply={startReply}
+                  onDeleteClick={handleDeleteClick}
+                  onDeleteCancel={handleDeleteCancel}
+                  onDeleteConfirm={handleDeleteConfirm}
+                />
 
                 {replies.length > 0 ? (
                   <div className="ml-8 mt-2 space-y-3 rounded-xl bg-zinc-50 px-3 py-2.5">
@@ -230,7 +333,13 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                         key={reply.id}
                         comment={reply}
                         isReply
+                        canDelete={canDeleteComment(reply.id)}
+                        confirmingDelete={confirmingDeleteId === reply.id}
+                        deleting={deletingCommentId === reply.id}
                         onReply={startReply}
+                        onDeleteClick={handleDeleteClick}
+                        onDeleteCancel={handleDeleteCancel}
+                        onDeleteConfirm={handleDeleteConfirm}
                       />
                     ))}
                   </div>

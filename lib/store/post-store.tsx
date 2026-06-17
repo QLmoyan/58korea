@@ -17,9 +17,19 @@ import {
   fetchPosts,
   insertComment,
   insertPost,
+  deleteCommentById,
+  deletePostById,
 } from "@/lib/supabase/queries";
 import { uploadCommentImage, uploadPostImages } from "@/lib/supabase/storage";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  isOwnedComment,
+  isOwnedPost,
+  markOwnedComment,
+  markOwnedPost,
+  unmarkOwnedComment,
+  unmarkOwnedPost,
+} from "@/lib/local/owned-content";
 import { createClientId } from "@/lib/utils/create-client-id";
 import { compressImage, compressImages } from "@/lib/utils/compress-image";
 import {
@@ -40,6 +50,10 @@ interface PostStoreValue {
   getPostById: (id: number) => Post | undefined;
   getPostImagesByPostId: (postId: number) => PostImage[];
   getCommentsByPostId: (postId: number) => Comment[];
+  canDeletePost: (postId: number) => boolean;
+  canDeleteComment: (commentId: string) => boolean;
+  deletePost: (postId: number) => Promise<void>;
+  deleteComment: (postId: number, commentId: string) => Promise<void>;
 }
 
 const PostStoreContext = createContext<PostStoreValue | null>(null);
@@ -129,6 +143,7 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       savedPost,
       ...current.filter((post) => post.id !== savedPost.id),
     ]);
+    markOwnedPost(savedPost.id);
 
     return savedPost;
   }, []);
@@ -205,6 +220,7 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       });
 
       setComments((current) => [...current, newComment]);
+      markOwnedComment(newComment.id);
       return newComment;
     },
     [],
@@ -231,6 +247,47 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
     [comments],
   );
 
+  const canDeletePost = useCallback(
+    (postId: number) => isOwnedPost(postId),
+    [],
+  );
+
+  const canDeleteComment = useCallback(
+    (commentId: string) => isOwnedComment(commentId),
+    [],
+  );
+
+  const deletePost = useCallback(async (postId: number) => {
+    await deletePostById(postId);
+
+    setPosts((current) => current.filter((post) => post.id !== postId));
+    setComments((current) =>
+      current.filter((comment) => comment.postId !== postId),
+    );
+    setPostImagesByPostId((current) => {
+      const next = { ...current };
+      delete next[postId];
+      return next;
+    });
+    unmarkOwnedPost(postId);
+  }, []);
+
+  const deleteComment = useCallback(
+    async (postId: number, commentId: string) => {
+      await deleteCommentById(commentId);
+
+      setComments((current) =>
+        current.filter(
+          (comment) =>
+            comment.postId !== postId ||
+            (comment.id !== commentId && comment.parentId !== commentId),
+        ),
+      );
+      unmarkOwnedComment(commentId);
+    },
+    [],
+  );
+
   const value = useMemo(
     () => ({
       posts,
@@ -243,6 +300,10 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       getPostById,
       getPostImagesByPostId,
       getCommentsByPostId,
+      canDeletePost,
+      canDeleteComment,
+      deletePost,
+      deleteComment,
     }),
     [
       posts,
@@ -255,6 +316,10 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       getPostById,
       getPostImagesByPostId,
       getCommentsByPostId,
+      canDeletePost,
+      canDeleteComment,
+      deletePost,
+      deleteComment,
     ],
   );
 

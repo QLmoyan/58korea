@@ -186,3 +186,21 @@ export async function fetchCommentById(commentId: string): Promise<Comment | nul
 
   return data ? mapComment(data) : null;
 }
+
+export async function deletePostById(postId: number): Promise<void> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.from("posts").delete().eq("id", postId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function deleteCommentById(commentId: string): Promise<void> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.from("comments").delete().eq("id", commentId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
