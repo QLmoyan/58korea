@@ -8,26 +8,28 @@ import {
   useMemo,
   useState,
 } from "react";
+import type { Post, PostDistance } from "@/lib/data/posts";
 import {
-  posts as seedPosts,
-  type Post,
-  type PostDistance,
-} from "@/lib/data/posts";
+  fetchCommentsByPostId,
+  fetchPosts,
+  insertComment,
+  insertPost,
+} from "@/lib/supabase/queries";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   ANONYMOUS_NAMES,
   type Comment,
   type CreatePostInput,
   publishCategoryMap,
-  STORAGE_COMMENTS_KEY,
-  STORAGE_POSTS_KEY,
 } from "@/lib/types/community";
 
 interface PostStoreValue {
   posts: Post[];
   comments: Comment[];
   hydrated: boolean;
-  addPost: (input: CreatePostInput) => Post;
-  addComment: (postId: number, content: string) => Comment;
+  addPost: (input: CreatePostInput) => Promise<Post>;
+  addComment: (postId: number, content: string) => Promise<Comment>;
+  loadCommentsForPost: (postId: number) => Promise<void>;
   getPostById: (id: number) => Post | undefined;
   getCommentsByPostId: (postId: number) => Comment[];
 }
@@ -43,108 +45,87 @@ const distances: PostDistance[] = [
   "3.8km",
 ];
 
-function enrichSeedPosts(data: Post[]): Post[] {
-  return data.map((post) => ({
-    ...post,
-    content:
-      post.content ||
-      `${post.title}\n\n这是帖子详情内容。欢迎在下方留言交流，了解更多信息。`,
-    createdAt: post.createdAt || new Date().toISOString(),
-  }));
-}
-
-function loadPosts(): Post[] {
-  if (typeof window === "undefined") {
-    return enrichSeedPosts(seedPosts);
-  }
-
-  const saved = localStorage.getItem(STORAGE_POSTS_KEY);
-  if (!saved) {
-    return enrichSeedPosts(seedPosts);
-  }
-
-  try {
-    return JSON.parse(saved) as Post[];
-  } catch {
-    return enrichSeedPosts(seedPosts);
-  }
-}
-
-function loadComments(): Comment[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  const saved = localStorage.getItem(STORAGE_COMMENTS_KEY);
-  if (!saved) {
-    return [];
-  }
-
-  try {
-    return JSON.parse(saved) as Comment[];
-  } catch {
-    return [];
-  }
-}
-
 function randomItem<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
 export function PostStoreProvider({ children }: { children: React.ReactNode }) {
-  const [posts, setPosts] = useState<Post[]>(() => enrichSeedPosts(seedPosts));
+  const [posts, setPosts] = useState<Post[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setPosts(loadPosts());
-    setComments(loadComments());
-    setHydrated(true);
+    let cancelled = false;
+
+    async function loadInitialPosts() {
+      if (!isSupabaseConfigured()) {
+        setHydrated(true);
+        return;
+      }
+
+      try {
+        const data = await fetchPosts();
+        if (!cancelled) {
+          setPosts(data);
+        }
+      } catch (error) {
+        console.error("Failed to load posts:", error);
+      } finally {
+        if (!cancelled) {
+          setHydrated(true);
+        }
+      }
+    }
+
+    loadInitialPosts();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem(STORAGE_POSTS_KEY, JSON.stringify(posts));
-  }, [posts, hydrated]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem(STORAGE_COMMENTS_KEY, JSON.stringify(comments));
-  }, [comments, hydrated]);
-
-  const addPost = useCallback((input: CreatePostInput) => {
-    const nextId =
-      posts.reduce((maxId, post) => Math.max(maxId, post.id), 0) + 1;
-    const distance = randomItem(distances);
-
-    const newPost: Post = {
-      id: nextId,
+  const addPost = useCallback(async (input: CreatePostInput) => {
+    const imageSeed = Date.now();
+    const newPost = await insertPost({
       title: input.title.trim(),
       content: input.content.trim(),
       author: "我",
       location: "首尔",
-      distance,
+      distance: randomItem(distances),
       likes: 0,
       category: publishCategoryMap[input.category],
-      imageUrl: `https://picsum.photos/seed/post-${nextId}/400/480`,
-      imageHeight: 160 + (nextId % 5) * 20,
+      image_url: `https://picsum.photos/seed/post-${imageSeed}/400/480`,
+      image_height: 160 + (imageSeed % 5) * 20,
       nearby: true,
       following: false,
-      createdAt: new Date().toISOString(),
-    };
+    });
 
     setPosts((current) => [newPost, ...current]);
     return newPost;
-  }, [posts]);
+  }, []);
 
-  const addComment = useCallback((postId: number, content: string) => {
-    const newComment: Comment = {
-      id: `${postId}-${Date.now()}`,
-      postId,
+  const loadCommentsForPost = useCallback(async (postId: number) => {
+    if (!isSupabaseConfigured()) {
+      return;
+    }
+
+    try {
+      const data = await fetchCommentsByPostId(postId);
+      setComments((current) => {
+        const others = current.filter((comment) => comment.postId !== postId);
+        return [...others, ...data];
+      });
+    } catch (error) {
+      console.error("Failed to load comments:", error);
+    }
+  }, []);
+
+  const addComment = useCallback(async (postId: number, content: string) => {
+    const newComment = await insertComment({
+      post_id: postId,
       author: randomItem(ANONYMOUS_NAMES),
       content: content.trim(),
-      createdAt: new Date().toISOString(),
-    };
+    });
 
     setComments((current) => [...current, newComment]);
     return newComment;
@@ -173,6 +154,7 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       hydrated,
       addPost,
       addComment,
+      loadCommentsForPost,
       getPostById,
       getCommentsByPostId,
     }),
@@ -182,6 +164,7 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       hydrated,
       addPost,
       addComment,
+      loadCommentsForPost,
       getPostById,
       getCommentsByPostId,
     ],

@@ -34,9 +34,6 @@ export interface CreatePostInput {
   category: PublishCategory;
 }
 
-export const STORAGE_POSTS_KEY = "58korea-posts";
-export const STORAGE_COMMENTS_KEY = "58korea-comments";
-
 export const ANONYMOUS_NAMES = [
   "在韩小张",
   "首尔路人",

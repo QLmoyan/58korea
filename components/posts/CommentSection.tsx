@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePostStore } from "@/lib/store/post-store";
 
 interface CommentSectionProps {
@@ -18,12 +18,16 @@ function formatTime(iso: string) {
 }
 
 export default function CommentSection({ postId }: CommentSectionProps) {
-  const { getCommentsByPostId, addComment } = usePostStore();
+  const { getCommentsByPostId, addComment, loadCommentsForPost } = usePostStore();
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
   const comments = getCommentsByPostId(postId);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    loadCommentsForPost(postId);
+  }, [postId, loadCommentsForPost]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!input.trim()) {
@@ -31,9 +35,13 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       return;
     }
 
-    addComment(postId, input);
-    setInput("");
-    setError("");
+    try {
+      await addComment(postId, input);
+      setInput("");
+      setError("");
+    } catch {
+      setError("留言发送失败，请稍后重试");
+    }
   }
 
   return (

@@ -17,7 +17,7 @@ export default function PublishForm() {
   const [category, setCategory] = useState<PublishCategory>("租房");
   const [error, setError] = useState("");
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!title.trim()) {
@@ -30,8 +30,12 @@ export default function PublishForm() {
       return;
     }
 
-    addPost({ title, content, category });
-    router.push("/");
+    try {
+      await addPost({ title, content, category });
+      router.push("/");
+    } catch {
+      setError("发布失败，请检查 Supabase 配置后重试");
+    }
   }
 
   return (
