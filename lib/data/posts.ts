@@ -21,6 +21,7 @@ export type PostDistance =
 export interface Post {
   id: number;
   title: string;
+  content?: string;
   author: string;
   location: string;
   distance: PostDistance;
@@ -30,6 +31,7 @@ export interface Post {
   imageHeight: number;
   nearby?: boolean;
   following?: boolean;
+  createdAt?: string;
 }
 
 export const channels: FeedChannel[] = ["推荐", "附近", "关注"];
@@ -290,6 +292,7 @@ export const posts: Post[] = [
 ];
 
 export function filterPosts(
+  posts: Post[],
   channel: FeedChannel,
   category: PostCategory | null,
 ): Post[] {

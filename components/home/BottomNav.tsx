@@ -1,47 +1,58 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 const navItems = [
-  { label: "首页", icon: HomeIcon, active: true },
-  { label: "广场", icon: SquareIcon, active: false },
-  { label: "发布", icon: PlusIcon, active: false, highlight: true },
-  { label: "消息", icon: ChatIcon, active: false },
-  { label: "我的", icon: UserIcon, active: false },
+  { label: "首页", href: "/", icon: HomeIcon },
+  { label: "广场", href: "/square", icon: SquareIcon },
+  { label: "发布", href: "/publish", icon: PlusIcon, highlight: true },
+  { label: "消息", href: "/messages", icon: ChatIcon },
+  { label: "我的", href: "/profile", icon: UserIcon },
 ];
 
 export default function BottomNav() {
+  const pathname = usePathname();
+
   return (
-    <nav className="fixed right-0 bottom-0 left-0 z-50 border-t border-zinc-100 bg-white/95 backdrop-blur-md">
+    <nav className="pointer-events-auto fixed right-0 bottom-0 left-0 z-[100] border-t border-zinc-100 bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-md items-end justify-around px-2 pb-safe">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            type="button"
-            className={`flex flex-col items-center justify-center gap-0.5 ${
-              item.highlight ? "-mt-3" : "flex-1 py-1"
-            }`}
-          >
-            {item.highlight ? (
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-orange-400 text-white shadow-lg shadow-rose-200">
-                <item.icon className="h-6 w-6" />
-              </span>
-            ) : (
-              <item.icon
-                className={`h-6 w-6 ${
-                  item.active ? "text-zinc-900" : "text-zinc-400"
-                }`}
-              />
-            )}
-            <span
-              className={`text-[10px] ${
-                item.highlight
-                  ? "mt-1 font-medium text-rose-500"
-                  : item.active
-                    ? "font-semibold text-zinc-900"
-                    : "text-zinc-400"
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`flex cursor-pointer touch-manipulation flex-col items-center justify-center gap-0.5 ${
+                item.highlight ? "-mt-3 min-w-[56px]" : "min-h-11 flex-1 py-1"
               }`}
             >
-              {item.label}
-            </span>
-          </button>
-        ))}
+              {item.highlight ? (
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-orange-400 text-white shadow-lg shadow-rose-200">
+                  <item.icon className="h-6 w-6" />
+                </span>
+              ) : (
+                <item.icon
+                  className={`h-6 w-6 ${
+                    isActive ? "text-zinc-900" : "text-zinc-400"
+                  }`}
+                />
+              )}
+              <span
+                className={`text-[10px] ${
+                  item.highlight
+                    ? "mt-1 font-medium text-rose-500"
+                    : isActive
+                      ? "font-semibold text-zinc-900"
+                      : "text-zinc-400"
+                }`}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

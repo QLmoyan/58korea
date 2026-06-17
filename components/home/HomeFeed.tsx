@@ -6,17 +6,19 @@ import {
   type FeedChannel,
   type PostCategory,
 } from "@/lib/data/posts";
+import { usePostStore } from "@/lib/store/post-store";
 import CategoryScroll from "./CategoryScroll";
 import ChannelTabs from "./ChannelTabs";
 import PostFeed from "./PostFeed";
 
 export default function HomeFeed() {
+  const { posts } = usePostStore();
   const [channel, setChannel] = useState<FeedChannel>("推荐");
   const [category, setCategory] = useState<PostCategory | null>(null);
 
   const filteredPosts = useMemo(
-    () => filterPosts(channel, category),
-    [channel, category],
+    () => filterPosts(posts, channel, category),
+    [posts, channel, category],
   );
 
   function handleChannelChange(nextChannel: FeedChannel) {

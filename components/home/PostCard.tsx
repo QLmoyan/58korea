@@ -1,3 +1,6 @@
+"use client";
+
+import Link from "next/link";
 import Image from "next/image";
 import type { Post } from "@/lib/data/posts";
 
@@ -14,46 +17,53 @@ function formatLikes(likes: number) {
 
 export default function PostCard({ post }: PostCardProps) {
   return (
-    <article className="mb-2.5 break-inside-avoid overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-100 transition-transform active:scale-[0.98]">
-      <div
-        className="relative w-full overflow-hidden bg-zinc-100"
-        style={{ height: post.imageHeight }}
-      >
-        <Image
-          src={post.imageUrl}
-          alt={post.title}
-          fill
-          sizes="(max-width: 448px) 50vw, 200px"
-          className="object-cover"
-        />
-      </div>
-
-      <div className="space-y-1.5 p-2.5">
-        <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900">
-          {post.title}
-        </h3>
-
-        <p className="truncate text-[11px] leading-tight text-zinc-400">
-          <span aria-hidden="true">📍 </span>
-          {post.location}
-          <span className="mx-1 text-zinc-300">·</span>
-          <span className="text-[10px] text-zinc-400">{post.distance}</span>
-        </p>
-
-        <div className="flex items-center justify-between gap-2 pt-0.5">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-orange-300 text-[10px] font-bold text-white">
-              {post.author.slice(0, 1)}
-            </div>
-            <span className="truncate text-xs text-zinc-500">{post.author}</span>
-          </div>
-          <span className="flex shrink-0 items-center gap-1 text-xs text-zinc-400">
-            <HeartIcon />
-            {formatLikes(post.likes)}
-          </span>
+    <Link
+      href={`/posts/${post.id}`}
+      className="mb-2.5 block w-full cursor-pointer break-inside-avoid touch-manipulation"
+    >
+      <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-100 transition-transform active:scale-[0.98]">
+        <div
+          className="relative w-full overflow-hidden bg-zinc-100"
+          style={{ height: post.imageHeight }}
+        >
+          <Image
+            src={post.imageUrl}
+            alt={post.title}
+            fill
+            sizes="(max-width: 448px) 50vw, 200px"
+            className="pointer-events-none object-cover"
+          />
         </div>
-      </div>
-    </article>
+
+        <div className="space-y-1.5 p-2.5">
+          <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900">
+            {post.title}
+          </h3>
+
+          <p className="truncate text-[11px] leading-tight text-zinc-400">
+            <span aria-hidden="true">📍 </span>
+            {post.location}
+            <span className="mx-1 text-zinc-300">·</span>
+            <span className="text-[10px] text-zinc-400">{post.distance}</span>
+          </p>
+
+          <div className="flex items-center justify-between gap-2 pt-0.5">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-orange-300 text-[10px] font-bold text-white">
+                {post.author.slice(0, 1)}
+              </div>
+              <span className="truncate text-xs text-zinc-500">
+                {post.author}
+              </span>
+            </div>
+            <span className="flex shrink-0 items-center gap-1 text-xs text-zinc-400">
+              <HeartIcon />
+              {formatLikes(post.likes)}
+            </span>
+          </div>
+        </div>
+      </article>
+    </Link>
   );
 }
 
