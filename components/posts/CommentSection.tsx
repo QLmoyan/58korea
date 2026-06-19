@@ -2,8 +2,12 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useImageViewer } from "@/lib/store/image-viewer-store";
 import { usePostStore } from "@/lib/store/post-store";
 import type { Comment } from "@/lib/types/community";
+import ReportSheet from "@/components/report/ReportSheet";
+import FrontendAdminCommentActions from "@/components/frontend/FrontendAdminCommentActions";
+import type { AdminCapabilities } from "@/lib/actions/admin-capabilities";
 import {
   buildCommentThreads,
   resolveReplyTarget,
@@ -11,6 +15,7 @@ import {
 
 interface CommentSectionProps {
   postId: number;
+  adminCapabilities?: AdminCapabilities | null;
 }
 
 interface SelectedCommentImage {
@@ -32,24 +37,34 @@ interface CommentItemProps {
   comment: Comment;
   isReply?: boolean;
   canDelete?: boolean;
+  canReport?: boolean;
   confirmingDelete?: boolean;
   deleting?: boolean;
   onReply: (comment: Comment) => void;
+  onReport: (comment: Comment) => void;
   onDeleteClick: (comment: Comment) => void;
   onDeleteCancel: () => void;
   onDeleteConfirm: (comment: Comment) => void;
+  onImageClick: (comment: Comment) => void;
+  adminCapabilities?: AdminCapabilities | null;
+  onAdminUpdated?: () => void | Promise<void>;
 }
 
 function CommentItem({
   comment,
   isReply = false,
   canDelete = false,
+  canReport = false,
   confirmingDelete = false,
   deleting = false,
   onReply,
+  onReport,
   onDeleteClick,
   onDeleteCancel,
   onDeleteConfirm,
+  onImageClick,
+  adminCapabilities,
+  onAdminUpdated,
 }: CommentItemProps) {
   const hasText = comment.content.trim().length > 0;
   const isRootComment = !comment.parentId;
@@ -94,8 +109,10 @@ function CommentItem({
         ) : null}
 
         {comment.imageUrl ? (
-          <div
-            className={`relative aspect-[4/3] max-w-[200px] overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200 ${
+          <button
+            type="button"
+            onClick={() => onImageClick(comment)}
+            className={`relative aspect-[4/3] max-w-[200px] overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200 touch-manipulation cursor-zoom-in ${
               hasText ? "mt-2" : "mt-0.5"
             }`}
           >
@@ -104,9 +121,9 @@ function CommentItem({
               alt="评论图片"
               fill
               sizes="200px"
-              className="object-cover"
+              className="pointer-events-none object-cover"
             />
-          </div>
+          </button>
         ) : null}
 
         <div className="mt-1 flex flex-wrap items-center gap-3">
@@ -120,6 +137,23 @@ function CommentItem({
           >
             回复
           </button>
+          {canReport ? (
+            <button
+              type="button"
+              onClick={() => onReport(comment)}
+              className="touch-manipulation text-[11px] font-medium text-zinc-400 transition-colors hover:text-zinc-600"
+            >
+              举报
+            </button>
+          ) : null}
+          {adminCapabilities?.isAdmin ? (
+            <FrontendAdminCommentActions
+              commentId={comment.id}
+              permissions={adminCapabilities.permissions}
+              isReply={isReply}
+              onUpdated={onAdminUpdated}
+            />
+          ) : null}
           {canDelete && !confirmingDelete ? (
             <button
               type="button"
@@ -162,7 +196,10 @@ function CommentItem({
   );
 }
 
-export default function CommentSection({ postId }: CommentSectionProps) {
+export default function CommentSection({
+  postId,
+  adminCapabilities = null,
+}: CommentSectionProps) {
   const {
     getCommentsByPostId,
     addComment,
@@ -170,8 +207,10 @@ export default function CommentSection({ postId }: CommentSectionProps) {
     canDeleteComment,
     deleteComment,
   } = usePostStore();
+  const { openViewer } = useImageViewer();
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
+  const [infoNotice, setInfoNotice] = useState("");
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
@@ -183,6 +222,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   const [selectedImage, setSelectedImage] = useState<SelectedCommentImage | null>(
     null,
   );
+  const [reportTarget, setReportTarget] = useState<Comment | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -261,6 +301,28 @@ export default function CommentSection({ postId }: CommentSectionProps) {
     }
   }
 
+  function handleCommentImageClick(comment: Comment) {
+    if (!comment.imageUrl) {
+      return;
+    }
+
+    openViewer({
+      images: [
+        {
+          id: comment.id,
+          url: comment.imageUrl,
+          alt: "评论图片",
+        },
+      ],
+      initialIndex: 0,
+    });
+  }
+
+  function handleReportClick(comment: Comment) {
+    setReportTarget(comment);
+    setError("");
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -270,10 +332,11 @@ export default function CommentSection({ postId }: CommentSectionProps) {
     }
 
     setSubmitting(true);
+    setInfoNotice("");
 
     try {
       const reply = replyingTo ? resolveReplyTarget(replyingTo) : undefined;
-      await addComment(postId, {
+      const result = await addComment(postId, {
         content: input,
         reply,
         image: selectedImage?.file,
@@ -282,6 +345,9 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       setReplyingTo(null);
       clearSelectedImage();
       setError("");
+      if (result.notice) {
+        setInfoNotice(result.notice);
+      }
     } catch (submitError) {
       const rawMessage =
         submitError instanceof Error
@@ -318,12 +384,17 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                 <CommentItem
                   comment={root}
                   canDelete={canDeleteComment(root.id)}
+                  canReport={!canDeleteComment(root.id)}
                   confirmingDelete={confirmingDeleteId === root.id}
                   deleting={deletingCommentId === root.id}
                   onReply={startReply}
+                  onReport={handleReportClick}
                   onDeleteClick={handleDeleteClick}
                   onDeleteCancel={handleDeleteCancel}
                   onDeleteConfirm={handleDeleteConfirm}
+                  onImageClick={handleCommentImageClick}
+                  adminCapabilities={adminCapabilities}
+                  onAdminUpdated={() => loadCommentsForPost(postId)}
                 />
 
                 {replies.length > 0 ? (
@@ -334,12 +405,17 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                         comment={reply}
                         isReply
                         canDelete={canDeleteComment(reply.id)}
+                        canReport={!canDeleteComment(reply.id)}
                         confirmingDelete={confirmingDeleteId === reply.id}
                         deleting={deletingCommentId === reply.id}
                         onReply={startReply}
+                        onReport={handleReportClick}
                         onDeleteClick={handleDeleteClick}
                         onDeleteCancel={handleDeleteCancel}
                         onDeleteConfirm={handleDeleteConfirm}
+                        onImageClick={handleCommentImageClick}
+                        adminCapabilities={adminCapabilities}
+                        onAdminUpdated={() => loadCommentsForPost(postId)}
                       />
                     ))}
                   </div>
@@ -434,7 +510,20 @@ export default function CommentSection({ postId }: CommentSectionProps) {
         {error ? (
           <p className="mt-2 text-xs text-rose-500">{error}</p>
         ) : null}
+
+        {infoNotice ? (
+          <p className="mt-2 text-xs leading-5 text-amber-700">{infoNotice}</p>
+        ) : null}
       </form>
+
+      <ReportSheet
+        open={Boolean(reportTarget)}
+        onClose={() => setReportTarget(null)}
+        targetType="comment"
+        targetId={reportTarget?.id ?? ""}
+        postId={postId}
+        targetLabel={reportTarget?.parentId ? "举报该回复" : "举报该评论"}
+      />
     </section>
   );
 }

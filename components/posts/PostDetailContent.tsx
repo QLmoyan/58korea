@@ -2,10 +2,15 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import FrontendAdminPostBar from "@/components/frontend/FrontendAdminPostBar";
 import PageHeader from "@/components/layout/PageHeader";
 import CommentSection from "@/components/posts/CommentSection";
 import PostImageCarousel from "@/components/posts/PostImageCarousel";
+import ReportSheet from "@/components/report/ReportSheet";
 import type { PostImage } from "@/lib/data/posts";
+import { getAdminCapabilitiesAction } from "@/lib/actions/admin-capabilities";
+import type { AdminCapabilities } from "@/lib/actions/admin-capabilities";
+import { MODERATION_MEDIUM_DISCLAIMER } from "@/lib/moderation/constants";
 import { usePostStore } from "@/lib/store/post-store";
 
 function formatLikes(likes: number) {
@@ -23,6 +28,7 @@ export default function PostDetailContent() {
     getPostById,
     getPostImagesByPostId,
     loadPostImagesForPost,
+    syncPostById,
     hydrated,
     canDeletePost,
     deletePost,
@@ -32,6 +38,9 @@ export default function PostDetailContent() {
   const [deleteConfirming, setDeleteConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
+  const [adminCapabilities, setAdminCapabilities] =
+    useState<AdminCapabilities | null>(null);
 
   const ownedPost = post ? canDeletePost(post.id) : false;
   const commentCount = post ? getCommentsByPostId(post.id).length : 0;
@@ -41,6 +50,29 @@ export default function PostDetailContent() {
       loadPostImagesForPost(postId);
     }
   }, [postId, loadPostImagesForPost]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAdminCapabilities() {
+      try {
+        const capabilities = await getAdminCapabilitiesAction();
+        if (!cancelled) {
+          setAdminCapabilities(capabilities);
+        }
+      } catch {
+        if (!cancelled) {
+          setAdminCapabilities({ isAdmin: false, role: null, permissions: [] });
+        }
+      }
+    }
+
+    loadAdminCapabilities();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const displayImages = useMemo((): PostImage[] => {
     if (!post) {
@@ -121,7 +153,15 @@ export default function PostDetailContent() {
           {deleting ? "删除中" : "确认"}
         </button>
       </div>
-    ) : null;
+    ) : (
+      <button
+        type="button"
+        onClick={() => setReportOpen(true)}
+        className="touch-manipulation rounded-full px-2 py-1 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+      >
+        举报
+      </button>
+    );
 
   if (!hydrated) {
     return (
@@ -200,11 +240,40 @@ export default function PostDetailContent() {
             <div className="whitespace-pre-wrap text-sm leading-7 text-zinc-700">
               {post.content}
             </div>
+
+            {post.riskLevel === "medium" ? (
+              <p className="rounded-xl bg-zinc-100 px-3 py-2.5 text-xs leading-5 text-zinc-500">
+                {MODERATION_MEDIUM_DISCLAIMER}
+              </p>
+            ) : null}
+
+            {adminCapabilities?.isAdmin ? (
+              <FrontendAdminPostBar
+                postId={post.id}
+                permissions={adminCapabilities.permissions}
+                riskLevel={post.riskLevel}
+                onUpdated={() => syncPostById(post.id)}
+                onHidden={() => router.push("/")}
+                onDeleted={() => router.push("/")}
+              />
+            ) : null}
           </div>
         </article>
 
-        <CommentSection postId={post.id} />
+        <CommentSection
+          postId={post.id}
+          adminCapabilities={adminCapabilities}
+        />
       </main>
+
+      <ReportSheet
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="post"
+        targetId={String(post.id)}
+        postId={post.id}
+        targetLabel="举报该帖子"
+      />
     </div>
   );
 }

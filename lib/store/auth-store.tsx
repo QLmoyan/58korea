@@ -15,6 +15,7 @@ import {
 } from "@/lib/auth/username";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { fetchProfileByUserId } from "@/lib/supabase/profile";
+import { registerUserAction } from "@/lib/actions/register-user";
 import type { Profile } from "@/lib/types/user";
 
 interface AuthStoreValue {
@@ -49,6 +50,10 @@ function mapAuthError(message: string) {
 
   if (message.includes("User already registered")) {
     return "该账号已被占用，请直接登录";
+  }
+
+  if (message === "账号已存在") {
+    return "账号已存在";
   }
 
   if (message.includes("email rate limit exceeded")) {
@@ -102,7 +107,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(sessionUser);
 
         if (sessionUser) {
-          await loadProfile(sessionUser.id);
+          void loadProfile(sessionUser.id).catch((error) => {
+            console.error("Failed to load profile:", error);
+            if (!cancelled) {
+              setProfile(null);
+            }
+          });
         } else {
           setProfile(null);
         }
@@ -123,17 +133,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       const sessionUser = session?.user ?? null;
       setUser(sessionUser);
 
       if (sessionUser) {
-        try {
-          await loadProfile(sessionUser.id);
-        } catch (error) {
+        void loadProfile(sessionUser.id).catch((error) => {
           console.error("Failed to load profile:", error);
           setProfile(null);
-        }
+        });
       } else {
         setProfile(null);
       }
@@ -162,16 +170,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const trimmedNickname = nickname.trim();
       const trimmedBio = bio.trim();
 
-      const { data, error } = await supabase.auth.signUp({
+      await registerUserAction({
+        username: normalizedUsername,
+        password,
+        nickname: trimmedNickname,
+        bio: trimmedBio,
+      });
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: toInternalEmail(normalizedUsername),
         password,
-        options: {
-          data: {
-            username: normalizedUsername,
-            nickname: trimmedNickname,
-            bio: trimmedBio,
-          },
-        },
       });
 
       if (error) {
@@ -182,13 +190,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("注册失败，请稍后重试");
       }
 
-      if (data.session) {
-        setUser(data.user);
-        await loadProfile(data.user.id);
-        return;
-      }
-
-      throw new Error("注册成功，请登录");
+      setUser(data.user);
+      await loadProfile(data.user.id);
     },
     [loadProfile],
   );

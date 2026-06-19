@@ -52,6 +52,8 @@ function mapPost(row: DbPostRow, images?: PostImage[]): Post {
     following: row.following,
     createdAt: row.created_at,
     images: resolvedImages.length > 0 ? resolvedImages : undefined,
+    riskLevel: row.risk_level,
+    riskScore: row.risk_score,
   };
 }
 
@@ -83,6 +85,7 @@ export async function fetchPosts(): Promise<Post[]> {
   const { data, error } = await supabase
     .from("posts")
     .select("*, post_images(id, public_url, sort_order, width, height)")
+    .eq("moderation_status", "published")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -98,6 +101,7 @@ export async function fetchPostById(postId: number): Promise<Post | null> {
     .from("posts")
     .select("*")
     .eq("id", postId)
+    .eq("moderation_status", "published")
     .maybeSingle();
 
   if (error) {
@@ -133,6 +137,7 @@ export async function fetchCommentsByPostId(postId: number): Promise<Comment[]> 
     .from("comments")
     .select("*")
     .eq("post_id", postId)
+    .eq("moderation_status", "published")
     .order("created_at", { ascending: true });
 
   if (error) {

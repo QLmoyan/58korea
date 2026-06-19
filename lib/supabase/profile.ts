@@ -4,12 +4,16 @@ import type { Profile } from "@/lib/types/user";
 function mapProfile(row: {
   id: string;
   nickname: string;
+  username: string | null;
+  bio: string | null;
   created_at: string;
   updated_at: string;
 }): Profile {
   return {
     id: row.id,
     nickname: row.nickname,
+    username: row.username,
+    bio: row.bio,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -19,7 +23,7 @@ export async function fetchProfileByUserId(userId: string): Promise<Profile | nu
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, nickname, created_at, updated_at")
+    .select("id, nickname, username, bio, created_at, updated_at")
     .eq("id", userId)
     .maybeSingle();
 

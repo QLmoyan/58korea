@@ -9,14 +9,17 @@ import {
   useState,
 } from "react";
 import type { Post, PostDistance, PostImage } from "@/lib/data/posts";
-import { resolveAuthorName } from "@/lib/auth/author";
+import { resolveAuthorNameFromAuth } from "@/lib/auth/author";
+import { useAuthStore } from "@/lib/store/auth-store";
+import {
+  publishCommentAction,
+  publishPostAction,
+} from "@/lib/actions/publish-content";
 import {
   fetchCommentsByPostId,
   fetchPostById,
   fetchPostImagesByPostId,
   fetchPosts,
-  insertComment,
-  insertPost,
   deleteCommentById,
   deletePostById,
 } from "@/lib/supabase/queries";
@@ -43,10 +46,14 @@ interface PostStoreValue {
   posts: Post[];
   comments: Comment[];
   hydrated: boolean;
-  addPost: (input: CreatePostInput) => Promise<Post>;
-  addComment: (postId: number, input: AddCommentInput) => Promise<Comment>;
+  addPost: (input: CreatePostInput) => Promise<{ post: Post; notice?: string }>;
+  addComment: (
+    postId: number,
+    input: AddCommentInput,
+  ) => Promise<{ comment: Comment; notice?: string }>;
   loadCommentsForPost: (postId: number) => Promise<void>;
   loadPostImagesForPost: (postId: number) => Promise<PostImage[]>;
+  syncPostById: (postId: number) => Promise<void>;
   getPostById: (id: number) => Post | undefined;
   getPostImagesByPostId: (postId: number) => PostImage[];
   getCommentsByPostId: (postId: number) => Comment[];
@@ -72,6 +79,7 @@ function randomItem<T>(items: T[]): T {
 }
 
 export function PostStoreProvider({ children }: { children: React.ReactNode }) {
+  const { user, profile } = useAuthStore();
   const [posts, setPosts] = useState<Post[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [postImagesByPostId, setPostImagesByPostId] = useState<
@@ -110,29 +118,35 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addPost = useCallback(async (input: CreatePostInput) => {
-    const author = await resolveAuthorName();
-    const newPost = await insertPost({
+    const author = resolveAuthorNameFromAuth(user, profile);
+    const result = await publishPostAction({
       title: input.title.trim(),
       content: input.content.trim(),
       author,
       location: "首尔",
       distance: randomItem(distances),
-      likes: 0,
       category: publishCategoryMap[input.category],
-      image_url: null,
-      image_height: 180,
       nearby: true,
       following: false,
     });
+
+    markOwnedPost(result.post.id);
 
     const images = input.images ?? [];
 
     if (images.length > 0) {
       const compressedImages = await compressImages(images.slice(0, 9));
-      await uploadPostImages(newPost.id, compressedImages);
+      await uploadPostImages(result.post.id, compressedImages);
     }
 
-    const savedPost = (await fetchPostById(newPost.id)) ?? newPost;
+    if (!result.visible) {
+      return {
+        post: result.post,
+        notice: result.notice,
+      };
+    }
+
+    const savedPost = (await fetchPostById(result.post.id)) ?? result.post;
     const savedImages = savedPost.images ?? [];
 
     setPostImagesByPostId((current) => ({
@@ -143,10 +157,12 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       savedPost,
       ...current.filter((post) => post.id !== savedPost.id),
     ]);
-    markOwnedPost(savedPost.id);
 
-    return savedPost;
-  }, []);
+    return {
+      post: savedPost,
+      notice: result.notice,
+    };
+  }, [user, profile]);
 
   const loadCommentsForPost = useCallback(async (postId: number) => {
     if (!isSupabaseConfigured()) {
@@ -194,9 +210,26 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const syncPostById = useCallback(async (postId: number) => {
+    const updated = await fetchPostById(postId);
+
+    setPosts((current) => {
+      if (!updated) {
+        return current.filter((post) => post.id !== postId);
+      }
+
+      const exists = current.some((post) => post.id === postId);
+      if (!exists) {
+        return current;
+      }
+
+      return current.map((post) => (post.id === postId ? updated : post));
+    });
+  }, []);
+
   const addComment = useCallback(
     async (postId: number, input: AddCommentInput) => {
-      const author = await resolveAuthorName();
+      const author = resolveAuthorNameFromAuth(user, profile);
       const commentId = createClientId();
       let imageUrl: string | null = null;
       let imageStoragePath: string | null = null;
@@ -208,22 +241,33 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
         imageStoragePath = uploaded.storagePath;
       }
 
-      const newComment = await insertComment({
+      const result = await publishCommentAction({
         id: commentId,
-        post_id: postId,
+        postId,
         author,
         content: input.content.trim(),
-        parent_id: input.reply?.parentId ?? null,
-        reply_to_author: input.reply?.replyToAuthor ?? null,
-        image_url: imageUrl,
-        image_storage_path: imageStoragePath,
+        parentId: input.reply?.parentId ?? null,
+        replyToAuthor: input.reply?.replyToAuthor ?? null,
+        imageUrl,
+        imageStoragePath,
       });
 
-      setComments((current) => [...current, newComment]);
-      markOwnedComment(newComment.id);
-      return newComment;
+      markOwnedComment(result.comment.id);
+
+      if (!result.visible) {
+        return {
+          comment: result.comment,
+          notice: result.notice,
+        };
+      }
+
+      setComments((current) => [...current, result.comment]);
+      return {
+        comment: result.comment,
+        notice: result.notice,
+      };
     },
-    [],
+    [user, profile],
   );
 
   const getPostById = useCallback(
@@ -297,6 +341,7 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       addComment,
       loadCommentsForPost,
       loadPostImagesForPost,
+      syncPostById,
       getPostById,
       getPostImagesByPostId,
       getCommentsByPostId,
@@ -313,6 +358,7 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       addComment,
       loadCommentsForPost,
       loadPostImagesForPost,
+      syncPostById,
       getPostById,
       getPostImagesByPostId,
       getCommentsByPostId,

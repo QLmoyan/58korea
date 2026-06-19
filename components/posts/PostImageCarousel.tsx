@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PostImage } from "@/lib/data/posts";
+import { useImageViewer } from "@/lib/store/image-viewer-store";
 
 interface PostImageCarouselProps {
   images: PostImage[];
@@ -10,17 +11,25 @@ interface PostImageCarouselProps {
 }
 
 const DRAG_THRESHOLD = 48;
+const TAP_THRESHOLD = 10;
 
 export default function PostImageCarousel({
   images,
   title,
 }: PostImageCarouselProps) {
+  const { openViewer } = useImageViewer();
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef({
     active: false,
     pointerId: -1,
     startX: 0,
     startScrollLeft: 0,
+  });
+  const tapRef = useRef({
+    pointerId: -1,
+    startX: 0,
+    startY: 0,
+    moved: false,
   });
   const [activeIndex, setActiveIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -29,6 +38,20 @@ export default function PostImageCarousel({
   const getSlideWidth = useCallback(() => {
     return scrollRef.current?.clientWidth ?? 0;
   }, []);
+
+  const openAtIndex = useCallback(
+    (index: number) => {
+      openViewer({
+        images: images.map((image, imageIndex) => ({
+          id: image.id,
+          url: image.url,
+          alt: `${title} - 第 ${imageIndex + 1} 张`,
+        })),
+        initialIndex: index,
+      });
+    },
+    [images, openViewer, title],
+  );
 
   const goToIndex = useCallback(
     (index: number, behavior: ScrollBehavior = "smooth") => {
@@ -79,7 +102,24 @@ export default function PostImageCarousel({
     };
   }, [hasMultiple, updateActiveIndex]);
 
+  function markTapMoved(clientX: number, clientY: number) {
+    const tap = tapRef.current;
+    if (
+      Math.abs(clientX - tap.startX) > TAP_THRESHOLD ||
+      Math.abs(clientY - tap.startY) > TAP_THRESHOLD
+    ) {
+      tap.moved = true;
+    }
+  }
+
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    tapRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false,
+    };
+
     if (!hasMultiple || event.pointerType !== "mouse" || event.button !== 0) {
       return;
     }
@@ -102,6 +142,10 @@ export default function PostImageCarousel({
   }
 
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.pointerId === tapRef.current.pointerId) {
+      markTapMoved(event.clientX, event.clientY);
+    }
+
     const drag = dragRef.current;
     if (!drag.active || event.pointerId !== drag.pointerId) {
       return;
@@ -116,6 +160,23 @@ export default function PostImageCarousel({
     container.scrollLeft = drag.startScrollLeft + deltaX;
     updateActiveIndex();
     event.preventDefault();
+  }
+
+  function handlePointerUp(event: React.PointerEvent<HTMLDivElement>) {
+    finishMouseDrag(event);
+
+    const tap = tapRef.current;
+    if (event.pointerId !== tap.pointerId || tap.moved) {
+      return;
+    }
+
+    const container = scrollRef.current;
+    const slideWidth = getSlideWidth();
+    const index =
+      container && slideWidth > 0
+        ? Math.round(container.scrollLeft / slideWidth)
+        : activeIndex;
+    openAtIndex(Math.min(Math.max(index, 0), images.length - 1));
   }
 
   function finishMouseDrag(event: React.PointerEvent<HTMLDivElement>) {
@@ -143,6 +204,11 @@ export default function PostImageCarousel({
         ? Math.round(drag.startScrollLeft / slideWidth)
         : activeIndex;
     const dragDistance = drag.startX - event.clientX;
+
+    if (Math.abs(dragDistance) > TAP_THRESHOLD) {
+      tapRef.current.moved = true;
+    }
+
     let nextIndex = dragStartIndex;
 
     if (dragDistance > DRAG_THRESHOLD) {
@@ -176,11 +242,11 @@ export default function PostImageCarousel({
           ref={scrollRef}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
-          onPointerUp={finishMouseDrag}
-          onPointerCancel={finishMouseDrag}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
           onDragStart={(event) => event.preventDefault()}
           className={`flex aspect-[4/5] w-full touch-pan-x snap-x snap-mandatory overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-            hasMultiple ? "cursor-grab select-none data-[dragging=true]:cursor-grabbing" : ""
+            hasMultiple ? "cursor-grab select-none data-[dragging=true]:cursor-grabbing" : "cursor-zoom-in"
           } ${isDragging ? "scroll-auto" : "scroll-smooth"}`}
         >
           {images.map((image, index) => (

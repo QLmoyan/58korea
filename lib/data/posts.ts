@@ -10,6 +10,8 @@ export type PostCategory =
   | "探店"
   | "其他";
 
+import type { RiskLevel } from "@/lib/moderation/constants";
+
 export type PostDistance =
   | "100m"
   | "350m"
@@ -41,6 +43,8 @@ export interface Post {
   nearby?: boolean;
   following?: boolean;
   createdAt?: string;
+  riskLevel?: RiskLevel;
+  riskScore?: number;
 }
 
 export const channels: FeedChannel[] = ["推荐", "附近", "关注"];

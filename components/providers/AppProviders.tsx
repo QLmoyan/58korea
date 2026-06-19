@@ -1,6 +1,7 @@
 "use client";
 
 import { AuthProvider } from "@/lib/store/auth-store";
+import { ImageViewerProvider } from "@/lib/store/image-viewer-store";
 import { PostStoreProvider } from "@/lib/store/post-store";
 
 export default function AppProviders({
@@ -9,8 +10,10 @@ export default function AppProviders({
   children: React.ReactNode;
 }) {
   return (
-    <AuthProvider>
-      <PostStoreProvider>{children}</PostStoreProvider>
-    </AuthProvider>
+    <ImageViewerProvider>
+      <AuthProvider>
+        <PostStoreProvider>{children}</PostStoreProvider>
+      </AuthProvider>
+    </ImageViewerProvider>
   );
 }

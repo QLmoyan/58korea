@@ -1,28 +1,33 @@
-import { getSupabaseClient } from "@/lib/supabase/client";
-import { fetchProfileByUserId } from "@/lib/supabase/profile";
+import type { User } from "@supabase/supabase-js";
+import { normalizeUsername } from "@/lib/auth/username";
+import type { Profile } from "@/lib/types/user";
 import { ANONYMOUS_NAMES } from "@/lib/types/community";
 
 function randomItem<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
-export async function resolveAuthorName(): Promise<string> {
-  const supabase = getSupabaseClient();
-  const { data } = await supabase.auth.getSession();
-  const user = data.session?.user;
-
-  if (user) {
-    try {
-      const profile = await fetchProfileByUserId(user.id);
-      if (profile?.nickname) {
-        return profile.nickname;
-      }
-    } catch {
-      // Fall through to default logged-in label.
-    }
-
-    return "社区用户";
+export function resolveAuthorNameFromAuth(
+  user: User | null | undefined,
+  profile: Profile | null | undefined,
+): string {
+  if (!user) {
+    return randomItem(ANONYMOUS_NAMES);
   }
 
-  return randomItem(ANONYMOUS_NAMES);
+  if (profile?.nickname?.trim()) {
+    return profile.nickname.trim();
+  }
+
+  const metadataNickname = user.user_metadata?.nickname;
+  if (typeof metadataNickname === "string" && metadataNickname.trim()) {
+    return metadataNickname.trim();
+  }
+
+  const metadataUsername = user.user_metadata?.username;
+  if (typeof metadataUsername === "string" && metadataUsername.trim()) {
+    return normalizeUsername(metadataUsername);
+  }
+
+  return "社区用户";
 }

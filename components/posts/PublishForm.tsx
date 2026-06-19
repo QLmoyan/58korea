@@ -30,6 +30,7 @@ export default function PublishForm() {
   const [category, setCategory] = useState<PublishCategory>("租房");
   const [images, setImages] = useState<SelectedImage[]>([]);
   const [error, setError] = useState("");
+  const [successNotice, setSuccessNotice] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   function handlePickImages(event: React.ChangeEvent<HTMLInputElement>) {
@@ -83,14 +84,27 @@ export default function PublishForm() {
 
     setSubmitting(true);
     setError("");
+    setSuccessNotice("");
 
     try {
-      await addPost({
+      const result = await addPost({
         title,
         content,
         category,
         images: images.map((image) => image.file),
       });
+
+      if (result.notice) {
+        setTitle("");
+        setContent("");
+        setImages((current) => {
+          current.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+          return [];
+        });
+        setSuccessNotice(result.notice);
+        return;
+      }
+
       router.push("/");
     } catch (submitError) {
       setError(
@@ -219,6 +233,12 @@ export default function PublishForm() {
 
           {error ? (
             <p className="text-center text-sm text-rose-500">{error}</p>
+          ) : null}
+
+          {successNotice ? (
+            <p className="rounded-xl bg-amber-50 px-4 py-3 text-center text-sm leading-6 text-amber-700 ring-1 ring-amber-100">
+              {successNotice}
+            </p>
           ) : null}
 
           <button
