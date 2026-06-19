@@ -10,6 +10,7 @@ import {
 } from "react";
 import type { Post, PostDistance, PostImage } from "@/lib/data/posts";
 import { resolveAuthorNameFromAuth } from "@/lib/auth/author";
+import { sortPostsWithMerchantsFirst } from "@/lib/merchant/sort-posts";
 import { useAuthStore } from "@/lib/store/auth-store";
 import {
   attachPostImagesAction,
@@ -184,10 +185,12 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       ...current,
       [savedPost.id]: savedImages,
     }));
-    setPosts((current) => [
-      savedPost,
-      ...current.filter((post) => post.id !== savedPost.id),
-    ]);
+    setPosts((current) =>
+      sortPostsWithMerchantsFirst([
+        savedPost,
+        ...current.filter((post) => post.id !== savedPost.id),
+      ]),
+    );
 
     return {
       post: savedPost,

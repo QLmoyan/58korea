@@ -1,5 +1,6 @@
 import type { Post, PostCategory, PostDistance, PostImage } from "@/lib/data/posts";
 import type { Comment } from "@/lib/types/community";
+import { sortPostsWithMerchantsFirst } from "@/lib/merchant/sort-posts";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -92,7 +93,7 @@ export async function fetchPosts(): Promise<Post[]> {
     throw new Error(error.message);
   }
 
-  return (data ?? []).map((row) => mapPost(row));
+  return sortPostsWithMerchantsFirst((data ?? []).map((row) => mapPost(row)));
 }
 
 export async function fetchPostById(postId: number): Promise<Post | null> {

@@ -11,6 +11,7 @@ export type PostCategory =
   | "其他";
 
 import type { RiskLevel } from "@/lib/moderation/constants";
+import { sortPostsWithMerchantsFirst } from "@/lib/merchant/sort-posts";
 
 export type PostDistance =
   | "100m"
@@ -321,5 +322,5 @@ export function filterPosts(
     result = result.filter((post) => post.category === category);
   }
 
-  return result;
+  return sortPostsWithMerchantsFirst(result);
 }
