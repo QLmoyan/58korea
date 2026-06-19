@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import FrontendAdminPostBar from "@/components/frontend/FrontendAdminPostBar";
+import MerchantDetailTitleMeta from "@/components/merchant/MerchantDetailTitleMeta";
 import CommentSection from "@/components/posts/CommentSection";
 import PostDetailTopBar from "@/components/posts/PostDetailTopBar";
 import PostImageCarousel from "@/components/posts/PostImageCarousel";
@@ -10,6 +11,7 @@ import type { PostImage } from "@/lib/data/posts";
 import { getAdminCapabilitiesAction } from "@/lib/actions/admin-capabilities";
 import type { AdminCapabilities } from "@/lib/actions/admin-capabilities";
 import { MODERATION_MEDIUM_DISCLAIMER } from "@/lib/moderation/constants";
+import { isMerchantPost } from "@/lib/merchant/identify";
 import { usePostStore } from "@/lib/store/post-store";
 
 interface PostDetailOverlayContentProps {
@@ -161,6 +163,7 @@ export default function PostDetailOverlayContent({
   }
 
   const locationLabel = post.location?.trim();
+  const merchantPost = isMerchantPost({ author: post.author });
 
   return (
     <>
@@ -181,6 +184,7 @@ export default function PostDetailOverlayContent({
       <div className="flex min-h-0 w-1/2 flex-col bg-white">
         <PostDetailTopBar
           author={post.author}
+          showMerchantBadge={merchantPost}
           variant="embedded"
           ownedPost={ownedPost}
           deleteConfirming={deleteConfirming}
@@ -210,12 +214,12 @@ export default function PostDetailOverlayContent({
         <div className="min-h-0 flex-1 overflow-hidden">
           <div className="flex h-full min-h-0 flex-col">
             <div className="shrink-0 space-y-2 border-b border-zinc-100 px-4 py-3">
-              <h1 className="text-lg font-bold leading-snug text-zinc-900">
-                {post.title}
-              </h1>
-              {locationLabel ? (
-                <p className="text-xs text-zinc-400">📍 {locationLabel}</p>
-              ) : null}
+              <MerchantDetailTitleMeta
+                title={post.title}
+                location={locationLabel}
+                isMerchant={merchantPost}
+                titleClassName="text-lg font-bold leading-snug text-zinc-900"
+              />
               <div className="whitespace-pre-wrap text-sm leading-6 text-zinc-700">
                 {post.content}
               </div>
@@ -241,6 +245,7 @@ export default function PostDetailOverlayContent({
 
             <CommentSection
               postId={post.id}
+              postAuthor={post.author}
               adminCapabilities={adminCapabilities}
               postLikes={post.likes}
               viewCountPlaceholder={viewCountPlaceholder}

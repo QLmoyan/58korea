@@ -6,15 +6,18 @@ import { useImageViewer } from "@/lib/store/image-viewer-store";
 import { usePostStore } from "@/lib/store/post-store";
 import type { Comment } from "@/lib/types/community";
 import ReportSheet from "@/components/report/ReportSheet";
+import MerchantVerifiedBadge from "@/components/merchant/MerchantVerifiedBadge";
 import FrontendAdminCommentActions from "@/components/frontend/FrontendAdminCommentActions";
 import type { AdminCapabilities } from "@/lib/actions/admin-capabilities";
 import {
   buildCommentThreads,
   resolveReplyTarget,
 } from "@/lib/utils/comments";
+import { isMerchantAuthorComment } from "@/lib/merchant/identify";
 
 interface CommentSectionProps {
   postId: number;
+  postAuthor?: string;
   adminCapabilities?: AdminCapabilities | null;
   postLikes?: number;
   viewCountPlaceholder?: number;
@@ -46,6 +49,7 @@ function formatTime(iso: string) {
 interface CommentItemProps {
   comment: Comment;
   isReply?: boolean;
+  showMerchantBadge?: boolean;
   canDelete?: boolean;
   canReport?: boolean;
   confirmingDelete?: boolean;
@@ -63,6 +67,7 @@ interface CommentItemProps {
 function CommentItem({
   comment,
   isReply = false,
+  showMerchantBadge = false,
   canDelete = false,
   canReport = false,
   confirmingDelete = false,
@@ -92,15 +97,18 @@ function CommentItem({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p
-          className={
-            isReply
-              ? "text-[12px] font-medium leading-5 text-zinc-800"
-              : "text-[13px] font-medium leading-5 text-zinc-800"
-          }
-        >
-          {comment.author}
-        </p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <p
+            className={
+              isReply
+                ? "text-[12px] font-medium leading-5 text-zinc-800"
+                : "text-[13px] font-medium leading-5 text-zinc-800"
+            }
+          >
+            {comment.author}
+          </p>
+          {showMerchantBadge ? <MerchantVerifiedBadge size="sm" /> : null}
+        </div>
 
         {hasText ? (
           <p className="mt-0.5 text-sm leading-6 text-zinc-700">
@@ -208,6 +216,7 @@ function CommentItem({
 
 export default function CommentSection({
   postId,
+  postAuthor = "",
   adminCapabilities = null,
   postLikes = 0,
   viewCountPlaceholder = 0,
@@ -387,6 +396,14 @@ export default function CommentSection({
 
   const isDesktopModal = layout === "desktop-modal";
 
+  function shouldShowMerchantCommentBadge(commentAuthor: string) {
+    if (!postAuthor) {
+      return false;
+    }
+
+    return isMerchantAuthorComment(postAuthor, commentAuthor);
+  }
+
   const commentList = (
     <>
       {threads.length === 0 ? (
@@ -399,6 +416,7 @@ export default function CommentSection({
             <div key={root.id} className="py-3 first:pt-0 last:pb-0">
               <CommentItem
                 comment={root}
+                showMerchantBadge={shouldShowMerchantCommentBadge(root.author)}
                 canDelete={canDeleteComment(root.id)}
                 canReport={!canDeleteComment(root.id)}
                 confirmingDelete={confirmingDeleteId === root.id}
@@ -420,6 +438,7 @@ export default function CommentSection({
                       key={reply.id}
                       comment={reply}
                       isReply
+                      showMerchantBadge={shouldShowMerchantCommentBadge(reply.author)}
                       canDelete={canDeleteComment(reply.id)}
                       canReport={!canDeleteComment(reply.id)}
                       confirmingDelete={confirmingDeleteId === reply.id}

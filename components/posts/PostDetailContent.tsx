@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import FrontendAdminPostBar from "@/components/frontend/FrontendAdminPostBar";
+import MerchantDetailTitleMeta from "@/components/merchant/MerchantDetailTitleMeta";
 import DesktopPostDetailModal from "@/components/posts/DesktopPostDetailModal";
 import CommentSection from "@/components/posts/CommentSection";
 import PostDetailTopBar from "@/components/posts/PostDetailTopBar";
@@ -12,6 +13,7 @@ import type { PostImage } from "@/lib/data/posts";
 import { getAdminCapabilitiesAction } from "@/lib/actions/admin-capabilities";
 import type { AdminCapabilities } from "@/lib/actions/admin-capabilities";
 import { MODERATION_MEDIUM_DISCLAIMER } from "@/lib/moderation/constants";
+import { isMerchantPost } from "@/lib/merchant/identify";
 import { usePostStore } from "@/lib/store/post-store";
 import Link from "next/link";
 
@@ -153,12 +155,14 @@ export default function PostDetailContent() {
   }
 
   const locationLabel = post.location?.trim();
+  const merchantPost = isMerchantPost({ author: post.author });
 
   return (
     <>
       <div className="mx-auto min-h-screen w-full max-w-full bg-zinc-50 pb-28 lg:hidden sm:max-w-lg">
       <PostDetailTopBar
         author={post.author}
+        showMerchantBadge={merchantPost}
         ownedPost={ownedPost}
         deleteConfirming={deleteConfirming}
         deleting={deleting}
@@ -191,13 +195,11 @@ export default function PostDetailContent() {
           ) : null}
 
           <div className="space-y-1.5 px-3 pb-2 pt-2">
-            <h1 className="text-xl font-bold leading-snug text-zinc-900">
-              {post.title}
-            </h1>
-
-            {locationLabel ? (
-              <p className="text-xs text-zinc-400">📍 {locationLabel}</p>
-            ) : null}
+            <MerchantDetailTitleMeta
+              title={post.title}
+              location={locationLabel}
+              isMerchant={merchantPost}
+            />
 
             <div className="whitespace-pre-wrap pt-0.5 text-sm leading-6 text-zinc-700">
               {post.content}
@@ -230,6 +232,7 @@ export default function PostDetailContent() {
 
         <CommentSection
           postId={post.id}
+          postAuthor={post.author}
           adminCapabilities={adminCapabilities}
           postLikes={post.likes}
           viewCountPlaceholder={viewCountPlaceholder}

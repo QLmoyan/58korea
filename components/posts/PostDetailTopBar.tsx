@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import MerchantVerifiedBadge from "@/components/merchant/MerchantVerifiedBadge";
 
 interface PostDetailTopBarProps {
   author: string;
+  showMerchantBadge?: boolean;
   backHref?: string;
   variant?: "page" | "embedded";
   ownedPost: boolean;
@@ -18,6 +20,7 @@ interface PostDetailTopBarProps {
 
 export default function PostDetailTopBar({
   author,
+  showMerchantBadge = false,
   backHref = "/",
   variant = "page",
   ownedPost,
@@ -80,6 +83,7 @@ export default function PostDetailTopBar({
             {author.slice(0, 1)}
           </div>
           <p className="truncate text-sm font-semibold text-zinc-900">{author}</p>
+          {showMerchantBadge ? <MerchantVerifiedBadge /> : null}
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">

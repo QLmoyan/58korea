@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import MerchantTitleStar from "@/components/merchant/MerchantTitleStar";
+import MerchantVerifiedBadge from "@/components/merchant/MerchantVerifiedBadge";
 import type { Post } from "@/lib/data/posts";
+import { isMerchantPost } from "@/lib/merchant/identify";
 import { useDesktopPostModalOptional } from "@/lib/store/desktop-post-modal-store";
 
 interface PostCardProps {
@@ -19,6 +22,7 @@ function formatLikes(likes: number) {
 export default function PostCard({ post }: PostCardProps) {
   const coverHeight = post.imageHeight ?? 240;
   const desktopPostModal = useDesktopPostModalOptional();
+  const merchantPost = isMerchantPost({ author: post.author });
 
   function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
     if (window.matchMedia("(min-width: 1024px)").matches && desktopPostModal) {
@@ -39,6 +43,11 @@ export default function PostCard({ post }: PostCardProps) {
             className="relative w-full overflow-hidden bg-zinc-100 lg:!h-80"
             style={{ height: coverHeight }}
           >
+            {merchantPost ? (
+              <div className="pointer-events-none absolute top-2.5 left-2.5 z-10 inline-flex items-center rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-amber-300 backdrop-blur-sm lg:top-3 lg:left-3 lg:px-2.5 lg:text-[11px]">
+                ⭐ 认证
+              </div>
+            ) : null}
             <Image
               src={post.imageUrl}
               alt={post.title}
@@ -51,6 +60,7 @@ export default function PostCard({ post }: PostCardProps) {
 
         <div className="space-y-1.5 p-2.5 lg:space-y-2 lg:p-4">
           <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900 lg:text-[15px]">
+            {merchantPost ? <MerchantTitleStar /> : null}
             {post.title}
           </h3>
 
@@ -69,6 +79,11 @@ export default function PostCard({ post }: PostCardProps) {
               <span className="truncate text-xs text-zinc-500">
                 {post.author}
               </span>
+              {merchantPost ? (
+                <span className="hidden lg:inline-flex">
+                  <MerchantVerifiedBadge size="sm" />
+                </span>
+              ) : null}
             </div>
             <span className="flex shrink-0 items-center gap-1 text-xs text-zinc-400">
               <HeartIcon />
