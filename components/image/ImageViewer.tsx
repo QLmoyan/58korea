@@ -191,6 +191,18 @@ export default function ImageViewer({
       className="image-viewer-fade-in fixed inset-0 z-[100] bg-black/95"
       onClick={handleOuterClick}
     >
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose();
+        }}
+        className="absolute top-4 right-4 z-[110] flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+        aria-label="关闭预览"
+      >
+        <CloseIcon />
+      </button>
+
       <div
         ref={mainRef}
         className={`h-full w-full ${
@@ -244,5 +256,19 @@ export default function ImageViewer({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
   );
 }

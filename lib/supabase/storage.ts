@@ -5,6 +5,12 @@ export const COMMUNITY_MEDIA_BUCKET = "community-media";
 
 const MAX_POST_IMAGES = 9;
 
+export interface UploadedPostImageDraft {
+  storagePath: string;
+  publicUrl: string;
+  sortOrder: number;
+}
+
 function getFileExtension(file: File) {
   const fromName = file.name.split(".").pop()?.toLowerCase();
   if (fromName && fromName.length <= 5) {
@@ -39,7 +45,10 @@ export function getPublicUrl(storagePath: string) {
   return data.publicUrl;
 }
 
-export async function uploadPostImages(postId: number, files: File[]) {
+export async function uploadPostImagesToStorage(
+  postId: number,
+  files: File[],
+): Promise<UploadedPostImageDraft[]> {
   if (files.length === 0) {
     return [];
   }
@@ -49,42 +58,59 @@ export async function uploadPostImages(postId: number, files: File[]) {
   }
 
   const supabase = getSupabaseClient();
-  const uploadedRows = [];
+  const uploadedDrafts: UploadedPostImageDraft[] = [];
+  const uploadedPaths: string[] = [];
 
-  for (const [index, file] of files.entries()) {
-    const storagePath = `posts/${postId}/${createStorageFileName(file)}`;
-    const { error: uploadError } = await supabase.storage
-      .from(COMMUNITY_MEDIA_BUCKET)
-      .upload(storagePath, file, {
-        cacheControl: "3600",
-        contentType: file.type || "application/octet-stream",
-        upsert: false,
+  try {
+    for (const [index, file] of files.entries()) {
+      const storagePath = `posts/${postId}/${createStorageFileName(file)}`;
+      const { error: uploadError } = await supabase.storage
+        .from(COMMUNITY_MEDIA_BUCKET)
+        .upload(storagePath, file, {
+          cacheControl: "3600",
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+
+      uploadedPaths.push(storagePath);
+      uploadedDrafts.push({
+        storagePath,
+        publicUrl: getPublicUrl(storagePath),
+        sortOrder: index,
       });
-
-    if (uploadError) {
-      throw new Error(uploadError.message);
     }
 
-    const publicUrl = getPublicUrl(storagePath);
-    const { data, error: insertError } = await supabase
-      .from("post_images")
-      .insert({
-        post_id: postId,
-        storage_path: storagePath,
-        public_url: publicUrl,
-        sort_order: index,
-      })
-      .select("*")
-      .single();
-
-    if (insertError) {
-      throw new Error(insertError.message);
+    return uploadedDrafts;
+  } catch (error) {
+    if (uploadedPaths.length > 0) {
+      await removePostImagesFromStorage(uploadedPaths).catch((cleanupError) => {
+        console.error("Failed to cleanup partially uploaded post images:", cleanupError);
+      });
     }
 
-    uploadedRows.push(data);
+    throw error;
+  }
+}
+
+export async function removePostImagesFromStorage(
+  storagePaths: string[],
+): Promise<void> {
+  if (storagePaths.length === 0) {
+    return;
   }
 
-  return uploadedRows;
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.storage
+    .from(COMMUNITY_MEDIA_BUCKET)
+    .remove(storagePaths);
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 export async function uploadCommentImage(commentId: string, file: File) {

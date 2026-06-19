@@ -12,6 +12,7 @@ import type { Post, PostDistance, PostImage } from "@/lib/data/posts";
 import { resolveAuthorNameFromAuth } from "@/lib/auth/author";
 import { useAuthStore } from "@/lib/store/auth-store";
 import {
+  attachPostImagesAction,
   publishCommentAction,
   publishPostAction,
 } from "@/lib/actions/publish-content";
@@ -23,7 +24,11 @@ import {
   deleteCommentById,
   deletePostById,
 } from "@/lib/supabase/queries";
-import { uploadCommentImage, uploadPostImages } from "@/lib/supabase/storage";
+import {
+  removePostImagesFromStorage,
+  uploadPostImagesToStorage,
+  uploadCommentImage,
+} from "@/lib/supabase/storage";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   isOwnedComment,
@@ -133,10 +138,36 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
     markOwnedPost(result.post.id);
 
     const images = input.images ?? [];
+    let uploadedStoragePaths: string[] = [];
 
-    if (images.length > 0) {
-      const compressedImages = await compressImages(images.slice(0, 9));
-      await uploadPostImages(result.post.id, compressedImages);
+    try {
+      if (images.length > 0) {
+        const compressedImages = await compressImages(images.slice(0, 9));
+        const drafts = await uploadPostImagesToStorage(
+          result.post.id,
+          compressedImages,
+        );
+        uploadedStoragePaths = drafts.map((draft) => draft.storagePath);
+
+        await attachPostImagesAction({
+          postId: result.post.id,
+          author,
+          images: drafts.map((draft) => ({
+            storagePath: draft.storagePath,
+            sortOrder: draft.sortOrder,
+          })),
+        });
+      }
+    } catch (error) {
+      if (uploadedStoragePaths.length > 0) {
+        await removePostImagesFromStorage(uploadedStoragePaths).catch(
+          (cleanupError) => {
+            console.error("Failed to cleanup uploaded post images:", cleanupError);
+          },
+        );
+      }
+
+      throw error;
     }
 
     if (!result.visible) {

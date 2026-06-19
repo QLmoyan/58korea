@@ -8,8 +8,7 @@ interface ChannelTabsProps {
 
 export default function ChannelTabs({ active, onChange }: ChannelTabsProps) {
   return (
-    <div className="border-b border-zinc-100 bg-white">
-      <div className="mx-auto flex max-w-md items-center justify-around px-6">
+    <div className="mx-auto flex max-w-md shrink-0 items-center justify-around px-6 lg:max-w-none lg:justify-start lg:gap-8 lg:px-0">
         {channels.map((channel) => {
           const isActive = active === channel;
 
@@ -35,7 +34,6 @@ export default function ChannelTabs({ active, onChange }: ChannelTabsProps) {
             </button>
           );
         })}
-      </div>
     </div>
   );
 }

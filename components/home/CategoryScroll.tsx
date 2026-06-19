@@ -12,7 +12,7 @@ export default function CategoryScroll({
 }: CategoryScrollProps) {
   return (
     <div className="border-b border-zinc-100 bg-zinc-50/80">
-      <div className="scrollbar-hide mx-auto flex max-w-md gap-2 overflow-x-auto px-4 py-2.5">
+      <div className="scrollbar-hide mx-auto flex max-w-md gap-2 overflow-x-auto px-4 py-2.5 lg:max-w-none lg:flex-wrap lg:overflow-visible lg:px-6">
         <button
           type="button"
           onClick={() => onChange(null)}

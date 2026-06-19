@@ -8,18 +8,26 @@ import { useImageViewer } from "@/lib/store/image-viewer-store";
 interface PostImageCarouselProps {
   images: PostImage[];
   title: string;
+  variant?: "mobile" | "desktop-modal";
 }
 
 const DRAG_THRESHOLD = 48;
 const TAP_THRESHOLD = 10;
 
-/** Hero image height — dominant first-screen focal, within 58vh–68vh. */
-const CAROUSEL_HEIGHT_CLASS =
+const MOBILE_CAROUSEL_HEIGHT_CLASS =
   "h-[62vh] min-h-[58vh] max-h-[68vh]";
+
+function isLandscapeImage(image: PostImage): boolean {
+  if (image.width && image.height && image.height > 0) {
+    return image.width / image.height > 1.05;
+  }
+  return false;
+}
 
 export default function PostImageCarousel({
   images,
   title,
+  variant = "mobile",
 }: PostImageCarouselProps) {
   const { openViewer } = useImageViewer();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -38,6 +46,10 @@ export default function PostImageCarousel({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const hasMultiple = images.length > 1;
+  const isDesktopModal = variant === "desktop-modal";
+  const slideHeightClass = isDesktopModal
+    ? "h-full min-h-0"
+    : MOBILE_CAROUSEL_HEIGHT_CLASS;
 
   const getSlideWidth = useCallback(() => {
     return scrollRef.current?.clientWidth ?? 0;
@@ -230,8 +242,12 @@ export default function PostImageCarousel({
   }
 
   return (
-    <div className="w-full bg-white">
-      <div className="relative w-full overflow-hidden bg-zinc-950 sm:mx-3 sm:rounded-2xl sm:ring-1 sm:ring-zinc-100">
+    <div className={`w-full ${isDesktopModal ? "h-full bg-zinc-950" : "bg-white"}`}>
+      <div
+        className={`relative w-full overflow-hidden bg-zinc-950 ${
+          isDesktopModal ? "h-full" : "sm:mx-3 sm:rounded-2xl sm:ring-1 sm:ring-zinc-100"
+        }`}
+      >
         {hasMultiple ? (
           <div
             className="pointer-events-none absolute top-3 right-3 z-10 rounded-full bg-black/50 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm"
@@ -249,28 +265,35 @@ export default function PostImageCarousel({
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
           onDragStart={(event) => event.preventDefault()}
-          className={`flex ${CAROUSEL_HEIGHT_CLASS} w-full touch-pan-x snap-x snap-mandatory overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+          className={`flex ${slideHeightClass} w-full touch-pan-x snap-x snap-mandatory overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
             hasMultiple
               ? "cursor-grab select-none data-[dragging=true]:cursor-grabbing"
               : "cursor-zoom-in"
           } ${isDragging ? "scroll-auto" : "scroll-smooth"}`}
         >
-          {images.map((image, index) => (
+          {images.map((image, index) => {
+            const landscape = isLandscapeImage(image);
+            return (
             <div
               key={image.id}
-              className={`relative ${CAROUSEL_HEIGHT_CLASS} w-full shrink-0 snap-center snap-always`}
+              className={`relative ${slideHeightClass} w-full shrink-0 snap-center snap-always`}
             >
               <Image
                 src={image.url}
                 alt={`${title} - 第 ${index + 1} 张`}
                 fill
                 priority={index === 0}
-                sizes="100vw"
-                className="pointer-events-none object-cover object-center"
+                sizes={isDesktopModal ? "460px" : "100vw"}
+                className={`pointer-events-none ${
+                  landscape
+                    ? "object-contain object-center"
+                    : "object-cover object-center"
+                }`}
                 draggable={false}
               />
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {hasMultiple ? (

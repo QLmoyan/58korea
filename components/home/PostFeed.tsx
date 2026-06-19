@@ -22,8 +22,8 @@ export default function PostFeed({ posts, channel }: PostFeedProps) {
   }
 
   return (
-    <section className="px-2 pt-2 pb-4">
-      <div className="columns-2 gap-2.5 [&>*]:inline-block [&>*]:w-full">
+    <section className="px-2 pt-2 pb-4 lg:px-0 lg:pt-4 lg:pb-8">
+      <div className="columns-2 gap-2.5 lg:columns-3 lg:gap-4 xl:columns-3 xl:gap-5 [&>*]:inline-block [&>*]:w-full">
         {posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}

@@ -6,10 +6,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import ImageViewer from "@/components/image/ImageViewer";
 import type { OpenViewerPayload, ViewerImage } from "@/lib/types/image-viewer";
+
+const IMAGE_VIEWER_HISTORY_STATE = { imageViewerOpen: true } as const;
 
 interface ImageViewerContextValue {
   open: boolean;
@@ -25,27 +28,61 @@ export function ImageViewerProvider({ children }: { children: React.ReactNode })
   const [open, setOpen] = useState(false);
   const [images, setImages] = useState<ViewerImage[]>([]);
   const [initialIndex, setInitialIndex] = useState(0);
+  const viewerHistoryActiveRef = useRef(false);
 
-  const closeViewer = useCallback(() => {
+  const resetViewerState = useCallback(() => {
     setOpen(false);
     setImages([]);
     setInitialIndex(0);
   }, []);
 
-  const openViewer = useCallback(({ images: nextImages, initialIndex: index = 0 }: OpenViewerPayload) => {
-    if (nextImages.length === 0) {
+  const closeViewer = useCallback((fromPopstate = false) => {
+    resetViewerState();
+
+    if (fromPopstate) {
+      viewerHistoryActiveRef.current = false;
       return;
     }
 
-    const safeIndex = Math.min(
-      Math.max(index, 0),
-      nextImages.length - 1,
-    );
+    if (viewerHistoryActiveRef.current) {
+      viewerHistoryActiveRef.current = false;
+      window.history.back();
+    }
+  }, [resetViewerState]);
 
-    setImages(nextImages);
-    setInitialIndex(safeIndex);
-    setOpen(true);
-  }, []);
+  const openViewer = useCallback(
+    ({ images: nextImages, initialIndex: index = 0 }: OpenViewerPayload) => {
+      if (nextImages.length === 0) {
+        return;
+      }
+
+      const safeIndex = Math.min(
+        Math.max(index, 0),
+        nextImages.length - 1,
+      );
+
+      setImages(nextImages);
+      setInitialIndex(safeIndex);
+      setOpen(true);
+
+      if (!viewerHistoryActiveRef.current) {
+        window.history.pushState(IMAGE_VIEWER_HISTORY_STATE, "");
+        viewerHistoryActiveRef.current = true;
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    function handlePopstate() {
+      if (viewerHistoryActiveRef.current) {
+        closeViewer(true);
+      }
+    }
+
+    window.addEventListener("popstate", handlePopstate);
+    return () => window.removeEventListener("popstate", handlePopstate);
+  }, [closeViewer]);
 
   useEffect(() => {
     if (!open) {
@@ -66,7 +103,7 @@ export function ImageViewerProvider({ children }: { children: React.ReactNode })
       images,
       initialIndex,
       openViewer,
-      closeViewer,
+      closeViewer: () => closeViewer(false),
     }),
     [open, images, initialIndex, openViewer, closeViewer],
   );
@@ -78,7 +115,7 @@ export function ImageViewerProvider({ children }: { children: React.ReactNode })
         <ImageViewer
           images={images}
           initialIndex={initialIndex}
-          onClose={closeViewer}
+          onClose={() => closeViewer(false)}
         />
       ) : null}
     </ImageViewerContext.Provider>

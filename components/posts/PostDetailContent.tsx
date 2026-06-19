@@ -1,10 +1,11 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import FrontendAdminPostBar from "@/components/frontend/FrontendAdminPostBar";
-import PageHeader from "@/components/layout/PageHeader";
+import DesktopPostDetailModal from "@/components/posts/DesktopPostDetailModal";
 import CommentSection from "@/components/posts/CommentSection";
+import PostDetailTopBar from "@/components/posts/PostDetailTopBar";
 import PostImageCarousel from "@/components/posts/PostImageCarousel";
 import ReportSheet from "@/components/report/ReportSheet";
 import type { PostImage } from "@/lib/data/posts";
@@ -12,31 +13,7 @@ import { getAdminCapabilitiesAction } from "@/lib/actions/admin-capabilities";
 import type { AdminCapabilities } from "@/lib/actions/admin-capabilities";
 import { MODERATION_MEDIUM_DISCLAIMER } from "@/lib/moderation/constants";
 import { usePostStore } from "@/lib/store/post-store";
-
-function formatLikes(likes: number) {
-  if (likes >= 1000) {
-    return `${(likes / 1000).toFixed(1).replace(/\.0$/, "")}k`;
-  }
-  return String(likes);
-}
-
-function formatPostTime(iso?: string) {
-  if (!iso) {
-    return null;
-  }
-
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date.toLocaleString("zh-CN", {
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import Link from "next/link";
 
 export default function PostDetailContent() {
   const params = useParams();
@@ -62,7 +39,9 @@ export default function PostDetailContent() {
 
   const ownedPost = post ? canDeletePost(post.id) : false;
   const commentCount = post ? getCommentsByPostId(post.id).length : 0;
-  const postTimeLabel = post ? formatPostTime(post.createdAt) : null;
+  const viewCountPlaceholder = post
+    ? Math.max(post.likes + commentCount * 5, 1)
+    : 0;
 
   useEffect(() => {
     if (Number.isFinite(postId)) {
@@ -141,76 +120,60 @@ export default function PostDetailContent() {
     }
   }
 
-  const headerAction =
-    ownedPost && !deleteConfirming ? (
-      <button
-        type="button"
-        onClick={() => {
-          setDeleteConfirming(true);
-          setDeleteError("");
-        }}
-        className="touch-manipulation rounded-full px-2 py-1 text-xs font-medium text-rose-500 transition-colors hover:bg-rose-50"
-      >
-        删除帖子
-      </button>
-    ) : ownedPost && deleteConfirming ? (
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={() => setDeleteConfirming(false)}
-          disabled={deleting}
-          className="touch-manipulation rounded-full px-2 py-1 text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-600 disabled:opacity-60"
-        >
-          取消
-        </button>
-        <button
-          type="button"
-          onClick={handleConfirmDeletePost}
-          disabled={deleting}
-          className="touch-manipulation rounded-full px-2 py-1 text-xs font-medium text-rose-500 transition-colors hover:bg-rose-50 disabled:opacity-60"
-        >
-          {deleting ? "删除中" : "确认"}
-        </button>
-      </div>
-    ) : (
-      <button
-        type="button"
-        onClick={() => setReportOpen(true)}
-        className="touch-manipulation rounded-full px-2 py-1 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
-      >
-        举报
-      </button>
-    );
-
   if (!hydrated) {
     return (
-      <div className="mx-auto min-h-screen w-full max-w-full bg-zinc-50 sm:max-w-lg">
-        <PageHeader title="帖子详情" />
-        <div className="flex h-[60vh] items-center justify-center pt-14">
+      <>
+        <div className="mx-auto min-h-screen w-full max-w-full bg-zinc-50 pb-28 lg:hidden sm:max-w-lg">
+          <SimpleBackHeader />
+          <div className="flex h-[60vh] items-center justify-center pt-12">
+            <p className="text-sm text-zinc-400">加载中...</p>
+          </div>
+        </div>
+        <div className="hidden min-h-screen items-center justify-center bg-zinc-50 lg:flex">
           <p className="text-sm text-zinc-400">加载中...</p>
         </div>
-      </div>
+      </>
     );
   }
 
   if (!post) {
     return (
-      <div className="mx-auto min-h-screen w-full max-w-full bg-zinc-50 sm:max-w-lg">
-        <PageHeader title="帖子详情" />
-        <div className="flex h-[60vh] flex-col items-center justify-center gap-3 pt-14">
+      <>
+        <div className="mx-auto min-h-screen w-full max-w-full bg-zinc-50 pb-28 lg:hidden sm:max-w-lg">
+          <SimpleBackHeader />
+          <div className="flex h-[60vh] flex-col items-center justify-center gap-3 pt-12">
+            <p className="text-sm text-zinc-500">帖子不存在或已被删除</p>
+          </div>
+        </div>
+        <div className="hidden min-h-screen items-center justify-center bg-zinc-50 lg:flex">
           <p className="text-sm text-zinc-500">帖子不存在或已被删除</p>
         </div>
-      </div>
+      </>
     );
   }
 
-  return (
-    <div className="mx-auto min-h-screen w-full max-w-full bg-zinc-50 pb-24 sm:max-w-lg">
-      <PageHeader title="帖子详情" action={headerAction} />
+  const locationLabel = post.location?.trim();
 
-      <main className="pt-14">
+  return (
+    <>
+      <div className="mx-auto min-h-screen w-full max-w-full bg-zinc-50 pb-28 lg:hidden sm:max-w-lg">
+      <PostDetailTopBar
+        author={post.author}
+        ownedPost={ownedPost}
+        deleteConfirming={deleteConfirming}
+        deleting={deleting}
+        onReport={() => setReportOpen(true)}
+        onDeleteClick={() => {
+          setDeleteConfirming(true);
+          setDeleteError("");
+        }}
+        onDeleteCancel={() => setDeleteConfirming(false)}
+        onDeleteConfirm={handleConfirmDeletePost}
+      />
+
+      <main className="pt-12">
         {deleteConfirming ? (
-          <div className="border-b border-rose-100 bg-rose-50 px-3 py-2.5 text-xs leading-5 text-rose-600">
+          <div className="border-b border-rose-100 bg-rose-50 px-3 py-2 text-xs leading-5 text-rose-600">
             删除后，{commentCount > 0 ? `${commentCount} 条评论和` : ""}
             所有图片记录将一并删除，且无法恢复。
           </div>
@@ -223,48 +186,26 @@ export default function PostDetailContent() {
         ) : null}
 
         <article className="bg-white">
-          <div className="flex items-center gap-2.5 border-b border-zinc-100 px-3 py-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-orange-300 text-sm font-bold text-white">
-              {post.author.slice(0, 1)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-zinc-900">
-                {post.author}
-              </p>
-              <p className="truncate text-[11px] text-zinc-400">
-                {post.location} · {post.distance}
-                {postTimeLabel ? ` · ${postTimeLabel}` : ""}
-              </p>
-            </div>
-            <button
-              type="button"
-              className="shrink-0 touch-manipulation rounded-full border border-rose-500 px-3 py-1 text-xs font-semibold text-rose-500"
-              aria-label="关注作者"
-            >
-              关注
-            </button>
-          </div>
-
           {displayImages.length > 0 ? (
             <PostImageCarousel images={displayImages} title={post.title} />
           ) : null}
 
-          <div className="space-y-1.5 px-3 pb-2 pt-2.5">
+          <div className="space-y-1.5 px-3 pb-2 pt-2">
             <h1 className="text-xl font-bold leading-snug text-zinc-900">
               {post.title}
             </h1>
 
-            <div className="whitespace-pre-wrap text-sm leading-6 text-zinc-700">
+            {locationLabel ? (
+              <p className="text-xs text-zinc-400">📍 {locationLabel}</p>
+            ) : null}
+
+            <div className="whitespace-pre-wrap pt-0.5 text-sm leading-6 text-zinc-700">
               {post.content}
             </div>
 
-            <div className="flex items-center justify-between gap-2 pt-1">
+            <div className="pt-1">
               <span className="inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-500">
                 {post.category === "住房" ? "租房" : post.category}
-              </span>
-              <span className="flex shrink-0 items-center gap-1 text-sm text-zinc-500">
-                <HeartIcon />
-                {formatLikes(post.likes)}
               </span>
             </div>
 
@@ -290,6 +231,8 @@ export default function PostDetailContent() {
         <CommentSection
           postId={post.id}
           adminCapabilities={adminCapabilities}
+          postLikes={post.likes}
+          viewCountPlaceholder={viewCountPlaceholder}
         />
       </main>
 
@@ -302,17 +245,41 @@ export default function PostDetailContent() {
         targetLabel="举报该帖子"
       />
     </div>
+
+      <div className="hidden lg:block">
+        <DesktopPostDetailModal
+          postId={postId}
+          onClose={() => router.push("/")}
+        />
+      </div>
+    </>
   );
 }
 
-function HeartIcon() {
+function SimpleBackHeader() {
   return (
-    <svg
-      className="h-4 w-4 text-rose-400"
-      fill="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-    </svg>
+    <header className="fixed top-0 right-0 left-0 z-50 border-b border-zinc-100 bg-white/95 backdrop-blur-md">
+      <div className="mx-auto flex h-12 max-w-full items-center px-2 sm:max-w-lg sm:px-3">
+        <Link
+          href="/"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-700 transition-colors hover:bg-zinc-100"
+          aria-label="返回"
+        >
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </Link>
+      </div>
+    </header>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Post } from "@/lib/data/posts";
+import { useDesktopPostModalOptional } from "@/lib/store/desktop-post-modal-store";
 
 interface PostCardProps {
   post: Post;
@@ -17,30 +18,39 @@ function formatLikes(likes: number) {
 
 export default function PostCard({ post }: PostCardProps) {
   const coverHeight = post.imageHeight ?? 240;
+  const desktopPostModal = useDesktopPostModalOptional();
+
+  function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    if (window.matchMedia("(min-width: 1024px)").matches && desktopPostModal) {
+      event.preventDefault();
+      desktopPostModal.openPostModal(post.id);
+    }
+  }
 
   return (
     <Link
       href={`/posts/${post.id}`}
-      className="mb-2.5 block w-full cursor-pointer break-inside-avoid touch-manipulation"
+      onClick={handleClick}
+      className="mb-2.5 block w-full cursor-pointer break-inside-avoid touch-manipulation lg:mb-4"
     >
-      <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-100 transition-transform active:scale-[0.98]">
+      <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-100 transition-transform active:scale-[0.98] lg:rounded-3xl lg:shadow-md lg:shadow-zinc-200/50 lg:ring-zinc-100/80 lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-zinc-200/60">
         {post.imageUrl ? (
           <div
-            className="relative w-full overflow-hidden bg-zinc-100"
+            className="relative w-full overflow-hidden bg-zinc-100 lg:!h-80"
             style={{ height: coverHeight }}
           >
             <Image
               src={post.imageUrl}
               alt={post.title}
               fill
-              sizes="(max-width: 448px) 50vw, 200px"
+              sizes="(max-width: 1024px) 50vw, 280px"
               className="pointer-events-none object-cover"
             />
           </div>
         ) : null}
 
-        <div className="space-y-1.5 p-2.5">
-          <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900">
+        <div className="space-y-1.5 p-2.5 lg:space-y-2 lg:p-4">
+          <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900 lg:text-[15px]">
             {post.title}
           </h3>
 
