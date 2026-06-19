@@ -20,6 +20,24 @@ function formatLikes(likes: number) {
   return String(likes);
 }
 
+function formatPostTime(iso?: string) {
+  if (!iso) {
+    return null;
+  }
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toLocaleString("zh-CN", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function PostDetailContent() {
   const params = useParams();
   const router = useRouter();
@@ -44,6 +62,7 @@ export default function PostDetailContent() {
 
   const ownedPost = post ? canDeletePost(post.id) : false;
   const commentCount = post ? getCommentsByPostId(post.id).length : 0;
+  const postTimeLabel = post ? formatPostTime(post.createdAt) : null;
 
   useEffect(() => {
     if (Number.isFinite(postId)) {
@@ -165,7 +184,7 @@ export default function PostDetailContent() {
 
   if (!hydrated) {
     return (
-      <div className="mx-auto min-h-screen max-w-md bg-zinc-50">
+      <div className="mx-auto min-h-screen w-full max-w-full bg-zinc-50 sm:max-w-lg">
         <PageHeader title="帖子详情" />
         <div className="flex h-[60vh] items-center justify-center pt-14">
           <p className="text-sm text-zinc-400">加载中...</p>
@@ -176,7 +195,7 @@ export default function PostDetailContent() {
 
   if (!post) {
     return (
-      <div className="mx-auto min-h-screen max-w-md bg-zinc-50">
+      <div className="mx-auto min-h-screen w-full max-w-full bg-zinc-50 sm:max-w-lg">
         <PageHeader title="帖子详情" />
         <div className="flex h-[60vh] flex-col items-center justify-center gap-3 pt-14">
           <p className="text-sm text-zinc-500">帖子不存在或已被删除</p>
@@ -186,63 +205,71 @@ export default function PostDetailContent() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-zinc-50 pb-24">
+    <div className="mx-auto min-h-screen w-full max-w-full bg-zinc-50 pb-24 sm:max-w-lg">
       <PageHeader title="帖子详情" action={headerAction} />
 
       <main className="pt-14">
         {deleteConfirming ? (
-          <div className="border-b border-rose-100 bg-rose-50 px-4 py-2.5 text-xs leading-5 text-rose-600">
+          <div className="border-b border-rose-100 bg-rose-50 px-3 py-2.5 text-xs leading-5 text-rose-600">
             删除后，{commentCount > 0 ? `${commentCount} 条评论和` : ""}
             所有图片记录将一并删除，且无法恢复。
           </div>
         ) : null}
 
         {deleteError ? (
-          <div className="border-b border-rose-100 bg-rose-50 px-4 py-2 text-xs text-rose-500">
+          <div className="border-b border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-500">
             {deleteError}
           </div>
         ) : null}
 
         <article className="bg-white">
+          <div className="flex items-center gap-2.5 border-b border-zinc-100 px-3 py-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-orange-300 text-sm font-bold text-white">
+              {post.author.slice(0, 1)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-zinc-900">
+                {post.author}
+              </p>
+              <p className="truncate text-[11px] text-zinc-400">
+                {post.location} · {post.distance}
+                {postTimeLabel ? ` · ${postTimeLabel}` : ""}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="shrink-0 touch-manipulation rounded-full border border-rose-500 px-3 py-1 text-xs font-semibold text-rose-500"
+              aria-label="关注作者"
+            >
+              关注
+            </button>
+          </div>
+
           {displayImages.length > 0 ? (
             <PostImageCarousel images={displayImages} title={post.title} />
           ) : null}
 
-          <div className="space-y-4 px-4 py-4">
-            <h1 className="text-lg font-bold leading-snug text-zinc-900">
+          <div className="space-y-1.5 px-3 pb-2 pt-2.5">
+            <h1 className="text-xl font-bold leading-snug text-zinc-900">
               {post.title}
             </h1>
 
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-orange-300 text-xs font-bold text-white">
-                  {post.author.slice(0, 1)}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-zinc-800">
-                    {post.author}
-                  </p>
-                  <p className="truncate text-[11px] text-zinc-400">
-                    📍 {post.location} · {post.distance}
-                  </p>
-                </div>
-              </div>
+            <div className="whitespace-pre-wrap text-sm leading-6 text-zinc-700">
+              {post.content}
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <span className="inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-500">
+                {post.category === "住房" ? "租房" : post.category}
+              </span>
               <span className="flex shrink-0 items-center gap-1 text-sm text-zinc-500">
                 <HeartIcon />
                 {formatLikes(post.likes)}
               </span>
             </div>
 
-            <span className="inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-500">
-              {post.category === "住房" ? "租房" : post.category}
-            </span>
-
-            <div className="whitespace-pre-wrap text-sm leading-7 text-zinc-700">
-              {post.content}
-            </div>
-
             {post.riskLevel === "medium" ? (
-              <p className="rounded-xl bg-zinc-100 px-3 py-2.5 text-xs leading-5 text-zinc-500">
+              <p className="rounded-xl bg-zinc-100 px-3 py-2 text-xs leading-5 text-zinc-500">
                 {MODERATION_MEDIUM_DISCLAIMER}
               </p>
             ) : null}

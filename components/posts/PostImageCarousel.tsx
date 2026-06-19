@@ -13,6 +13,10 @@ interface PostImageCarouselProps {
 const DRAG_THRESHOLD = 48;
 const TAP_THRESHOLD = 10;
 
+/** Hero image height — dominant first-screen focal, within 58vh–68vh. */
+const CAROUSEL_HEIGHT_CLASS =
+  "h-[62vh] min-h-[58vh] max-h-[68vh]";
+
 export default function PostImageCarousel({
   images,
   title,
@@ -226,11 +230,11 @@ export default function PostImageCarousel({
   }
 
   return (
-    <div className="w-full bg-white px-4 pt-4">
-      <div className="relative overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-100">
+    <div className="w-full bg-white">
+      <div className="relative w-full overflow-hidden bg-zinc-950 sm:mx-3 sm:rounded-2xl sm:ring-1 sm:ring-zinc-100">
         {hasMultiple ? (
           <div
-            className="pointer-events-none absolute top-3 right-3 z-10 rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm"
+            className="pointer-events-none absolute top-3 right-3 z-10 rounded-full bg-black/50 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm"
             aria-live="polite"
             aria-atomic="true"
           >
@@ -245,22 +249,24 @@ export default function PostImageCarousel({
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
           onDragStart={(event) => event.preventDefault()}
-          className={`flex aspect-[4/5] w-full touch-pan-x snap-x snap-mandatory overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-            hasMultiple ? "cursor-grab select-none data-[dragging=true]:cursor-grabbing" : "cursor-zoom-in"
+          className={`flex ${CAROUSEL_HEIGHT_CLASS} w-full touch-pan-x snap-x snap-mandatory overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+            hasMultiple
+              ? "cursor-grab select-none data-[dragging=true]:cursor-grabbing"
+              : "cursor-zoom-in"
           } ${isDragging ? "scroll-auto" : "scroll-smooth"}`}
         >
           {images.map((image, index) => (
             <div
               key={image.id}
-              className="relative aspect-[4/5] w-full shrink-0 snap-center snap-always"
+              className={`relative ${CAROUSEL_HEIGHT_CLASS} w-full shrink-0 snap-center snap-always`}
             >
               <Image
                 src={image.url}
                 alt={`${title} - 第 ${index + 1} 张`}
                 fill
                 priority={index === 0}
-                sizes="(max-width: 448px) 100vw, 448px"
-                className="pointer-events-none object-cover"
+                sizes="100vw"
+                className="pointer-events-none object-cover object-center"
                 draggable={false}
               />
             </div>
