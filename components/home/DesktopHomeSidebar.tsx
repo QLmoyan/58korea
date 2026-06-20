@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import NotificationDot from "@/components/ui/NotificationDot";
 import { getAdminCapabilitiesAction } from "@/lib/actions/admin-capabilities";
+import { SHOW_MESSAGE_UNREAD_DOT } from "@/lib/messages/constants";
 import { useAuthStore } from "@/lib/store/auth-store";
 
 const mainNavItems = [
   { label: "首页", href: "/", icon: HomeIcon },
   { label: "发布", href: "/publish", icon: PlusIcon },
   { label: "广场", href: "/square", icon: SquareIcon },
-  { label: "通知", href: "/messages", icon: BellIcon, placeholder: true },
+  { label: "消息", href: "/messages", icon: ChatIcon },
   { label: "我的", href: "/profile", icon: UserIcon },
 ];
 
@@ -62,7 +64,7 @@ export default function DesktopHomeSidebar() {
             <Link
               key={item.label}
               href={item.href}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+              className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
                   ? "bg-rose-50 text-rose-600"
                   : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
@@ -72,10 +74,10 @@ export default function DesktopHomeSidebar() {
                 className={`h-5 w-5 ${isActive ? "text-rose-500" : "text-zinc-500"}`}
               />
               <span>{item.label}</span>
-              {item.placeholder ? (
-                <span className="ml-auto rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-400">
-                  占位
-                </span>
+              {item.label === "消息" &&
+              SHOW_MESSAGE_UNREAD_DOT &&
+              !isActive ? (
+                <NotificationDot className="top-2.5 right-3" />
               ) : null}
             </Link>
           );
@@ -167,7 +169,7 @@ function SquareIcon({ className }: { className?: string }) {
   );
 }
 
-function BellIcon({ className }: { className?: string }) {
+function ChatIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -179,7 +181,7 @@ function BellIcon({ className }: { className?: string }) {
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.2-3.6C3.45 15.1 3 13.6 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
       />
     </svg>
   );

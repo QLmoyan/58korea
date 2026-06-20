@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import NotificationDot from "@/components/ui/NotificationDot";
+import { SHOW_MESSAGE_UNREAD_DOT } from "@/lib/messages/constants";
 
 const navItems = [
   { label: "首页", href: "/", icon: HomeIcon },
@@ -33,11 +35,18 @@ export default function BottomNav() {
                   <item.icon className="h-6 w-6" />
                 </span>
               ) : (
-                <item.icon
-                  className={`h-6 w-6 ${
-                    isActive ? "text-zinc-900" : "text-zinc-400"
-                  }`}
-                />
+                <span className="relative">
+                  <item.icon
+                    className={`h-6 w-6 ${
+                      isActive ? "text-zinc-900" : "text-zinc-400"
+                    }`}
+                  />
+                  {item.label === "消息" &&
+                  SHOW_MESSAGE_UNREAD_DOT &&
+                  !isActive ? (
+                    <NotificationDot className="-top-0.5 -right-1" />
+                  ) : null}
+                </span>
               )}
               <span
                 className={`text-[10px] ${

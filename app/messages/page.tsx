@@ -1,14 +1,14 @@
-import BottomNav from "@/components/home/BottomNav";
-import TopNav from "@/components/home/TopNav";
+import type { Metadata } from "next";
+import MessageCenterContent from "@/components/messages/MessageCenterContent";
+
+export const metadata: Metadata = {
+  title: "消息 - 58韩国",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function MessagesPage() {
-  return (
-    <div className="relative mx-auto min-h-screen max-w-md bg-zinc-50 pb-24">
-      <TopNav />
-      <main className="flex min-h-[60vh] items-center justify-center pt-14">
-        <p className="text-sm text-zinc-500">消息功能开发中</p>
-      </main>
-      <BottomNav />
-    </div>
-  );
+  return <MessageCenterContent />;
 }

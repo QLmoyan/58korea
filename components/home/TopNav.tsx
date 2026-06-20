@@ -1,3 +1,9 @@
+"use client";
+
+import Link from "next/link";
+import NotificationDot from "@/components/ui/NotificationDot";
+import { SHOW_MESSAGE_UNREAD_DOT } from "@/lib/messages/constants";
+
 export default function TopNav() {
   return (
     <header className="fixed top-0 right-0 left-0 z-50 border-b border-zinc-100 bg-white/95 backdrop-blur-md">
@@ -8,14 +14,16 @@ export default function TopNav() {
           </span>
         </div>
 
-        <button
-          type="button"
+        <Link
+          href="/messages"
           aria-label="消息"
           className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-700 transition-colors hover:bg-zinc-100"
         >
           <MessageIcon />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
-        </button>
+          {SHOW_MESSAGE_UNREAD_DOT ? (
+            <NotificationDot className="top-1.5 right-1.5" />
+          ) : null}
+        </Link>
       </div>
     </header>
   );
@@ -29,6 +37,7 @@ function MessageIcon() {
       viewBox="0 0 24 24"
       stroke="currentColor"
       strokeWidth={1.8}
+      aria-hidden="true"
     >
       <path
         strokeLinecap="round"
