@@ -3,19 +3,32 @@ import PostCard from "./PostCard";
 
 interface PostFeedProps {
   posts: Post[];
-  channel: FeedChannel;
+  channel?: FeedChannel;
+  emptyMessage?: string;
 }
 
-export default function PostFeed({ posts, channel }: PostFeedProps) {
+function getDefaultEmptyMessage(channel: FeedChannel) {
+  if (channel === "关注") {
+    return "还没有关注的内容，去发现更多吧";
+  }
+
+  if (channel === "附近") {
+    return "附近暂无相关内容";
+  }
+
+  return "该分类下暂无内容";
+}
+
+export default function PostFeed({
+  posts,
+  channel = "推荐",
+  emptyMessage,
+}: PostFeedProps) {
   if (posts.length === 0) {
     return (
       <section className="flex flex-col items-center justify-center px-6 py-16 text-center">
         <p className="text-sm font-medium text-zinc-500">
-          {channel === "关注"
-            ? "还没有关注的内容，去发现更多吧"
-            : channel === "附近"
-              ? "附近暂无相关内容"
-              : "该分类下暂无内容"}
+          {emptyMessage ?? getDefaultEmptyMessage(channel)}
         </p>
       </section>
     );

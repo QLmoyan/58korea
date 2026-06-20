@@ -81,7 +81,7 @@ function mapComment(row: DbComment): Comment {
   };
 }
 
-export async function fetchPosts(): Promise<Post[]> {
+async function fetchPublishedPostRows(): Promise<Post[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("posts")
@@ -93,7 +93,15 @@ export async function fetchPosts(): Promise<Post[]> {
     throw new Error(error.message);
   }
 
-  return sortPostsWithMerchantsFirst((data ?? []).map((row) => mapPost(row)));
+  return (data ?? []).map((row) => mapPost(row));
+}
+
+export async function fetchPosts(): Promise<Post[]> {
+  return sortPostsWithMerchantsFirst(await fetchPublishedPostRows());
+}
+
+export async function fetchPublishedPostsByNewest(): Promise<Post[]> {
+  return fetchPublishedPostRows();
 }
 
 export async function fetchPostById(postId: number): Promise<Post | null> {
