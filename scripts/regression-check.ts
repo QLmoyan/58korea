@@ -410,6 +410,29 @@ async function main() {
     );
   });
 
+  await check("1.6g 帖子详情无假浏览量 (静态)", async () => {
+    const postDetailFiles = [
+      "components/posts/PostDetailContent.tsx",
+      "components/posts/PostDetailOverlayContent.tsx",
+      "components/posts/CommentSection.tsx",
+    ];
+    for (const relativePath of postDetailFiles) {
+      const source = readFileSync(resolve(process.cwd(), relativePath), "utf8");
+      assert(
+        !source.includes("viewCountPlaceholder"),
+        `${relativePath} must not use viewCountPlaceholder`,
+      );
+      assert(
+        !source.includes("commentCount * 5"),
+        `${relativePath} must not use fake view formula (commentCount * 5)`,
+      );
+      assert(
+        !source.includes('aria-label="浏览量"'),
+        `${relativePath} must not render fake view count UI`,
+      );
+    }
+  });
+
   await check("1.7 前台管理员按钮 UI 对普通用户不可见 (静态)", async () => {
     const postDetail = readFileSync(
       resolve(process.cwd(), "components/posts/PostDetailContent.tsx"),

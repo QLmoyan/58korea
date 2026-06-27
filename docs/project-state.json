@@ -6,7 +6,7 @@
   "productTagline": "韩国华人生活社区",
   "lastUpdated": "2026-06-17",
   "currentFocus": [
-    "消除假功能误导（浏览量、关注按钮、关注 Tab）",
+    "消除假功能误导（关注按钮、关注 Tab）",
     "我的评论 Tab 全量查询"
   ],
   "build": {
@@ -16,8 +16,8 @@
   },
   "regression": {
     "status": "PASS",
-    "passed": 47,
-    "total": 47,
+    "passed": 48,
+    "total": 48,
     "lastVerified": "2026-06-17",
     "command": "npm run regression-check"
   },
@@ -107,7 +107,7 @@
     {
       "id": "honest-ui-v2",
       "name": "消除假功能误导",
-      "summary": "关注按钮、关注 Tab、假浏览量 — 隐藏或接最小实现"
+      "summary": "关注按钮、关注 Tab — 隐藏或接最小实现"
     },
     {
       "id": "profile-comments-v2",
@@ -183,11 +183,6 @@
     }
   ],
   "knownBugs": [
-    {
-      "id": "view-count-placeholder",
-      "severity": "medium",
-      "summary": "帖子详情浏览量为占位公式（likes + 评论*5），非 post_views 真实数据"
-    },
     {
       "id": "follow-button-noop",
       "severity": "medium",
@@ -332,6 +327,17 @@
     ]
   },
   "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "隐藏帖子详情假浏览量",
+      "items": [
+        "移除 CommentSection 底部假浏览量（likes + 评论*5 公式）",
+        "post_views 写入、浏览历史、Dashboard DAU 统计不变",
+        "regression 1.6g 防止假浏览量回归",
+        "build + regression 48/48 PASS"
+      ]
+    },
     {
       "version": "0.1.0",
       "date": "2026-06-17",
@@ -492,7 +498,7 @@
     }
   ],
   "nextRecommended": [
-    "消除假功能误导（浏览量、关注按钮、关注 Tab）",
+    "消除假功能误导（关注按钮、关注 Tab）",
     "我的评论 Tab 全量查询"
   ],
   "decisions": [

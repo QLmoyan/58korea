@@ -24,11 +24,11 @@
 - **Current Version**：`0.1.0`
 - **Next Version（目标）**：`0.2.0`
 - **Build**：PASS（2026-06-17）
-- **Regression**：PASS 47/47（2026-06-17）
+- **Regression**：PASS 48/48（2026-06-17）
 
 ## 5. Current Focus
 
-- 消除假功能误导（浏览量、关注按钮、关注 Tab）
+- 消除假功能误导（关注按钮、关注 Tab）
 - 我的评论 Tab 全量查询
 
 ## 6. 产品铁律（不可违背）

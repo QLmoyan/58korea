@@ -52,9 +52,6 @@ export default function PostDetailContent() {
 
   const ownedPost = post ? canDeletePost(post.id) : false;
   const commentCount = post ? getCommentsByPostId(post.id).length : 0;
-  const viewCountPlaceholder = post
-    ? Math.max(post.likes + commentCount * 5, 1)
-    : 0;
 
   useEffect(() => {
     if (Number.isFinite(postId)) {
@@ -310,7 +307,6 @@ export default function PostDetailContent() {
           postAuthor={post.author}
           adminCapabilities={adminCapabilities}
           postLikes={post.likes}
-          viewCountPlaceholder={viewCountPlaceholder}
         />
       </main>
 

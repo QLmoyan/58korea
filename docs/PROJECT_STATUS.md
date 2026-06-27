@@ -12,11 +12,11 @@
 | **Next Version** | `0.2.0` |
 | **Development Stage** | Late Beta / 早期生产 |
 | **Build** | **PASS**（2026-06-17） |
-| **Regression** | **PASS** 47/47（2026-06-17） |
+| **Regression** | **PASS** 48/48（2026-06-17） |
 
 ## Current Focus
 
-- 消除假功能误导（浏览量、关注按钮、关注 Tab）
+- 消除假功能误导（关注按钮、关注 Tab）
 - 我的评论 Tab 全量查询
 
 验证命令：`npm run build` · `npm run regression-check`
@@ -47,7 +47,7 @@
 
 ## 待优化模块（V2）
 
-- **消除假功能误导** (`honest-ui-v2`) — 关注按钮、关注 Tab、假浏览量 — 隐藏或接最小实现
+- **消除假功能误导** (`honest-ui-v2`) — 关注按钮、关注 Tab — 隐藏或接最小实现
 - **我的评论 Tab 补全** (`profile-comments-v2`) — 按 user_id 查全量评论，非 session 片段
 - **系统通知 Tab** (`system-notifications-v2`) — 利用现有 notifications 表与券到期 cron
 - **广场 Banner 可运营** (`square-banners-v2`) — 替换 lib/square/banners.ts 硬编码
@@ -68,7 +68,6 @@
 
 ## 当前 Bug / 体验债
 
-- **[medium]** `view-count-placeholder` — 帖子详情浏览量为占位公式（likes + 评论*5），非 post_views 真实数据
 - **[medium]** `follow-button-noop` — PostDetailTopBar「关注作者」按钮无 onClick / 无 API
 - **[low]** `follow-tab-misleading` — 首页「关注」Tab 依赖 post.following 字段，用户发帖恒为 false
 - **[low]** `admin-admins-404` — AdminDashboard 链接 /admin/admins 但路由不存在
@@ -79,7 +78,7 @@
 
 ## 建议下一步
 
-- 消除假功能误导（浏览量、关注按钮、关注 Tab）
+- 消除假功能误导（关注按钮、关注 Tab）
 - 我的评论 Tab 全量查询
 
 ## 相关文档

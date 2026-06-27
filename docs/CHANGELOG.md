@@ -4,6 +4,13 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.1.0**（Late Beta / 早期生产）。
 
+## [0.1.0] 隐藏帖子详情假浏览量 — 2026-06-17
+
+- 移除 CommentSection 底部假浏览量（likes + 评论*5 公式）
+- post_views 写入、浏览历史、Dashboard DAU 统计不变
+- regression 1.6g 防止假浏览量回归
+- build + regression 48/48 PASS
+
 ## [0.1.0] Feed 返回后图片高度修复 — 2026-06-17
 
 - loadPostImagesForPost 不再用 post_images.height 覆盖 post.imageHeight
