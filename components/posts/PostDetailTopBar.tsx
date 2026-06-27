@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import MerchantVerifiedBadge from "@/components/merchant/MerchantVerifiedBadge";
+import PostAuthorLink from "@/components/posts/PostAuthorLink";
 
 interface PostDetailTopBarProps {
   author: string;
+  authorHomeHref?: string | null;
   showMerchantBadge?: boolean;
   backHref?: string;
   variant?: "page" | "embedded";
@@ -20,6 +22,7 @@ interface PostDetailTopBarProps {
 
 export default function PostDetailTopBar({
   author,
+  authorHomeHref,
   showMerchantBadge = false,
   backHref = "/",
   variant = "page",
@@ -79,11 +82,15 @@ export default function PostDetailTopBar({
         ) : null}
 
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-orange-300 text-xs font-bold text-white">
-            {author.slice(0, 1)}
-          </div>
-          <p className="truncate text-sm font-semibold text-zinc-900">{author}</p>
-          {showMerchantBadge ? <MerchantVerifiedBadge /> : null}
+          <PostAuthorLink
+            author={author}
+            href={authorHomeHref}
+            className="flex min-w-0 flex-1 items-center gap-2"
+            avatarClassName="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-orange-300 text-xs font-bold text-white"
+            nameClassName="truncate text-sm font-semibold text-zinc-900"
+          >
+            {showMerchantBadge ? <MerchantVerifiedBadge /> : null}
+          </PostAuthorLink>
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">

@@ -22,6 +22,7 @@ export function isVerifiedMerchantAccount(
 
 export function isMerchantPost(post: {
   author: string;
+  authorId?: string | null;
   username?: string | null;
 }): boolean {
   return isVerifiedMerchantAccount({

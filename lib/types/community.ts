@@ -1,28 +1,39 @@
-import type { PostCategory } from "@/lib/data/posts";
+import {
+  AI_AUTO_CATEGORY,
+  type PublishCategorySelection,
+} from "@/lib/posts/resolve-post-category";
 
-export const publishCategories = [
-  "租房",
-  "招聘",
-  "二手",
+export const publishCategoryChoices: PublishCategorySelection[] = [
+  AI_AUTO_CATEGORY,
+  "探店",
   "求助",
+  "房屋",
+  "二手",
+  "招聘",
   "攻略",
-  "搭子",
-] as const;
+  "其他",
+];
 
-export type PublishCategory = (typeof publishCategories)[number];
-
-export const publishCategoryMap: Record<PublishCategory, PostCategory> = {
-  租房: "住房",
-  招聘: "招聘",
-  二手: "二手",
+export const publishCategoryLabels: Record<PublishCategorySelection, string> = {
+  [AI_AUTO_CATEGORY]: "AI自动分类（推荐）",
+  探店: "探店",
   求助: "求助",
+  房屋: "房屋",
+  二手: "二手",
+  招聘: "招聘",
   攻略: "攻略",
-  搭子: "搭子",
+  其他: "其他",
 };
 
 export interface AddCommentReply {
   parentId: string;
   replyToAuthor: string;
+}
+
+export interface CommentImage {
+  id: string;
+  url: string;
+  sortOrder: number;
 }
 
 export interface Comment {
@@ -34,20 +45,38 @@ export interface Comment {
   parentId: string | null;
   replyToAuthor: string | null;
   imageUrl: string | null;
+  images: CommentImage[];
 }
 
 export interface AddCommentInput {
   content: string;
   reply?: AddCommentReply;
-  image?: File;
+  images?: File[];
 }
 
 export interface CreatePostInput {
   title: string;
   content: string;
-  category: PublishCategory;
+  categorySelection: PublishCategorySelection;
   images?: File[];
+  couponBinding?: PostCouponBindingInput;
 }
+
+export type PostCouponBindingMode = "none" | "add";
+
+export interface PublishPostNewCouponInput {
+  discountAmountKrw: number;
+  totalQuantity: number;
+  startsDate: string;
+  startsTime: string;
+  endsDate: string;
+  endsTime: string;
+  usageNote?: string | null;
+}
+
+export type PostCouponBindingInput =
+  | { mode: "none" }
+  | { mode: "add"; coupon: PublishPostNewCouponInput };
 
 export const ANONYMOUS_NAMES = [
   "在韩小张",
@@ -57,3 +86,5 @@ export const ANONYMOUS_NAMES = [
   "热心华人",
   "隔壁邻居",
 ];
+
+export type { PublishCategorySelection };

@@ -46,6 +46,14 @@ function writeOwnedContent(data: OwnedContent): void {
   }
 }
 
+export function getOwnedPostIds(): number[] {
+  return [...readOwnedContent().posts];
+}
+
+export function getOwnedCommentIds(): string[] {
+  return [...readOwnedContent().comments];
+}
+
 export function isOwnedPost(postId: number): boolean {
   return readOwnedContent().posts.includes(postId);
 }
@@ -92,4 +100,16 @@ export function unmarkOwnedComment(commentId: string): void {
     ...data,
     comments: data.comments.filter((id) => id !== commentId),
   });
+}
+
+export function clearOwnedContent(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Ignore quota or privacy mode errors.
+  }
 }

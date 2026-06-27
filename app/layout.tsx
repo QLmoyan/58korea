@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import AppProviders from "@/components/providers/AppProviders";
+import { buildRootMetadata } from "@/lib/share/metadata";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,10 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "58韩国 - 韩国华人生活社区",
-  description: "租房、招聘、二手交易、求助、攻略分享、搭子活动",
-};
+export const metadata: Metadata = buildRootMetadata();
 
 export const viewport: Viewport = {
   width: "device-width",

@@ -12,12 +12,14 @@ import ReportQueuePanel from "@/components/admin/ReportQueuePanel";
 import ReviewQueuePanel from "@/components/admin/ReviewQueuePanel";
 import RulesManagementPanel from "@/components/admin/rules/RulesManagementPanel";
 import RuleTesterPanel from "@/components/admin/rules/RuleTesterPanel";
+import ChannelArticlesPanel from "@/components/admin/ChannelArticlesPanel";
+import DashboardPanel from "@/components/admin/DashboardPanel";
 import { useAdminCapabilities } from "@/components/admin/AdminCapabilitiesProvider";
 
 export default function AdminDashboard() {
   const { permissions } = useAdminCapabilities();
   const accessibleTabs = listAccessibleAdminPanelTabs(permissions);
-  const [tab, setTab] = useState<AdminPanelTab>("reviews");
+  const [tab, setTab] = useState<AdminPanelTab>("dashboard");
   const [loggingOut, setLoggingOut] = useState(false);
   const canManageAdmins = permissions.includes("admins.manage");
 
@@ -46,7 +48,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between px-4 py-4 lg:px-6">
           <div>
             <h1 className="text-lg font-semibold text-zinc-900">58korea 运营后台</h1>
-            <p className="text-xs text-zinc-500">内容安全审核、举报处理、规则管理与测试</p>
+            <p className="text-xs text-zinc-500">运营概览、内容安全审核、举报处理、规则管理与测试</p>
           </div>
           <div className="flex items-center gap-2">
             {canManageAdmins ? (
@@ -82,6 +84,9 @@ export default function AdminDashboard() {
       </header>
 
       <main className="px-4 py-4 lg:px-6 lg:py-6">
+        {tab === "dashboard" && canAccessAdminPanelTab(permissions, "dashboard") ? (
+          <DashboardPanel />
+        ) : null}
         {tab === "reviews" && canAccessAdminPanelTab(permissions, "reviews") ? (
           <ReviewQueuePanel />
         ) : null}
@@ -93,6 +98,10 @@ export default function AdminDashboard() {
         ) : null}
         {tab === "tester" && canAccessAdminPanelTab(permissions, "tester") ? (
           <RuleTesterPanel />
+        ) : null}
+        {tab === "channelArticles" &&
+        canAccessAdminPanelTab(permissions, "channelArticles") ? (
+          <ChannelArticlesPanel />
         ) : null}
       </main>
     </div>

@@ -5,15 +5,10 @@ interface MerchantVerifiedBadgeProps {
 export default function MerchantVerifiedBadge({
   size = "md",
 }: MerchantVerifiedBadgeProps) {
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-full bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 font-semibold text-amber-700 ring-1 ring-amber-200/80 ${
-        size === "sm"
-          ? "px-1.5 py-0.5 text-[10px] leading-none"
-          : "px-2 py-0.5 text-[11px] leading-none"
-      }`}
-    >
-      ⭐认证商家
-    </span>
-  );
+  const className =
+    size === "sm"
+      ? "inline-flex shrink-0 items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-amber-600 ring-1 ring-amber-200/80"
+      : "inline-flex shrink-0 items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold leading-none text-amber-600 ring-1 ring-amber-200/80";
+
+  return <span className={className}>⭐认证商家</span>;
 }

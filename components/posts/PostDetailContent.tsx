@@ -7,20 +7,29 @@ import MerchantDetailTitleMeta from "@/components/merchant/MerchantDetailTitleMe
 import DesktopPostDetailModal from "@/components/posts/DesktopPostDetailModal";
 import CommentSection from "@/components/posts/CommentSection";
 import PostDetailTopBar from "@/components/posts/PostDetailTopBar";
+import PostLinkedCouponSection from "@/components/posts/PostLinkedCouponSection";
 import PostImageCarousel from "@/components/posts/PostImageCarousel";
 import ReportSheet from "@/components/report/ReportSheet";
 import type { PostImage } from "@/lib/data/posts";
 import { getAdminCapabilitiesAction } from "@/lib/actions/admin-capabilities";
 import type { AdminCapabilities } from "@/lib/actions/admin-capabilities";
 import { MODERATION_MEDIUM_DISCLAIMER } from "@/lib/moderation/constants";
-import { isMerchantPost } from "@/lib/merchant/identify";
+import { FEED_UI_DEADLINE_MS } from "@/lib/constants/network";
+import { useLoadingDeadline } from "@/lib/hooks/use-loading-deadline";
+import { usePostAuthorContext } from "@/lib/merchant/use-post-merchant";
+import { useAuthStore } from "@/lib/store/auth-store";
 import { usePostStore } from "@/lib/store/post-store";
+import { logClientError } from "@/lib/utils/log-client-error";
+import AsyncStatePanel from "@/components/ui/AsyncStatePanel";
+import { usePendingFavoriteOnLogin } from "@/lib/hooks/use-pending-favorite-on-login";
 import Link from "next/link";
 
 export default function PostDetailContent() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuthStore();
   const postId = Number(params.id);
+  usePendingFavoriteOnLogin(postId);
   const {
     getPostById,
     getPostImagesByPostId,
@@ -30,8 +39,10 @@ export default function PostDetailContent() {
     canDeletePost,
     deletePost,
     getCommentsByPostId,
+    recordPostView,
   } = usePostStore();
   const post = getPostById(postId);
+  const [postFetchDone, setPostFetchDone] = useState(false);
   const [deleteConfirming, setDeleteConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -50,6 +61,40 @@ export default function PostDetailContent() {
       loadPostImagesForPost(postId);
     }
   }, [postId, loadPostImagesForPost]);
+
+  useEffect(() => {
+    if (!hydrated || !Number.isFinite(postId) || post) {
+      if (post) {
+        setPostFetchDone(true);
+      }
+      return;
+    }
+
+    let cancelled = false;
+    setPostFetchDone(false);
+
+    void syncPostById(postId)
+      .catch((error) => {
+        logClientError("posts.detail.sync", error, { postId });
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setPostFetchDone(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, post, postId, syncPostById]);
+
+  useEffect(() => {
+    if (!user || !post || !Number.isFinite(postId)) {
+      return;
+    }
+
+    void recordPostView(postId);
+  }, [user?.id, post?.id, postId, recordPostView]);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,17 +167,31 @@ export default function PostDetailContent() {
     }
   }
 
-  if (!hydrated) {
+  const waitingForPost = hydrated && !post && !postFetchDone;
+  const postFetchOverdue = useLoadingDeadline(waitingForPost, FEED_UI_DEADLINE_MS);
+
+  if (!hydrated || waitingForPost) {
     return (
       <>
         <div className="mx-auto min-h-screen w-full max-w-full bg-zinc-50 pb-28 lg:hidden sm:max-w-lg">
           <SimpleBackHeader />
           <div className="flex h-[60vh] items-center justify-center pt-12">
-            <p className="text-sm text-zinc-400">加载中...</p>
+            {postFetchOverdue ? (
+              <AsyncStatePanel
+                message="帖子加载超时，请检查网络后重试"
+                tone="error"
+                onRetry={() => {
+                  setPostFetchDone(false);
+                  void syncPostById(postId).finally(() => setPostFetchDone(true));
+                }}
+              />
+            ) : (
+              <AsyncStatePanel message="加载中..." />
+            )}
           </div>
         </div>
         <div className="hidden min-h-screen items-center justify-center bg-zinc-50 lg:flex">
-          <p className="text-sm text-zinc-400">加载中...</p>
+          <AsyncStatePanel message="加载中..." />
         </div>
       </>
     );
@@ -155,7 +214,11 @@ export default function PostDetailContent() {
   }
 
   const locationLabel = post.location?.trim();
-  const merchantPost = isMerchantPost({ author: post.author });
+  const { isMerchant: merchantPost, authorHomeHref } = usePostAuthorContext({
+    author: post.author,
+    authorId: post.authorId,
+    authorUsername: post.authorUsername,
+  });
 
   return (
     <>
@@ -163,6 +226,7 @@ export default function PostDetailContent() {
       <PostDetailTopBar
         author={post.author}
         showMerchantBadge={merchantPost}
+        authorHomeHref={authorHomeHref}
         ownedPost={ownedPost}
         deleteConfirming={deleteConfirming}
         deleting={deleting}
@@ -207,9 +271,19 @@ export default function PostDetailContent() {
 
             <div className="pt-1">
               <span className="inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-500">
-                {post.category === "住房" ? "租房" : post.category}
+                {post.category}
               </span>
             </div>
+
+            {post.linkedCoupon ? (
+              <PostLinkedCouponSection
+                postId={post.id}
+                postTitle={post.title}
+                postAuthorId={post.authorId}
+                linkedCoupon={post.linkedCoupon}
+                onUpdated={() => void syncPostById(post.id)}
+              />
+            ) : null}
 
             {post.riskLevel === "medium" ? (
               <p className="rounded-xl bg-zinc-100 px-3 py-2 text-xs leading-5 text-zinc-500">
@@ -222,7 +296,7 @@ export default function PostDetailContent() {
                 postId={post.id}
                 permissions={adminCapabilities.permissions}
                 riskLevel={post.riskLevel}
-                onUpdated={() => syncPostById(post.id)}
+                onUpdated={() => void syncPostById(post.id)}
                 onHidden={() => router.push("/")}
                 onDeleted={() => router.push("/")}
               />
@@ -232,6 +306,7 @@ export default function PostDetailContent() {
 
         <CommentSection
           postId={post.id}
+          postTitle={post.title}
           postAuthor={post.author}
           adminCapabilities={adminCapabilities}
           postLikes={post.likes}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import NotificationDot from "@/components/ui/NotificationDot";
-import { SHOW_MESSAGE_UNREAD_DOT } from "@/lib/messages/constants";
+import { useNotificationUnreadCounts } from "@/lib/messages/use-notification-unread-counts";
 
 const navItems = [
   { label: "首页", href: "/", icon: HomeIcon },
@@ -15,6 +15,8 @@ const navItems = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { counts } = useNotificationUnreadCounts();
+  const showMessageUnreadDot = counts.totalUnread > 0;
 
   return (
     <nav className="pointer-events-auto fixed right-0 bottom-0 left-0 z-[100] border-t border-zinc-100 bg-white/95 backdrop-blur-md">
@@ -42,7 +44,7 @@ export default function BottomNav() {
                     }`}
                   />
                   {item.label === "消息" &&
-                  SHOW_MESSAGE_UNREAD_DOT &&
+                  showMessageUnreadDot &&
                   !isActive ? (
                     <NotificationDot className="-top-0.5 -right-1" />
                   ) : null}

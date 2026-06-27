@@ -1,14 +1,28 @@
 import BottomNav from "@/components/home/BottomNav";
-import TopNav from "@/components/home/TopNav";
+import DesktopHomeSidebar from "@/components/home/DesktopHomeSidebar";
+import ChannelSquareContent from "@/components/channels/ChannelSquareContent";
+import { fetchSquareChannelModules } from "@/lib/channels/queries";
 
-export default function SquarePage() {
+export default async function SquarePage() {
+  const modules = await fetchSquareChannelModules();
+
   return (
-    <div className="relative mx-auto min-h-screen max-w-md bg-zinc-50 pb-24">
-      <TopNav />
-      <main className="flex min-h-[60vh] items-center justify-center pt-14">
-        <p className="text-sm text-zinc-500">广场功能开发中</p>
-      </main>
-      <BottomNav />
-    </div>
+    <>
+      <div className="relative mx-auto min-h-screen max-w-md bg-white pb-24 lg:hidden">
+        <main>
+          <ChannelSquareContent modules={modules} />
+        </main>
+        <BottomNav />
+      </div>
+
+      <div className="hidden min-h-screen bg-white lg:block">
+        <DesktopHomeSidebar />
+        <div className="pl-[220px]">
+          <div className="mx-auto min-h-screen max-w-2xl px-8 py-6">
+            <ChannelSquareContent modules={modules} />
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

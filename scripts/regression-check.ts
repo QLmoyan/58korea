@@ -21,6 +21,7 @@ import {
 } from "../lib/admin/admin-panel-ui";
 import { hasPermission, listPermissions } from "../lib/admin/permissions";
 import { loadAdminMembership } from "../lib/admin/load-admin-membership";
+import { computeAdminDashboardStats } from "../lib/admin/dashboard-stats";
 import {
   createSessionToken,
   getAdminSessionCookieName,
@@ -102,7 +103,11 @@ function createCookieStore() {
 
 async function fetchWithTimeout(
   path: string,
-  options: { cookie?: string; redirect?: RequestRedirect } = {},
+  options: {
+    cookie?: string;
+    redirect?: RequestRedirect;
+    timeoutMs?: number;
+  } = {},
 ) {
   const headers: Record<string, string> = {};
   if (options.cookie) {
@@ -112,7 +117,7 @@ async function fetchWithTimeout(
   const response = await fetch(`${BASE_URL}${path}`, {
     headers,
     redirect: options.redirect ?? "follow",
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(options.timeoutMs ?? 5000),
   });
 
   return response;
@@ -208,6 +213,16 @@ async function main() {
     assert(res.ok, `GET / status=${res.status}`);
   });
 
+  await check("1.1b 广场页可打开", async () => {
+    const res = await fetchWithTimeout("/square");
+    assert(res.ok, `GET /square status=${res.status}`);
+    const html = await res.text();
+    assert(!html.includes("广场功能开发中"), "square page still placeholder");
+    assert(!html.includes("暂无动态，去发布第一条吧"), "square should not show post feed");
+    assert(html.includes("韩国新闻") || html.includes("官方公告"), "square should show channel modules");
+    assert(html.includes("进入频道"), "square should link to channel pages");
+  });
+
   await check("1.2 帖子详情可打开", async () => {
     const { data: post } = await service
       .from("posts")
@@ -228,7 +243,7 @@ async function main() {
     const result = await publishPostAction({
       title: `regression ${stamp}`,
       content: "regression publish",
-      category: "其他",
+      categorySelection: "其他",
       author: "回归测试",
       location: "首尔",
       distance: "350m",
@@ -316,6 +331,63 @@ async function main() {
     if (created?.id) {
       await service.auth.admin.deleteUser(created.id);
     }
+  });
+
+  await check("1.6b /forgot-password 说明页可打开", async () => {
+    const res = await fetchWithTimeout("/forgot-password");
+    assert(res.ok, `GET /forgot-password status=${res.status}`);
+    const html = await res.text();
+    assert(html.includes("用户名"), "forgot-password should mention username login");
+    assert(
+      html.includes("联系") || html.includes("客服") || html.includes("站长"),
+      "forgot-password should direct users to contact support",
+    );
+    assert(
+      !html.includes("resetPasswordForEmail") && !html.includes("type=\"email\""),
+      "forgot-password should not expose email reset form",
+    );
+  });
+
+  await check("1.6c 登录页忘记密码入口 (静态)", async () => {
+    const source = readFileSync(
+      resolve(process.cwd(), "components/auth/LoginForm.tsx"),
+      "utf8",
+    );
+    assert(source.includes('href="/forgot-password"'), "LoginForm missing forgot-password link");
+    assert(source.includes("忘记密码"), "LoginForm missing forgot-password label");
+  });
+
+  await check("1.6d 资料页修改密码区块 (静态)", async () => {
+    const profileSource = readFileSync(
+      resolve(process.cwd(), "components/profile/ProfileEditContent.tsx"),
+      "utf8",
+    );
+    assert(
+      profileSource.includes("ChangePasswordSection"),
+      "ProfileEditContent should render ChangePasswordSection",
+    );
+
+    const actionSource = readFileSync(
+      resolve(process.cwd(), "lib/actions/change-password.ts"),
+      "utf8",
+    );
+    assert(
+      actionSource.includes("signInWithPassword") && actionSource.includes("updateUser"),
+      "changePasswordAction should verify current password then update",
+    );
+  });
+
+  await check("1.6e 人工重置脚本 (静态)", async () => {
+    const source = readFileSync(
+      resolve(process.cwd(), "scripts/reset-user-password.ts"),
+      "utf8",
+    );
+    assert(source.includes("auth.admin.updateUserById"), "reset script should use admin API");
+    assert(source.includes("SUPABASE_SERVICE_ROLE_KEY"), "reset script should use service_role");
+    assert(
+      !source.includes("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+      "reset script must not use anon key as admin credential",
+    );
   });
 
   await check("1.7 前台管理员按钮 UI 对普通用户不可见 (静态)", async () => {
@@ -443,7 +515,8 @@ async function main() {
 
   await check("2.8 后台 Tab 正常显示 (owner)", async () => {
     const tabs = listAccessibleAdminPanelTabs(listPermissions("owner"));
-    assert(tabs.length === 4, `owner tabs=${tabs.map((t) => t.id).join(",")}`);
+    assert(tabs.length === 6, `owner tabs=${tabs.map((t) => t.id).join(",")}`);
+    assert(tabs[0]?.id === "dashboard", "dashboard should be first tab");
   });
 
   await check("2.9 帖子详情显示前台管理员操作区 (静态)", async () => {
@@ -547,11 +620,14 @@ async function main() {
   });
 
   await check("4.3 admin UI 权限矩阵 (admin/moderator)", async () => {
+    assert(hasPermission("owner", "dashboard.read"), "owner should have dashboard.read");
+    assert(hasPermission("moderator", "dashboard.read"), "moderator should have dashboard.read");
     const adminTabs = listAccessibleAdminPanelTabs(listPermissions("admin"));
-    assert(adminTabs.length === 4, "admin should see 4 tabs");
+    assert(adminTabs.length === 6, "admin should see 6 tabs");
+    assert(adminTabs[0]?.id === "dashboard", "dashboard should be first tab");
     const modTabs = listAccessibleAdminPanelTabs(listPermissions("moderator"));
     assert(
-      modTabs.map((t) => t.id).join(",") === "reviews,reports",
+      modTabs.map((t) => t.id).join(",") === "dashboard,reviews,reports",
       `moderator tabs=${modTabs.map((t) => t.id).join(",")}`,
     );
     assert(!hasPermission("admin", "rules.delete"), "admin should lack rules.delete");
@@ -564,6 +640,14 @@ async function main() {
       canDeleteContentTarget(listPermissions("moderator"), "comment"),
       "moderator should delete comments in UI",
     );
+  });
+
+  await check("4.4 admin dashboard stats action data shape", async () => {
+    const stats = await computeAdminDashboardStats();
+    assert(typeof stats.users.total === "number", "users.total");
+    assert(typeof stats.users.dau === "number", "users.dau");
+    assert(stats.content.searchesToday === null, "searchesToday should be null");
+    assert(typeof stats.operations.pendingReports === "number", "pendingReports");
   });
 
   // --- RLS / permission denied scan ---
@@ -591,6 +675,226 @@ async function main() {
       .eq("moderation_status", "published")
       .limit(1);
     assert(!error, `permission denied on comments: ${error?.message}`);
+  });
+
+  await check("RLS anon 不可写入 post_likes", async () => {
+    assert(publishedPostId > 0, "missing publishedPostId");
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon.from("post_likes").insert({
+      user_id: "00000000-0000-0000-0000-000000000000",
+      post_id: publishedPostId,
+    });
+    assert(error, "anon should not insert post_likes");
+  });
+
+  await check("RLS anon 不可读取 post_favorites", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon.from("post_favorites").select("post_id").limit(1);
+    assert(error, "anon should not select post_favorites");
+  });
+
+  await check("RLS anon 不可写入 post_views", async () => {
+    assert(publishedPostId > 0, "missing publishedPostId");
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon.from("post_views").insert({
+      user_id: "00000000-0000-0000-0000-000000000000",
+      post_id: publishedPostId,
+    });
+    assert(error, "anon should not insert post_views");
+  });
+
+  await check("RLS anon 不可读取 post_views", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon.from("post_views").select("post_id").limit(1);
+    assert(error, "anon should not select post_views");
+  });
+
+  await check("RLS anon 可读启用商家 merchant_profiles", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon
+      .from("merchant_profiles")
+      .select("business_name")
+      .eq("is_active", true)
+      .limit(1);
+    assert(!error, `anon should read active merchant_profiles: ${error?.message}`);
+  });
+
+  await check("RLS anon 不可写入 merchant_profiles", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon.from("merchant_profiles").insert({
+      user_id: "00000000-0000-0000-0000-000000000000",
+      business_name: "blocked merchant",
+    });
+    assert(error, "anon should not insert merchant_profiles");
+  });
+
+  await check("RLS anon 可读启用频道 channels", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon
+      .from("channels")
+      .select("slug")
+      .eq("is_active", true)
+      .limit(1);
+    assert(!error, `anon should read active channels: ${error?.message}`);
+  });
+
+  await check("RLS anon 不可写入 channel_articles", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: channel } = await service
+      .from("channels")
+      .select("id")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+    assert(channel?.id, "missing active channel");
+    const { error } = await anon.from("channel_articles").insert({
+      channel_id: channel.id,
+      title: "blocked article",
+      content_markdown: "blocked",
+      status: "draft",
+    });
+    assert(error, "anon should not insert channel_articles");
+  });
+
+  await check("1.5 用户主页可打开", async () => {
+    const { data: merchantProfile } = await service
+      .from("merchant_profiles")
+      .select("user_id")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (!merchantProfile?.user_id) {
+      console.log("SKIP  no active merchant profile for HTTP check");
+      return;
+    }
+
+    const { data: profile } = await service
+      .from("profiles")
+      .select("username")
+      .eq("id", merchantProfile.user_id)
+      .maybeSingle();
+
+    assert(profile?.username, "merchant missing username");
+
+    const res = await fetchWithTimeout(`/profile/${profile.username}`, {
+      timeoutMs: 15000,
+    });
+    assert(res.ok, `GET /profile/${profile.username} status=${res.status}`);
+
+    const legacyMerchantRes = await fetchWithTimeout(
+      `/merchants/${profile.username}`,
+      {
+        redirect: "manual",
+        timeoutMs: 15000,
+      },
+    );
+    assert(
+      legacyMerchantRes.status >= 300 && legacyMerchantRes.status < 400,
+      `GET /merchants/${profile.username} should redirect, status=${legacyMerchantRes.status}`,
+    );
+
+    const legacyUserRes = await fetchWithTimeout(`/${profile.username}`, {
+      redirect: "manual",
+      timeoutMs: 15000,
+    });
+    assert(
+      legacyUserRes.status >= 300 && legacyUserRes.status < 400,
+      `GET /${profile.username} should redirect, status=${legacyUserRes.status}`,
+    );
+  });
+
+  await check("1.5b 商家主页公开信息不含 phone", async () => {
+    const headerSource = readFileSync(
+      resolve(process.cwd(), "components/profile/ProfilePublicHeader.tsx"),
+      "utf8",
+    );
+    assert(
+      !headerSource.includes('label="电话"'),
+      "ProfilePublicHeader should not render phone on public merchant page",
+    );
+    assert(
+      headerSource.includes("MerchantVerifiedBadge"),
+      "ProfilePublicHeader should keep merchant verified badge",
+    );
+  });
+
+  await check("1.5c 商家资料保存不写入 is_active", async () => {
+    const actionSource = readFileSync(
+      resolve(process.cwd(), "lib/actions/update-profile.ts"),
+      "utf8",
+    );
+    const payloadMatch = actionSource.match(
+      /const merchantUpdatePayload = \{([\s\S]*?)\};/,
+    );
+    assert(payloadMatch, "merchantUpdatePayload whitelist missing");
+    assert(
+      !payloadMatch[1].includes("is_active"),
+      "updateProfileAction should not update is_active",
+    );
+    assert(
+      actionSource.includes("logoStoragePath"),
+      "updateProfileAction should support merchant logo uploads",
+    );
+  });
+
+  await check("RLS anon 可读启用且有效 merchant_coupons", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon
+      .from("merchant_coupons")
+      .select("title")
+      .eq("is_active", true)
+      .limit(1);
+    assert(!error, `anon should read active merchant_coupons: ${error?.message}`);
+  });
+
+  await check("RLS anon 不可写入 merchant_coupons", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon.from("merchant_coupons").insert({
+      merchant_id: "00000000-0000-0000-0000-000000000000",
+      title: "blocked coupon",
+      discount_amount_krw: 1000,
+      total_quantity: 1,
+    });
+    assert(error, "anon should not insert merchant_coupons");
+  });
+
+  await check("RLS anon 不可读取 user_coupons", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon.from("user_coupons").select("id").limit(1);
+    assert(error, "anon should not select user_coupons");
+  });
+
+  await check("RLS anon 不可核销 redeem_user_coupon", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon.rpc("redeem_user_coupon", {
+      p_redeem_code: "TESTCODE",
+    });
+    assert(error, "anon should not redeem user coupons");
   });
 
   // --- Summary ---

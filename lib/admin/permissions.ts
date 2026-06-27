@@ -17,11 +17,15 @@ const ALL_PERMISSIONS = [
   "content.post.risk_label",
   "content.comment.hide",
   "content.comment.delete",
+  "channel_articles.read",
+  "channel_articles.write",
+  "dashboard.read",
   "admins.manage",
 ] as const satisfies readonly AdminPermission[];
 
 const MODERATOR_PERMISSIONS = [
   "admin.access",
+  "dashboard.read",
   "reviews.read",
   "reports.read",
   "reports.write",
@@ -40,6 +44,8 @@ const ADMIN_PERMISSIONS = [
   "rules.test",
   "rules.stats",
   "content.post.delete",
+  "channel_articles.read",
+  "channel_articles.write",
 ] as const satisfies readonly AdminPermission[];
 
 const ROLE_PERMISSIONS: Record<AdminRole, readonly AdminPermission[]> = {

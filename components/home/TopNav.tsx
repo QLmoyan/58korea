@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import NotificationDot from "@/components/ui/NotificationDot";
-import { SHOW_MESSAGE_UNREAD_DOT } from "@/lib/messages/constants";
+import { useNotificationUnreadCounts } from "@/lib/messages/use-notification-unread-counts";
 
 export default function TopNav() {
+  const { counts } = useNotificationUnreadCounts();
+  const showMessageUnreadDot = counts.totalUnread > 0;
   return (
     <header className="fixed top-0 right-0 left-0 z-50 border-b border-zinc-100 bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-md items-center justify-between px-4 lg:max-w-none lg:px-6">
@@ -20,7 +22,7 @@ export default function TopNav() {
           className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-700 transition-colors hover:bg-zinc-100"
         >
           <MessageIcon />
-          {SHOW_MESSAGE_UNREAD_DOT ? (
+          {showMessageUnreadDot ? (
             <NotificationDot className="top-1.5 right-1.5" />
           ) : null}
         </Link>

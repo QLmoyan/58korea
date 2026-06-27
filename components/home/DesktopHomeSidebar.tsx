@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import NotificationDot from "@/components/ui/NotificationDot";
 import { getAdminCapabilitiesAction } from "@/lib/actions/admin-capabilities";
-import { SHOW_MESSAGE_UNREAD_DOT } from "@/lib/messages/constants";
+import { useNotificationUnreadCounts } from "@/lib/messages/use-notification-unread-counts";
 import { useAuthStore } from "@/lib/store/auth-store";
 
 const mainNavItems = [
@@ -19,8 +19,15 @@ const mainNavItems = [
 export default function DesktopHomeSidebar() {
   const pathname = usePathname();
   const { user, profile, loading } = useAuthStore();
+  const { counts } = useNotificationUnreadCounts();
+  const showMessageUnreadDot = counts.totalUnread > 0;
   const [showAdminLink, setShowAdminLink] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const displayName = profile?.nickname || profile?.username || "用户";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,7 +82,7 @@ export default function DesktopHomeSidebar() {
               />
               <span>{item.label}</span>
               {item.label === "消息" &&
-              SHOW_MESSAGE_UNREAD_DOT &&
+              showMessageUnreadDot &&
               !isActive ? (
                 <NotificationDot className="top-2.5 right-3" />
               ) : null}
@@ -101,7 +108,7 @@ export default function DesktopHomeSidebar() {
       </nav>
 
       <div className="mt-auto border-t border-zinc-100 pt-4">
-        {loading ? (
+        {!mounted || loading ? (
           <p className="px-3 text-xs text-zinc-400">加载中...</p>
         ) : user ? (
           <div className="flex items-center gap-3 rounded-xl px-3 py-2">

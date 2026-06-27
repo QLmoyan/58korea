@@ -1,0 +1,579 @@
+{
+  "version": "0.1.0",
+  "nextVersion": "0.2.0",
+  "developmentStage": "Late Beta / 早期生产",
+  "productName": "58korea",
+  "productTagline": "韩国华人生活社区",
+  "lastUpdated": "2026-06-17",
+  "currentFocus": [
+    "消除假功能误导（浏览量、关注按钮、关注 Tab）",
+    "我的评论 Tab 全量查询"
+  ],
+  "build": {
+    "status": "PASS",
+    "lastVerified": "2026-06-17",
+    "command": "npm run build"
+  },
+  "regression": {
+    "status": "PASS",
+    "passed": 46,
+    "total": 46,
+    "lastVerified": "2026-06-17",
+    "command": "npm run regression-check"
+  },
+  "completedV1": [
+    {
+      "id": "password-reset-v1",
+      "name": "密码方案 A",
+      "summary": "已登录改密、/forgot-password 说明页、人工 reset-user-password 脚本；改密成功文案对齐 session"
+    },
+    {
+      "id": "admin-dashboard-v1",
+      "name": "运营 Dashboard V1",
+      "summary": "后台数字卡片：用户/内容/商家/券/运营统计；DAU/WAU/MAU 行为去重"
+    },
+    {
+      "id": "bootstrap-v1",
+      "name": "项目 Bootstrap V1",
+      "summary": "一键 migrate + build + regression；部署清单"
+    },
+    {
+      "id": "home-feed-v1",
+      "name": "首页 Feed V1",
+      "summary": "推荐/附近/关注 Tab、分类筛选、双列瀑布流、移动端 + 桌面"
+    },
+    {
+      "id": "posts-comments-v1",
+      "name": "帖子与评论 V1",
+      "summary": "发帖、详情、评论、评论图片、点赞、浏览记录"
+    },
+    {
+      "id": "auth-profile-v1",
+      "name": "账号与资料 V1",
+      "summary": "注册/登录/资料编辑、公开主页、redirect 收口"
+    },
+    {
+      "id": "search-v1",
+      "name": "搜索 V1",
+      "summary": "帖子/用户/商家搜索与高亮"
+    },
+    {
+      "id": "merchant-v1",
+      "name": "商家体系 V1",
+      "summary": "商家主页、认证标识、资料编辑、公开券列表"
+    },
+    {
+      "id": "coupons-v1",
+      "name": "优惠券全链路 V1",
+      "summary": "发帖绑定券、领取、核销、过期、删券通知；Bugfix V1"
+    },
+    {
+      "id": "publish-v1",
+      "name": "发帖体验 V1",
+      "summary": "草稿、sticky 发布栏、券/图校验、失败保留草稿"
+    },
+    {
+      "id": "favorites-v1",
+      "name": "收藏系统收口 V1",
+      "summary": "三处同步、乐观更新、登录续收藏、删帖清理"
+    },
+    {
+      "id": "share-v1",
+      "name": "统一分享系统 V1",
+      "summary": "navigator.share / 复制链接、OG metadata、四类页面分享"
+    },
+    {
+      "id": "messages-v1",
+      "name": "消息中心 V1",
+      "summary": "评论/回复/点赞通知、未读数、已读"
+    },
+    {
+      "id": "channels-v1",
+      "name": "频道与广场 V1",
+      "summary": "Square 模块、频道文章、Markdown 详情"
+    },
+    {
+      "id": "moderation-admin-v1",
+      "name": "内容安全与运营后台 V1",
+      "summary": "审核/举报/规则/频道 CMS、前台管理员能力"
+    },
+    {
+      "id": "mobile-ux-v1",
+      "name": "移动端体验收口 V1",
+      "summary": "Loading 超时、LAN 访问、券/发帖移动端优化"
+    }
+  ],
+  "pendingV2": [
+    {
+      "id": "honest-ui-v2",
+      "name": "消除假功能误导",
+      "summary": "关注按钮、关注 Tab、假浏览量 — 隐藏或接最小实现"
+    },
+    {
+      "id": "profile-comments-v2",
+      "name": "我的评论 Tab 补全",
+      "summary": "按 user_id 查全量评论，非 session 片段"
+    },
+    {
+      "id": "system-notifications-v2",
+      "name": "系统通知 Tab",
+      "summary": "利用现有 notifications 表与券到期 cron"
+    },
+    {
+      "id": "square-banners-v2",
+      "name": "广场 Banner 可运营",
+      "summary": "替换 lib/square/banners.ts 硬编码"
+    },
+    {
+      "id": "admin-admins-v2",
+      "name": "Admin 管理员管理页",
+      "summary": "补 /admin/admins，消除死链"
+    },
+    {
+      "id": "login-redirect-v2",
+      "name": "登录 redirect 剩余入口",
+      "summary": "消息页、桌面侧栏等入口统一 buildLoginHref"
+    },
+    {
+      "id": "nearby-feed-v2",
+      "name": "「附近」产品定义",
+      "summary": "改文案或接真实定位，避免随机 distance 误导"
+    },
+    {
+      "id": "types-sync-v2",
+      "name": "database.types.ts 同步",
+      "summary": "admin_users 等 schema 与类型文件对齐"
+    }
+  ],
+  "notStarted": [
+    {
+      "id": "dm-chat",
+      "name": "用户私信 / IM",
+      "summary": "无表、无 UI"
+    },
+    {
+      "id": "follow-graph",
+      "name": "用户关注关系与关注 Feed",
+      "summary": "当前 following 字段非真实关注"
+    },
+    {
+      "id": "merchant-nav",
+      "name": "商家导航/打车/公交",
+      "summary": "merchant-navigation 页为 stub"
+    },
+    {
+      "id": "buddy-category",
+      "name": "搭子独立品类",
+      "summary": "PRODUCT.md 有描述，代码映射到「其他」"
+    },
+    {
+      "id": "structured-marketplace",
+      "name": "租房/招聘结构化表单",
+      "summary": "当前为通用帖子 + 分类"
+    },
+    {
+      "id": "share-rewards",
+      "name": "分享裂变 / 邀请奖励",
+      "summary": "明确不做，留 V2+ 以后评估"
+    },
+    {
+      "id": "pwa-i18n",
+      "name": "PWA / 多语言",
+      "summary": "未规划实现"
+    }
+  ],
+  "knownBugs": [
+    {
+      "id": "view-count-placeholder",
+      "severity": "medium",
+      "summary": "帖子详情浏览量为占位公式（likes + 评论*5），非 post_views 真实数据"
+    },
+    {
+      "id": "follow-button-noop",
+      "severity": "medium",
+      "summary": "PostDetailTopBar「关注作者」按钮无 onClick / 无 API"
+    },
+    {
+      "id": "follow-tab-misleading",
+      "severity": "low",
+      "summary": "首页「关注」Tab 依赖 post.following 字段，用户发帖恒为 false"
+    },
+    {
+      "id": "admin-admins-404",
+      "severity": "low",
+      "summary": "AdminDashboard 链接 /admin/admins 但路由不存在"
+    },
+    {
+      "id": "emoji-stub",
+      "severity": "low",
+      "summary": "评论 Emoji 按钮仍为「功能开发中」"
+    },
+    {
+      "id": "system-notifications-empty",
+      "severity": "low",
+      "summary": "消息中心系统 Tab 空态，文案「后续版本开放」"
+    },
+    {
+      "id": "square-banners-static",
+      "severity": "low",
+      "summary": "广场 Banner 硬编码 picsum 链接"
+    },
+    {
+      "id": "profile-comments-partial",
+      "severity": "low",
+      "summary": "我的页评论 Tab 仅 session 内已加载评论 + local owned IDs"
+    }
+  ],
+  "roadmap": {
+    "p1": [
+      {
+        "id": "honest-ui-v2",
+        "name": "消除假功能误导",
+        "status": "pending"
+      },
+      {
+        "id": "profile-comments-v2",
+        "name": "我的评论 Tab 补全",
+        "status": "pending"
+      }
+    ],
+    "p2": [
+      {
+        "id": "system-notifications-v2",
+        "name": "系统通知 Tab 落地",
+        "status": "pending"
+      },
+      {
+        "id": "square-banners-v2",
+        "name": "广场 Banner 可运营",
+        "status": "pending"
+      },
+      {
+        "id": "admin-admins-v2",
+        "name": "Admin 管理员管理页",
+        "status": "pending"
+      },
+      {
+        "id": "login-redirect-v2",
+        "name": "登录 redirect 剩余入口收口",
+        "status": "pending"
+      }
+    ],
+    "p3": [
+      {
+        "id": "nearby-feed-v2",
+        "name": "「附近」产品定义",
+        "status": "pending"
+      },
+      {
+        "id": "types-sync-v2",
+        "name": "database.types.ts 同步",
+        "status": "pending"
+      },
+      {
+        "id": "global-error-pages",
+        "name": "自定义 404 / error 页",
+        "status": "pending"
+      }
+    ],
+    "completed": [
+      "bootstrap-v1",
+      "mobile-ux-v1",
+      "coupons-v1",
+      "publish-v1",
+      "auth-profile-v1",
+      "share-v1",
+      "favorites-v1",
+      "admin-dashboard-v1"
+    ],
+    "deferred": [
+      {
+        "id": "dm-chat",
+        "name": "用户私信",
+        "reason": "非当前轻量社区阶段核心"
+      },
+      {
+        "id": "follow-graph",
+        "name": "完整关注社交图谱",
+        "reason": "需独立数据模型，暂缓"
+      },
+      {
+        "id": "structured-marketplace",
+        "name": "结构化租房/招聘市场",
+        "reason": "保持通用帖子 + 分类"
+      }
+    ],
+    "wontDo": [
+      {
+        "id": "standalone-coupon-admin",
+        "name": "独立商家优惠券后台",
+        "reason": "券必须绑定发帖"
+      },
+      {
+        "id": "merchant-stats-saas",
+        "name": "商家统计 SaaS 大盘",
+        "reason": "产品保持轻量"
+      },
+      {
+        "id": "share-rewards",
+        "name": "分享裂变 / 邀请奖励 / 积分",
+        "reason": "分享 V1 已做，裂变明确不做"
+      },
+      {
+        "id": "wechat-sdk",
+        "name": "微信 SDK 特殊分享",
+        "reason": "优先 Web Share / 复制链接"
+      },
+      {
+        "id": "rls-bypass",
+        "name": "前台使用 service_role",
+        "reason": "安全原则"
+      }
+    ]
+  },
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "密码改密成功文案修正",
+      "items": [
+        "改密成功提示对齐 session 行为：当前设备可继续，其他设备用新密码登录",
+        "build + regression 46/46 PASS"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "密码方案 A",
+      "items": [
+        "资料编辑页已登录修改密码（校验当前密码）",
+        "登录页「忘记密码？」→ /forgot-password 诚实说明页",
+        "scripts/reset-user-password.ts 人工重置 SOP",
+        "scripts/test-change-password-v1.ts + regression 46/46 PASS"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "Dashboard 活跃用户文案收口",
+      "items": [
+        "DAU/WAU/MAU 说明与 tooltip 对齐实现：已登录浏览、不含搜索",
+        "build + regression 42/42 PASS"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "Dashboard 审计收口",
+      "items": [
+        "隐藏「今日搜索」卡片（无搜索日志数据源，不再显示「暂无」）",
+        "「已认证商家」保持 is_active 口径与命名",
+        "build + regression 42/42 PASS"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "运营 Dashboard V1",
+      "items": [
+        "后台新增 Dashboard Tab（数字卡片，无图表）",
+        "用户 DAU/WAU/MAU 按登录/浏览/发帖/评论/收藏/点赞/领券/核销去重",
+        "商家活跃、券发布/领取/核销、待审帖/待处理举报统计",
+        "新增 dashboard.read 权限与 scripts/test-admin-dashboard-v1.ts",
+        "regression 42/42 PASS"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-26",
+      "title": "文档体系 V2",
+      "items": [
+        "新增 PROJECT_ARCHITECTURE.md、DECISIONS.md、AI_CONTEXT.md",
+        "升级 NEW_CHAT_GUIDE 阅读顺序",
+        "PROJECT_STATUS 增加 Current Focus / Next Version 快照",
+        "sync-docs 自动生成 AI_CONTEXT.md"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-26",
+      "title": "项目管理文档体系",
+      "items": [
+        "docs/project-state.json 单一事实来源",
+        "PROJECT_STATUS / ROADMAP / CHANGELOG 由 npm run sync-docs 自动生成",
+        "PRODUCT_RULES.md、NEW_CHAT_GUIDE.md、docs/README.md",
+        ".cursor/rules/project-documentation.mdc 约束 AI 自动维护"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-26",
+      "title": "收藏系统收口 V1",
+      "items": [
+        "收藏三处实时同步：首页、详情、我的收藏",
+        "乐观更新 + engagement 就绪前禁用误操作",
+        "未登录收藏 → 登录 → 回帖自动收藏",
+        "删帖清理本地 favorites/likes/history",
+        "新增 scripts/test-favorites-v1.ts"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-26",
+      "title": "统一分享系统 V1",
+      "items": [
+        "统一 shareContent：navigator.share 或复制链接",
+        "帖子/主页/帖内券分享入口",
+        "Open Graph + Twitter 卡片 metadata",
+        "app/opengraph-image.tsx 默认分享图",
+        "新增 scripts/test-share-v1.ts"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "账号与登录体验收口 V1",
+      "items": [
+        "redirect 全链路：登录/注册/我的页/领券/发帖",
+        "退出清理 owned-content 与发帖草稿",
+        "登录/注册 sticky 提交栏 + pb-safe",
+        "lib/auth/redirect.ts、session-cleanup.ts"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "发帖体验收口 V1",
+      "items": [
+        "sessionStorage 发帖草稿",
+        "sticky 发布栏、券/图校验",
+        "发布失败保留草稿，成功跳转详情"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "优惠券 Bugfix V1",
+      "items": [
+        "8 位数字核销码、过期不可领",
+        "领券数刷新、删券通知",
+        "apply-coupon-bugfix-v1 迁移"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "移动端真实链路收口 V1",
+      "items": [
+        "首页/消息/我的 loading 超时",
+        "syncPostById 直链详情",
+        "券流程移动端触控优化"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "项目 Bootstrap V1",
+      "items": [
+        "npm run bootstrap：20 个 apply 脚本 + build + regression",
+        "docs/deployment-checklist.md",
+        ".env.local.example"
+      ]
+    }
+  ],
+  "nextRecommended": [
+    "消除假功能误导（浏览量、关注按钮、关注 Tab）",
+    "我的评论 Tab 全量查询"
+  ],
+  "decisions": [
+    {
+      "date": "2026-06-17",
+      "id": "password-reset-plan-a",
+      "decision": "密码方案 A：已登录改密 + 忘记密码说明页 + 人工脚本重置",
+      "reason": "用户名登录无真实邮箱，不做 SMTP/reset token",
+      "rejected": "recovery_email、Supabase reset email、/auth/callback"
+    },
+    {
+      "date": "2026-06-17",
+      "id": "admin-dashboard-v1",
+      "decision": "运营 Dashboard V1：数字卡片统计，不做图表/BI",
+      "reason": "运营需要快速概览；避免复杂 SaaS 化",
+      "rejected": "折线图/柱状图/地图、独立 analytics 平台"
+    },
+    {
+      "date": "2026-06-26",
+      "id": "docs-v2-ai-onboarding",
+      "decision": "文档体系 V2：架构/决策/AI_CONTEXT + 自动生成接手材料",
+      "reason": "任意 AI 可在数分钟内恢复上下文",
+      "rejected": "仅 README 或口头交接"
+    },
+    {
+      "date": "2026-06-26",
+      "id": "unified-share-v1",
+      "decision": "统一分享：Web Share API + 复制链接；OG 默认图；不做微信 SDK",
+      "reason": "轻量、跨平台；链接可打开帖子/主页",
+      "rejected": "微信 SDK、邀请裂变、独立券分享页"
+    },
+    {
+      "date": "2026-06-26",
+      "id": "favorites-single-store",
+      "decision": "收藏状态统一由 post-store 管理；三入口乐观同步",
+      "reason": "避免首页/详情/我的收藏不一致",
+      "rejected": "各页面独立请求、无 pending 登录续流程"
+    },
+    {
+      "date": "2026-06-17",
+      "id": "coupon-bound-to-post",
+      "decision": "商家优惠券必须绑定发帖；帖内展示领取/剩余",
+      "reason": "券即内容营销；用户在同一上下文领券",
+      "rejected": "独立优惠券管理后台、与帖解耦的券库"
+    },
+    {
+      "date": "2026-06-17",
+      "id": "shared-profile-merchant",
+      "decision": "商家与普通用户共用 Profile 路由与账号体系",
+      "reason": "一套登录/发帖/互动；商家只是 profiles + merchant_profiles 扩展",
+      "rejected": "独立商家 App、双套账号"
+    },
+    {
+      "date": "2026-06-17",
+      "id": "no-merchant-saas",
+      "decision": "不做复杂商家后台与经营统计 SaaS",
+      "reason": "58korea 是社区不是 B 端 SaaS",
+      "rejected": "券分析大盘、商家独立运营台"
+    },
+    {
+      "date": "2026-06-17",
+      "id": "rls-no-service-role-frontend",
+      "decision": "前台只用 anon + authenticated；RLS 为安全边界",
+      "reason": "防止权限泄露；脚本/regression 可用 service_role",
+      "rejected": "前台 bypass RLS、随意改 policy"
+    },
+    {
+      "date": "2026-06-17",
+      "id": "server-actions-pattern",
+      "decision": "写操作走 lib/actions Server Actions + Supabase SSR 客户端",
+      "reason": "Next.js App Router 标准；Cookie session 一致",
+      "rejected": "大量自建 REST API routes"
+    },
+    {
+      "date": "2026-06-17",
+      "id": "bootstrap-regression-gate",
+      "decision": "npm run bootstrap = 20 迁移 + build + regression 41 项",
+      "reason": "换环境可验证；RLS 与主链路有回归网",
+      "rejected": "无自动化、仅手工点测"
+    },
+    {
+      "date": "2026-06-17",
+      "id": "auth-username-email",
+      "decision": "用户以 username 登录；内部映射 Supabase email",
+      "reason": "华人社区习惯账号名；profiles.username 公开",
+      "rejected": "强制邮箱注册为主标识"
+    }
+  ],
+  "docCommands": {
+    "sync": "npm run sync-docs",
+    "verifyBuild": "npm run build",
+    "verifyRegression": "npm run regression-check"
+  }
+}

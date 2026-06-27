@@ -51,3 +51,11 @@ export async function getServerAuthUser(): Promise<User | null> {
 
   return user;
 }
+
+export async function getServerAuthUserSafe(): Promise<User | null> {
+  try {
+    return await getServerAuthUser();
+  } catch {
+    return null;
+  }
+}

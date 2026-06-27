@@ -19,7 +19,7 @@ export function sortPostsWithMerchantsFirst(posts: Post[]): Post[] {
   const regularPosts: Post[] = [];
 
   for (const post of posts) {
-    if (isMerchantPost({ author: post.author })) {
+    if (isMerchantPost({ author: post.author, authorId: post.authorId })) {
       merchantPosts.push(post);
     } else {
       regularPosts.push(post);

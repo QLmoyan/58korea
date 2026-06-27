@@ -6,14 +6,19 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import { clearUserSessionLocalData } from "@/lib/auth/session-cleanup";
 import type { User } from "@supabase/supabase-js";
 import {
   normalizeUsername,
   toInternalEmail,
 } from "@/lib/auth/username";
+import { AUTH_INIT_TIMEOUT_MS } from "@/lib/constants/network";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { logClientError } from "@/lib/utils/log-client-error";
+import { withTimeout } from "@/lib/utils/with-timeout";
 import { fetchProfileByUserId } from "@/lib/supabase/profile";
 import { registerUserAction } from "@/lib/actions/register-user";
 import type { Profile } from "@/lib/types/user";
@@ -22,6 +27,7 @@ interface AuthStoreValue {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  initError: string | null;
   signUp: (input: {
     username: string;
     password: string;
@@ -31,6 +37,7 @@ interface AuthStoreValue {
   signIn: (input: { username: string; password: string }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  retryInit: () => void;
 }
 
 const AuthStoreContext = createContext<AuthStoreValue | null>(null);
@@ -67,9 +74,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
+  const [initAttempt, setInitAttempt] = useState(0);
+  const previousUserIdRef = useRef<string | null>(null);
 
   const loadProfile = useCallback(async (userId: string) => {
-    const nextProfile = await fetchProfileByUserId(userId);
+    const nextProfile = await withTimeout(
+      fetchProfileByUserId(userId),
+      AUTH_INIT_TIMEOUT_MS,
+      "资料加载超时",
+    );
     setProfile(nextProfile);
     return nextProfile;
   }, []);
@@ -86,15 +100,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isSupabaseConfigured()) {
       setLoading(false);
+      setInitError(null);
       return;
     }
 
     const supabase = getSupabaseClient();
     let cancelled = false;
 
+    const safetyTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        logClientError("auth.init.safety", new Error("Auth init safety timeout"));
+        setLoading(false);
+        setInitError((current) => current ?? "登录状态加载超时，请检查网络后重试");
+      }
+    }, AUTH_INIT_TIMEOUT_MS + 2_000);
+
     async function initAuth() {
+      setLoading(true);
+      setInitError(null);
+
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await withTimeout(
+          supabase.auth.getSession(),
+          AUTH_INIT_TIMEOUT_MS,
+          "登录状态加载超时",
+        );
         if (error) {
           throw error;
         }
@@ -104,11 +134,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         const sessionUser = data.session?.user ?? null;
+        previousUserIdRef.current = sessionUser?.id ?? null;
         setUser(sessionUser);
 
         if (sessionUser) {
           void loadProfile(sessionUser.id).catch((error) => {
-            console.error("Failed to load profile:", error);
+            logClientError("auth.profile", error, { userId: sessionUser.id });
             if (!cancelled) {
               setProfile(null);
             }
@@ -117,12 +148,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null);
         }
       } catch (error) {
-        console.error("Failed to initialize auth:", error);
+        logClientError("auth.init", error);
         if (!cancelled) {
           setUser(null);
           setProfile(null);
+          setInitError(
+            error instanceof Error
+              ? error.message
+              : "登录状态加载失败，请检查网络后重试",
+          );
         }
       } finally {
+        window.clearTimeout(safetyTimer);
         if (!cancelled) {
           setLoading(false);
         }
@@ -135,11 +172,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       const sessionUser = session?.user ?? null;
+      const nextUserId = sessionUser?.id ?? null;
+
+      if (previousUserIdRef.current !== nextUserId) {
+        if (nextUserId === null || previousUserIdRef.current !== null) {
+          clearUserSessionLocalData();
+        }
+        previousUserIdRef.current = nextUserId;
+      }
+
       setUser(sessionUser);
 
       if (sessionUser) {
         void loadProfile(sessionUser.id).catch((error) => {
-          console.error("Failed to load profile:", error);
+          logClientError("auth.profile", error, { userId: sessionUser.id });
           setProfile(null);
         });
       } else {
@@ -149,9 +195,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
-  }, [loadProfile]);
+  }, [loadProfile, initAttempt]);
+
+  const retryInit = useCallback(() => {
+    setInitAttempt((current) => current + 1);
+  }, []);
 
   const signUp = useCallback(
     async ({
@@ -226,6 +277,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(error.message);
     }
 
+    clearUserSessionLocalData();
     setUser(null);
     setProfile(null);
   }, []);
@@ -235,12 +287,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       profile,
       loading,
+      initError,
       signUp,
       signIn,
       signOut,
       refreshProfile,
+      retryInit,
     }),
-    [user, profile, loading, signUp, signIn, signOut, refreshProfile],
+    [user, profile, loading, initError, signUp, signIn, signOut, refreshProfile, retryInit],
   );
 
   return (

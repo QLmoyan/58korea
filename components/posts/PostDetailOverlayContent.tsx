@@ -5,14 +5,21 @@ import FrontendAdminPostBar from "@/components/frontend/FrontendAdminPostBar";
 import MerchantDetailTitleMeta from "@/components/merchant/MerchantDetailTitleMeta";
 import CommentSection from "@/components/posts/CommentSection";
 import PostDetailTopBar from "@/components/posts/PostDetailTopBar";
+import PostLinkedCouponSection from "@/components/posts/PostLinkedCouponSection";
 import PostImageCarousel from "@/components/posts/PostImageCarousel";
 import ReportSheet from "@/components/report/ReportSheet";
 import type { PostImage } from "@/lib/data/posts";
 import { getAdminCapabilitiesAction } from "@/lib/actions/admin-capabilities";
 import type { AdminCapabilities } from "@/lib/actions/admin-capabilities";
 import { MODERATION_MEDIUM_DISCLAIMER } from "@/lib/moderation/constants";
-import { isMerchantPost } from "@/lib/merchant/identify";
+import { FEED_UI_DEADLINE_MS } from "@/lib/constants/network";
+import { useLoadingDeadline } from "@/lib/hooks/use-loading-deadline";
+import { usePendingFavoriteOnLogin } from "@/lib/hooks/use-pending-favorite-on-login";
+import { usePostAuthorContext } from "@/lib/merchant/use-post-merchant";
+import { useAuthStore } from "@/lib/store/auth-store";
 import { usePostStore } from "@/lib/store/post-store";
+import { logClientError } from "@/lib/utils/log-client-error";
+import AsyncStatePanel from "@/components/ui/AsyncStatePanel";
 
 interface PostDetailOverlayContentProps {
   postId: number;
@@ -27,6 +34,8 @@ export default function PostDetailOverlayContent({
   onDeleted,
   onHidden,
 }: PostDetailOverlayContentProps) {
+  usePendingFavoriteOnLogin(postId);
+  const { user } = useAuthStore();
   const {
     getPostById,
     getPostImagesByPostId,
@@ -36,8 +45,10 @@ export default function PostDetailOverlayContent({
     canDeletePost,
     deletePost,
     getCommentsByPostId,
+    recordPostView,
   } = usePostStore();
   const post = getPostById(postId);
+  const [postFetchDone, setPostFetchDone] = useState(false);
   const [deleteConfirming, setDeleteConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -56,6 +67,40 @@ export default function PostDetailOverlayContent({
       loadPostImagesForPost(postId);
     }
   }, [postId, loadPostImagesForPost]);
+
+  useEffect(() => {
+    if (!hydrated || !Number.isFinite(postId) || post) {
+      if (post) {
+        setPostFetchDone(true);
+      }
+      return;
+    }
+
+    let cancelled = false;
+    setPostFetchDone(false);
+
+    void syncPostById(postId)
+      .catch((error) => {
+        logClientError("posts.detail.sync", error, { postId });
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setPostFetchDone(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, post, postId, syncPostById]);
+
+  useEffect(() => {
+    if (!user || !post || !Number.isFinite(postId)) {
+      return;
+    }
+
+    void recordPostView(postId);
+  }, [user?.id, post?.id, postId, recordPostView]);
 
   useEffect(() => {
     let cancelled = false;
@@ -139,10 +184,24 @@ export default function PostDetailOverlayContent({
     onClose();
   }
 
-  if (!hydrated) {
+  const waitingForPost = hydrated && !post && !postFetchDone;
+  const postFetchOverdue = useLoadingDeadline(waitingForPost, FEED_UI_DEADLINE_MS);
+
+  if (!hydrated || waitingForPost) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-zinc-400">
-        加载中...
+      <div className="flex h-full items-center justify-center">
+        {postFetchOverdue ? (
+          <AsyncStatePanel
+            message="帖子加载超时，请检查网络后重试"
+            tone="error"
+            onRetry={() => {
+              setPostFetchDone(false);
+              void syncPostById(postId).finally(() => setPostFetchDone(true));
+            }}
+          />
+        ) : (
+          <AsyncStatePanel message="加载中..." />
+        )}
       </div>
     );
   }
@@ -163,7 +222,11 @@ export default function PostDetailOverlayContent({
   }
 
   const locationLabel = post.location?.trim();
-  const merchantPost = isMerchantPost({ author: post.author });
+  const { isMerchant: merchantPost, authorHomeHref } = usePostAuthorContext({
+    author: post.author,
+    authorId: post.authorId,
+    authorUsername: post.authorUsername,
+  });
 
   return (
     <>
@@ -185,6 +248,7 @@ export default function PostDetailOverlayContent({
         <PostDetailTopBar
           author={post.author}
           showMerchantBadge={merchantPost}
+          authorHomeHref={authorHomeHref}
           variant="embedded"
           ownedPost={ownedPost}
           deleteConfirming={deleteConfirming}
@@ -224,8 +288,17 @@ export default function PostDetailOverlayContent({
                 {post.content}
               </div>
               <span className="inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-500">
-                {post.category === "住房" ? "租房" : post.category}
+                {post.category}
               </span>
+              {post.linkedCoupon ? (
+                <PostLinkedCouponSection
+                  postId={post.id}
+                  postTitle={post.title}
+                  postAuthorId={post.authorId}
+                  linkedCoupon={post.linkedCoupon}
+                  onUpdated={() => void syncPostById(post.id)}
+                />
+              ) : null}
               {post.riskLevel === "medium" ? (
                 <p className="rounded-xl bg-zinc-100 px-3 py-2 text-xs leading-5 text-zinc-500">
                   {MODERATION_MEDIUM_DISCLAIMER}
@@ -236,7 +309,7 @@ export default function PostDetailOverlayContent({
                   postId={post.id}
                   permissions={adminCapabilities.permissions}
                   riskLevel={post.riskLevel}
-                  onUpdated={() => syncPostById(post.id)}
+                  onUpdated={() => void syncPostById(post.id)}
                   onHidden={handleHidden}
                   onDeleted={handleAdminDeleted}
                 />
@@ -245,6 +318,7 @@ export default function PostDetailOverlayContent({
 
             <CommentSection
               postId={post.id}
+              postTitle={post.title}
               postAuthor={post.author}
               adminCapabilities={adminCapabilities}
               postLikes={post.likes}

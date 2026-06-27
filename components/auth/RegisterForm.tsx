@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import AuthField from "@/components/auth/AuthField";
 import PageHeader from "@/components/layout/PageHeader";
+import { buildLoginHref, resolveRedirectTarget } from "@/lib/auth/redirect";
 import { validateUsername } from "@/lib/auth/username";
 import { useAuthStore } from "@/lib/store/auth-store";
 
 export default function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signUp } = useAuthStore();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +19,7 @@ export default function RegisterForm() {
   const [bio, setBio] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const redirectTarget = resolveRedirectTarget(searchParams.get("redirect"));
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,7 +50,7 @@ export default function RegisterForm() {
 
     try {
       await signUp({ username, password, nickname, bio });
-      router.push("/profile");
+      router.push(redirectTarget);
       router.refresh();
     } catch (submitError) {
       setError(
@@ -59,11 +62,11 @@ export default function RegisterForm() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-zinc-50 pb-8">
+    <div className="mx-auto min-h-screen max-w-md bg-zinc-50 pb-32 pb-safe">
       <PageHeader title="注册" backHref="/profile" />
 
       <main className="px-4 pt-20">
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form id="register-form" onSubmit={handleSubmit} className="space-y-5">
           <section className="space-y-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-100">
             <AuthField
               label="账号"
@@ -111,7 +114,7 @@ export default function RegisterForm() {
                   setBio(event.target.value);
                   setError("");
                 }}
-                className="w-full resize-none rounded-xl bg-zinc-50 px-3 py-3 text-sm leading-6 text-zinc-900 outline-none ring-1 ring-zinc-200 placeholder:text-zinc-400 focus:ring-rose-300"
+                className="w-full resize-none rounded-xl bg-zinc-50 px-3 py-3 text-base leading-6 text-zinc-900 outline-none ring-1 ring-zinc-200 placeholder:text-zinc-400 focus:ring-rose-300"
               />
             </label>
           </section>
@@ -119,23 +122,31 @@ export default function RegisterForm() {
           {error ? (
             <p className="text-center text-sm text-rose-500">{error}</p>
           ) : null}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-full bg-gradient-to-r from-rose-500 to-orange-400 py-3.5 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition-transform active:scale-[0.98] disabled:opacity-60"
-          >
-            {submitting ? "注册中..." : "注册"}
-          </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-zinc-500">
           已有账号？
-          <Link href="/login" className="ml-1 font-medium text-rose-500">
+          <Link
+            href={buildLoginHref(searchParams.get("redirect"))}
+            className="ml-1 font-medium text-rose-500"
+          >
             去登录
           </Link>
         </p>
       </main>
+
+      <div className="fixed right-0 bottom-0 left-0 z-40 border-t border-zinc-100 bg-white/95 backdrop-blur-md pb-safe">
+        <div className="mx-auto max-w-md px-4 py-3">
+          <button
+            type="submit"
+            form="register-form"
+            disabled={submitting}
+            className="min-h-12 w-full touch-manipulation rounded-full bg-gradient-to-r from-rose-500 to-orange-400 py-3.5 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submitting ? "注册中..." : "注册"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

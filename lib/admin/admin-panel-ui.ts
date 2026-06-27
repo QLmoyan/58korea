@@ -1,16 +1,24 @@
 import type { AdminPermission } from "@/lib/types/admin-auth";
 
-export type AdminPanelTab = "reviews" | "reports" | "rules" | "tester";
+export type AdminPanelTab =
+  | "dashboard"
+  | "reviews"
+  | "reports"
+  | "rules"
+  | "tester"
+  | "channelArticles";
 
 export const ADMIN_PANEL_TABS: Array<{
   id: AdminPanelTab;
   label: string;
   permission: AdminPermission;
 }> = [
+  { id: "dashboard", label: "Dashboard", permission: "dashboard.read" },
   { id: "reviews", label: "审核队列", permission: "reviews.read" },
   { id: "reports", label: "举报记录", permission: "reports.read" },
   { id: "rules", label: "规则管理", permission: "rules.read" },
   { id: "tester", label: "规则测试器", permission: "rules.test" },
+  { id: "channelArticles", label: "频道文章", permission: "channel_articles.read" },
 ];
 
 export function canAccessAdminPanelTab(

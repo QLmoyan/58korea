@@ -2,6 +2,27 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### New environment / server
+
+1. Copy `.env.local.example` to `.env.local` and fill in Supabase credentials.
+2. Run project bootstrap (migrations, build, regression):
+
+```bash
+npm run bootstrap
+```
+
+3. On first deploy, create the site admin:
+
+```bash
+npx tsx scripts/create-admin-user.ts
+```
+
+See [docs/deployment-checklist.md](docs/deployment-checklist.md) for full deploy steps, what Cursor can automate, and what must be done manually.
+
+Project docs: [docs/README.md](docs/README.md) · AI onboarding: [docs/NEW_CHAT_GUIDE.md](docs/NEW_CHAT_GUIDE.md) (read [AI_CONTEXT.md](docs/AI_CONTEXT.md) first).
+
+### Daily development
+
 First, run the development server:
 
 ```bash

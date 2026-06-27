@@ -26,7 +26,7 @@ export default function AuthField({
         placeholder={placeholder}
         autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-xl bg-zinc-50 px-3 py-3 text-sm text-zinc-900 outline-none ring-1 ring-zinc-200 placeholder:text-zinc-400 focus:ring-rose-300"
+        className="w-full rounded-xl bg-zinc-50 px-3 py-3 text-base text-zinc-900 outline-none ring-1 ring-zinc-200 placeholder:text-zinc-400 focus:ring-rose-300"
       />
     </label>
   );

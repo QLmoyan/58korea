@@ -13,7 +13,7 @@ export default function DesktopHomeAside() {
               key={category}
               className="rounded-full bg-zinc-50 px-2.5 py-1 text-xs text-zinc-500 ring-1 ring-zinc-100"
             >
-              {category === "住房" ? "租房" : category}
+              {category}
             </span>
           ))}
         </div>
@@ -22,7 +22,7 @@ export default function DesktopHomeAside() {
       <section className="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-100/80">
         <h2 className="text-sm font-semibold text-zinc-900">社区提示</h2>
         <p className="mt-2 text-xs leading-5 text-zinc-500">
-          发现租房、攻略、二手与本地生活内容。请遵守社区规范，友善交流。
+          发现房屋、攻略、二手与本地生活内容。请遵守社区规范，友善交流。
         </p>
       </section>
     </aside>

@@ -17,6 +17,9 @@ export type AdminPermission =
   | "content.post.risk_label"
   | "content.comment.hide"
   | "content.comment.delete"
+  | "channel_articles.read"
+  | "channel_articles.write"
+  | "dashboard.read"
   | "admins.manage";
 
 export type AccountAdminActor = {

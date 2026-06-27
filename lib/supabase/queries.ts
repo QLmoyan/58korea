@@ -1,61 +1,32 @@
+import { FEED_PAGE_SIZE } from "@/lib/constants/network";
 import type { Post, PostCategory, PostDistance, PostImage } from "@/lib/data/posts";
 import type { Comment } from "@/lib/types/community";
 import { sortPostsWithMerchantsFirst } from "@/lib/merchant/sort-posts";
+import {
+  COMMENT_SELECT_WITH_IMAGES,
+  mapCommentRow,
+  type DbCommentWithImages,
+} from "@/lib/supabase/comment-mapper";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
+import {
+  mapPostRow,
+  POST_SELECT_WITH_LINKED_COUPON,
+  POST_SELECT_WITH_LINKED_COUPON_SINGLE,
+  type DbPostWithRelations,
+} from "@/lib/supabase/post-mapper";
 
-type DbPost = Database["public"]["Tables"]["posts"]["Row"];
 type DbComment = Database["public"]["Tables"]["comments"]["Row"];
 type DbPostImage = Database["public"]["Tables"]["post_images"]["Row"];
 type DbPostInsert = Database["public"]["Tables"]["posts"]["Insert"];
 type DbCommentInsert = Database["public"]["Tables"]["comments"]["Insert"];
 
-type DbPostImagePartial = Pick<
-  DbPostImage,
-  "id" | "public_url" | "sort_order" | "width" | "height"
->;
-
-type DbPostRow = DbPost & { post_images?: DbPostImagePartial[] };
-
-function resolvePostImages(row: DbPostRow, images?: PostImage[]): PostImage[] {
-  if (images) {
-    return [...images].sort((a, b) => a.sortOrder - b.sortOrder);
-  }
-
-  return (row.post_images ?? [])
-    .map((image) => ({
-      id: image.id,
-      url: image.public_url,
-      sortOrder: image.sort_order,
-      width: image.width,
-      height: image.height,
-    }))
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+function mapComment(row: DbCommentWithImages): Comment {
+  return mapCommentRow(row);
 }
 
-function mapPost(row: DbPostRow, images?: PostImage[]): Post {
-  const resolvedImages = resolvePostImages(row, images);
-  const coverUrl = row.image_url ?? resolvedImages[0]?.url ?? null;
-  const coverHeight = row.image_height ?? resolvedImages[0]?.height ?? null;
-
-  return {
-    id: row.id,
-    title: row.title,
-    content: row.content,
-    author: row.author,
-    location: row.location,
-    distance: row.distance as PostDistance,
-    likes: row.likes,
-    category: row.category as PostCategory,
-    imageUrl: coverUrl,
-    imageHeight: coverHeight,
-    nearby: row.nearby,
-    following: row.following,
-    createdAt: row.created_at,
-    images: resolvedImages.length > 0 ? resolvedImages : undefined,
-    riskLevel: row.risk_level,
-    riskScore: row.risk_score,
-  };
+function mapPost(row: DbPostWithRelations, images?: PostImage[]): Post {
+  return mapPostRow(row, images);
 }
 
 function mapPostImage(row: DbPostImage): PostImage {
@@ -68,32 +39,20 @@ function mapPostImage(row: DbPostImage): PostImage {
   };
 }
 
-function mapComment(row: DbComment): Comment {
-  return {
-    id: row.id,
-    postId: row.post_id,
-    author: row.author,
-    content: row.content,
-    createdAt: row.created_at,
-    parentId: row.parent_id || null,
-    replyToAuthor: row.reply_to_author,
-    imageUrl: row.image_url,
-  };
-}
-
 async function fetchPublishedPostRows(): Promise<Post[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("*, post_images(id, public_url, sort_order, width, height)")
+    .select(POST_SELECT_WITH_LINKED_COUPON)
     .eq("moderation_status", "published")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(FEED_PAGE_SIZE);
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return (data ?? []).map((row) => mapPost(row));
+  return (data ?? []).map((row) => mapPost(row as DbPostWithRelations));
 }
 
 export async function fetchPosts(): Promise<Post[]> {
@@ -108,7 +67,7 @@ export async function fetchPostById(postId: number): Promise<Post | null> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("*")
+    .select(POST_SELECT_WITH_LINKED_COUPON_SINGLE)
     .eq("id", postId)
     .eq("moderation_status", "published")
     .maybeSingle();
@@ -122,7 +81,7 @@ export async function fetchPostById(postId: number): Promise<Post | null> {
   }
 
   const images = await fetchPostImagesByPostId(postId);
-  return mapPost(data, images);
+  return mapPost(data as DbPostWithRelations, images);
 }
 
 export async function fetchPostImagesByPostId(postId: number): Promise<PostImage[]> {
@@ -144,7 +103,7 @@ export async function fetchCommentsByPostId(postId: number): Promise<Comment[]> 
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("comments")
-    .select("*")
+    .select(COMMENT_SELECT_WITH_IMAGES)
     .eq("post_id", postId)
     .eq("moderation_status", "published")
     .order("created_at", { ascending: true });
@@ -153,7 +112,7 @@ export async function fetchCommentsByPostId(postId: number): Promise<Comment[]> 
     throw new Error(error.message);
   }
 
-  return (data ?? []).map(mapComment);
+  return (data ?? []).map((row) => mapComment(row as DbCommentWithImages));
 }
 
 export async function insertPost(input: DbPostInsert): Promise<Post> {

@@ -1,14 +1,33 @@
 export type FeedChannel = "推荐" | "附近" | "关注";
 
-export type PostCategory =
-  | "求助"
-  | "住房"
-  | "招聘"
-  | "二手"
-  | "攻略"
-  | "搭子"
-  | "探店"
-  | "其他";
+export const POST_CATEGORIES = [
+  "探店",
+  "求助",
+  "房屋",
+  "二手",
+  "招聘",
+  "攻略",
+  "其他",
+] as const;
+
+export type PostCategory = (typeof POST_CATEGORIES)[number];
+
+const LEGACY_CATEGORY_ALIASES: Record<string, PostCategory> = {
+  住房: "房屋",
+  搭子: "其他",
+};
+
+export function isPostCategory(value: string): value is PostCategory {
+  return (POST_CATEGORIES as readonly string[]).includes(value);
+}
+
+export function normalizePostCategory(value: string): PostCategory {
+  if (isPostCategory(value)) {
+    return value;
+  }
+
+  return LEGACY_CATEGORY_ALIASES[value] ?? "其他";
+}
 
 import type { RiskLevel } from "@/lib/moderation/constants";
 import { sortPostsWithMerchantsFirst } from "@/lib/merchant/sort-posts";
@@ -29,11 +48,25 @@ export interface PostImage {
   height?: number | null;
 }
 
+export interface PostLinkedCouponSummary {
+  id: string;
+  title: string;
+  discountAmountKrw: number;
+  totalQuantity: number;
+  claimedQuantity: number;
+  startsAt: string | null;
+  endsAt: string | null;
+  usageNote: string | null;
+  isActive: boolean;
+}
+
 export interface Post {
   id: number;
   title: string;
   content?: string;
   author: string;
+  authorId?: string | null;
+  authorUsername?: string | null;
   location: string;
   distance: PostDistance;
   likes: number;
@@ -46,20 +79,13 @@ export interface Post {
   createdAt?: string;
   riskLevel?: RiskLevel;
   riskScore?: number;
+  linkedCouponId?: string | null;
+  linkedCoupon?: PostLinkedCouponSummary | null;
 }
 
 export const channels: FeedChannel[] = ["推荐", "附近", "关注"];
 
-export const categories: PostCategory[] = [
-  "求助",
-  "住房",
-  "招聘",
-  "二手",
-  "攻略",
-  "搭子",
-  "探店",
-  "其他",
-];
+export const categories: PostCategory[] = [...POST_CATEGORIES];
 
 export const posts: Post[] = [
   {
@@ -69,7 +95,7 @@ export const posts: Post[] = [
     location: "建国大学",
     distance: "350m",
     likes: 328,
-    category: "住房",
+    category: "房屋",
     imageUrl: "https://picsum.photos/seed/korea-room1/400/520",
     imageHeight: 220,
     nearby: true,
@@ -131,7 +157,7 @@ export const posts: Post[] = [
     location: "明洞",
     distance: "350m",
     likes: 412,
-    category: "住房",
+    category: "房屋",
     imageUrl: "https://picsum.photos/seed/korea-room2/400/560",
     imageHeight: 240,
     nearby: true,
@@ -179,7 +205,7 @@ export const posts: Post[] = [
     location: "高丽大",
     distance: "1.2km",
     likes: 534,
-    category: "搭子",
+    category: "其他",
     imageUrl: "https://picsum.photos/seed/korea-hike/400/540",
     imageHeight: 230,
     nearby: true,
@@ -192,7 +218,7 @@ export const posts: Post[] = [
     location: "弘大",
     distance: "350m",
     likes: 278,
-    category: "住房",
+    category: "房屋",
     imageUrl: "https://picsum.photos/seed/korea-room3/400/380",
     imageHeight: 165,
     nearby: true,
@@ -251,7 +277,7 @@ export const posts: Post[] = [
     location: "蚕室",
     distance: "1.2km",
     likes: 623,
-    category: "搭子",
+    category: "其他",
     imageUrl: "https://picsum.photos/seed/korea-run/400/450",
     imageHeight: 192,
     nearby: true,
@@ -319,7 +345,9 @@ export function filterPosts(
   }
 
   if (category) {
-    result = result.filter((post) => post.category === category);
+    result = result.filter(
+      (post) => normalizePostCategory(post.category) === category,
+    );
   }
 
   return sortPostsWithMerchantsFirst(result);

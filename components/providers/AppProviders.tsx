@@ -2,6 +2,7 @@
 
 import { AuthProvider } from "@/lib/store/auth-store";
 import { ImageViewerProvider } from "@/lib/store/image-viewer-store";
+import { MerchantStoreProvider } from "@/lib/store/merchant-store";
 import { PostStoreProvider } from "@/lib/store/post-store";
 
 export default function AppProviders({
@@ -12,7 +13,9 @@ export default function AppProviders({
   return (
     <ImageViewerProvider>
       <AuthProvider>
-        <PostStoreProvider>{children}</PostStoreProvider>
+        <MerchantStoreProvider>
+          <PostStoreProvider>{children}</PostStoreProvider>
+        </MerchantStoreProvider>
       </AuthProvider>
     </ImageViewerProvider>
   );

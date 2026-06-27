@@ -1,22 +1,51 @@
 import type { Post } from "@/lib/data/posts";
-import { fetchPublishedPostsByNewest } from "@/lib/supabase/queries";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  mapPostRow,
+  POST_SELECT_WITH_LINKED_COUPON,
+  type DbPostWithRelations,
+} from "@/lib/supabase/post-mapper";
+import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  buildIlikeOrFilter,
+  SEARCH_RESULT_LIMIT,
+} from "@/lib/search/escape-ilike";
+import { scorePostMatch, sortBySearchRank } from "@/lib/search/match-score";
 import { isSearchQueryEmpty, normalizeSearchQuery } from "./normalize-query";
-import { postMatchesQuery, sortPostsByNewest } from "./match-post";
 
-export async function searchPosts(query: string): Promise<Post[]> {
+/** @alias Post — search result row for the all-tab feed */
+export type SearchPostResult = Post;
+
+export async function searchPosts(query: string): Promise<SearchPostResult[]> {
   const normalized = normalizeSearchQuery(query);
 
-  if (isSearchQueryEmpty(normalized)) {
+  if (isSearchQueryEmpty(normalized) || !isSupabaseConfigured()) {
     return [];
   }
 
-  if (!isSupabaseConfigured()) {
+  const patternFilter = buildIlikeOrFilter(
+    ["title", "content", "author"],
+    normalized,
+  );
+  if (!patternFilter) {
     return [];
   }
 
-  const needle = normalized.toLowerCase();
-  const posts = await fetchPublishedPostsByNewest();
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_SELECT_WITH_LINKED_COUPON)
+    .eq("moderation_status", "published")
+    .or(patternFilter)
+    .limit(SEARCH_RESULT_LIMIT);
 
-  return sortPostsByNewest(posts.filter((post) => postMatchesQuery(post, needle)));
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const posts = (data ?? []).map((row) => mapPostRow(row as DbPostWithRelations));
+
+  return sortBySearchRank(posts, {
+    scoreOf: (post) => scorePostMatch(post, normalized),
+    timestampOf: (post) => post.createdAt ?? post.id,
+  });
 }

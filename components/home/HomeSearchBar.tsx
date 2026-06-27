@@ -18,6 +18,7 @@ interface HomeSearchBarProps {
   autoFocus?: boolean;
   showButton?: boolean;
   onSearch?: (query: string) => void;
+  onQueryChange?: (query: string) => void;
   className?: string;
 }
 
@@ -27,6 +28,7 @@ export default function HomeSearchBar({
   autoFocus = false,
   showButton = true,
   onSearch,
+  onQueryChange,
   className = "",
 }: HomeSearchBarProps) {
   const router = useRouter();
@@ -85,7 +87,11 @@ export default function HomeSearchBar({
           ref={inputRef}
           type="search"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            const nextQuery = event.target.value;
+            setQuery(nextQuery);
+            onQueryChange?.(nextQuery);
+          }}
           onKeyDown={handleKeyDown}
           placeholder={SEARCH_PLACEHOLDER}
           autoFocus={autoFocus}

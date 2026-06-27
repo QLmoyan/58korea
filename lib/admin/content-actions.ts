@@ -125,10 +125,25 @@ export async function deleteTargetContent(
   const supabase = getSupabaseAdminClient();
 
   if (targetType === "post") {
-    const { error } = await supabase
+    const postId = Number(targetId);
+    const { data: post } = await supabase
       .from("posts")
-      .delete()
-      .eq("id", Number(targetId));
+      .select("linked_coupon_id")
+      .eq("id", postId)
+      .maybeSingle();
+
+    if (post?.linked_coupon_id) {
+      const { error: couponError } = await supabase.rpc(
+        "deactivate_or_delete_merchant_coupon",
+        { p_coupon_id: post.linked_coupon_id },
+      );
+
+      if (couponError) {
+        throw new Error(couponError.message);
+      }
+    }
+
+    const { error } = await supabase.from("posts").delete().eq("id", postId);
 
     if (error) {
       throw new Error(error.message);

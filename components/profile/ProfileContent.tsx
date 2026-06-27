@@ -1,16 +1,58 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import BottomNav from "@/components/home/BottomNav";
+import DesktopHomeSidebar from "@/components/home/DesktopHomeSidebar";
 import TopNav from "@/components/home/TopNav";
-import { getDisplayUsername } from "@/lib/auth/username";
+import ProfileGuestView from "@/components/profile/ProfileGuestView";
+import ProfileLoggedInView from "@/components/profile/ProfileLoggedInView";
+import AsyncStatePanel from "@/components/ui/AsyncStatePanel";
+import { LOADING_UI_DEADLINE_MS } from "@/lib/constants/network";
+import { buildLoginHref, buildRegisterHref } from "@/lib/auth/redirect";
+import { useLoadingDeadline } from "@/lib/hooks/use-loading-deadline";
 import { useAuthStore } from "@/lib/store/auth-store";
 
+function ProfileSavedToast() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    if (searchParams.get("saved") !== "1") {
+      return;
+    }
+
+    setToast("资料保存成功");
+    router.replace("/profile");
+
+    const timer = window.setTimeout(() => {
+      setToast("");
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [searchParams, router]);
+
+  if (!toast) {
+    return null;
+  }
+
+  return (
+    <p className="fixed top-20 left-1/2 z-50 -translate-x-1/2 rounded-full bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg">
+      {toast}
+    </p>
+  );
+}
+
 export default function ProfileContent() {
-  const { user, profile, loading, signOut } = useAuthStore();
+  const { user, loading, initError, retryInit, signOut } = useAuthStore();
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const loadingOverdue = useLoadingDeadline(loading, LOADING_UI_DEADLINE_MS);
+  const authError =
+    initError ??
+    (loadingOverdue ? "登录状态加载超时，请检查网络后重试" : null);
 
   async function handleSignOut() {
     setSubmitting(true);
@@ -20,106 +62,112 @@ export default function ProfileContent() {
       await signOut();
     } catch (signOutError) {
       setError(
-        signOutError instanceof Error ? signOutError.message : "退出失败，请稍后重试",
+        signOutError instanceof Error
+          ? signOutError.message
+          : "退出失败，请稍后重试",
       );
     } finally {
       setSubmitting(false);
     }
   }
 
-  const displayUsername = getDisplayUsername(user);
+  if (loading && !authError) {
+    return (
+      <>
+        <div className="relative mx-auto flex min-h-screen max-w-md items-center justify-center bg-zinc-50 pb-24 lg:hidden">
+          <AsyncStatePanel message="加载中..." />
+        </div>
+        <div className="hidden min-h-screen items-center justify-center bg-zinc-50 pl-[220px] lg:flex">
+          <AsyncStatePanel message="加载中..." />
+        </div>
+      </>
+    );
+  }
+
+  if (authError && !user) {
+    return (
+      <>
+        <div className="relative mx-auto flex min-h-screen max-w-md items-center justify-center bg-zinc-50 pb-24 lg:hidden">
+          <AsyncStatePanel
+            message={authError}
+            tone="error"
+            onRetry={retryInit}
+          />
+        </div>
+        <div className="hidden min-h-screen items-center justify-center bg-zinc-50 pl-[220px] lg:flex">
+          <AsyncStatePanel
+            message={authError}
+            tone="error"
+            onRetry={retryInit}
+          />
+        </div>
+      </>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <ProfileGuestView />
+        <div className="hidden min-h-screen bg-zinc-50 pl-[220px] lg:block">
+          <DesktopHomeSidebar />
+          <div className="flex min-h-screen items-center justify-center px-8">
+            <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-zinc-100">
+              <h1 className="text-lg font-semibold text-zinc-900">我的主页</h1>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">
+                登录后可管理个人资料，查看我的帖子、收藏和优惠券。
+              </p>
+              <div className="mt-6 flex flex-col gap-3">
+                <Link
+                  href={buildLoginHref("/profile")}
+                  className="rounded-full bg-gradient-to-r from-rose-500 to-orange-400 py-3 text-sm font-semibold text-white"
+                >
+                  登录
+                </Link>
+                <Link
+                  href={buildRegisterHref("/profile")}
+                  className="rounded-full bg-zinc-100 py-3 text-sm font-medium text-zinc-700"
+                >
+                  注册新账号
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
-    <div className="relative mx-auto min-h-screen max-w-md bg-zinc-50 pb-24">
-      <TopNav />
-      <main className="px-4 pt-20 pb-6">
-        {loading ? (
-          <div className="flex min-h-[50vh] items-center justify-center">
-            <p className="text-sm text-zinc-400">加载中...</p>
-          </div>
-        ) : user ? (
-          <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-100">
-            <div className="flex flex-col items-center text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-orange-300 text-xl font-bold text-white">
-                {(profile?.nickname ?? displayUsername ?? "我").slice(0, 1)}
-              </div>
-              <h1 className="mt-4 text-lg font-semibold text-zinc-900">
-                {profile?.nickname ?? "社区用户"}
-              </h1>
-              {displayUsername ? (
-                <p className="mt-1 text-sm text-zinc-500">账号：{displayUsername}</p>
-              ) : null}
-              <span className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600">
-                已登录
-              </span>
-            </div>
+    <>
+      <Suspense fallback={null}>
+        <ProfileSavedToast />
+      </Suspense>
 
-            {!profile ? (
-              <p className="mt-4 text-center text-xs text-zinc-400">
-                资料加载失败，请退出后重新登录
-              </p>
-            ) : (
-              <div className="mt-6 space-y-3 border-t border-zinc-100 pt-5">
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-zinc-500">昵称</span>
-                  <span className="font-medium text-zinc-800">
-                    {profile.nickname}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-zinc-500">账号</span>
-                  <span className="truncate font-medium text-zinc-800">
-                    {displayUsername || "—"}
-                  </span>
-                </div>
-              </div>
-            )}
+      <div className="relative mx-auto min-h-screen max-w-md bg-zinc-50 pb-24 lg:hidden">
+        <TopNav />
+        <main className="pt-14">
+          <ProfileLoggedInView
+            layout="mobile"
+            onSignOut={handleSignOut}
+            signingOut={submitting}
+            signOutError={error}
+          />
+        </main>
+        <BottomNav />
+      </div>
 
-            <button
-              type="button"
-              onClick={handleSignOut}
-              disabled={submitting}
-              className="mt-6 w-full rounded-full bg-zinc-100 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-200 disabled:opacity-60"
-            >
-              {submitting ? "退出中..." : "退出登录"}
-            </button>
-
-            {error ? (
-              <p className="mt-3 text-center text-xs text-rose-500">{error}</p>
-            ) : null}
-          </section>
-        ) : (
-          <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-100">
-            <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-2xl text-zinc-400">
-                🙂
-              </div>
-              <h1 className="mt-4 text-lg font-semibold text-zinc-900">
-                欢迎来到 58韩国
-              </h1>
-              <p className="mt-2 text-sm leading-6 text-zinc-500">
-                登录后可管理个人资料，后续还会支持更多社区功能。
-              </p>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              <Link
-                href="/login"
-                className="flex w-full items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-orange-400 py-3.5 text-sm font-semibold text-white shadow-lg shadow-rose-200"
-              >
-                登录
-              </Link>
-              <Link
-                href="/register"
-                className="flex w-full items-center justify-center rounded-full bg-zinc-100 py-3.5 text-sm font-medium text-zinc-700"
-              >
-                注册
-              </Link>
-            </div>
-          </section>
-        )}
-      </main>
-      <BottomNav />
-    </div>
+      <div className="hidden min-h-screen bg-zinc-50 lg:block">
+        <DesktopHomeSidebar />
+        <div className="pl-[220px]">
+          <ProfileLoggedInView
+            layout="desktop"
+            onSignOut={handleSignOut}
+            signingOut={submitting}
+            signOutError={error}
+          />
+        </div>
+      </div>
+    </>
   );
 }
