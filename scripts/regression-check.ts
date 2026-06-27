@@ -390,6 +390,26 @@ async function main() {
     );
   });
 
+  await check("1.6f loadPostImagesForPost 不污染 Feed imageHeight (静态)", async () => {
+    const source = readFileSync(
+      resolve(process.cwd(), "lib/store/post-store.tsx"),
+      "utf8",
+    );
+    const fnMatch = source.match(
+      /const loadPostImagesForPost = useCallback\(async[\s\S]*?\n  \}, \[\]\);/,
+    );
+    assert(fnMatch, "loadPostImagesForPost missing");
+    const fnBody = fnMatch[0];
+    assert(
+      !fnBody.includes("imageHeight: images[0]?.height"),
+      "loadPostImagesForPost must not overwrite post.imageHeight with post_images pixel height",
+    );
+    assert(
+      fnBody.includes("imageUrl: images[0]?.url"),
+      "loadPostImagesForPost should still update imageUrl",
+    );
+  });
+
   await check("1.7 前台管理员按钮 UI 对普通用户不可见 (静态)", async () => {
     const postDetail = readFileSync(
       resolve(process.cwd(), "components/posts/PostDetailContent.tsx"),

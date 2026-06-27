@@ -514,7 +514,6 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
                 ...post,
                 images,
                 imageUrl: images[0]?.url ?? post.imageUrl,
-                imageHeight: images[0]?.height ?? post.imageHeight,
               }
             : post,
         ),

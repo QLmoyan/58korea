@@ -16,8 +16,8 @@
   },
   "regression": {
     "status": "PASS",
-    "passed": 46,
-    "total": 46,
+    "passed": 47,
+    "total": 47,
     "lastVerified": "2026-06-17",
     "command": "npm run regression-check"
   },
@@ -332,6 +332,16 @@
     ]
   },
   "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "Feed 返回后图片高度修复",
+      "items": [
+        "loadPostImagesForPost 不再用 post_images.height 覆盖 post.imageHeight",
+        "regression 1.6f 防止 Feed 布局高度被详情页污染",
+        "build + regression 47/47 PASS"
+      ]
+    },
     {
       "version": "0.1.0",
       "date": "2026-06-17",

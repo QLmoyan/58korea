@@ -4,6 +4,12 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.1.0**（Late Beta / 早期生产）。
 
+## [0.1.0] Feed 返回后图片高度修复 — 2026-06-17
+
+- loadPostImagesForPost 不再用 post_images.height 覆盖 post.imageHeight
+- regression 1.6f 防止 Feed 布局高度被详情页污染
+- build + regression 47/47 PASS
+
 ## [0.1.0] 密码改密成功文案修正 — 2026-06-17
 
 - 改密成功提示对齐 session 行为：当前设备可继续，其他设备用新密码登录

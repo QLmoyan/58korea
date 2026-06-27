@@ -24,7 +24,7 @@
 - **Current Version**：`0.1.0`
 - **Next Version（目标）**：`0.2.0`
 - **Build**：PASS（2026-06-17）
-- **Regression**：PASS 46/46（2026-06-17）
+- **Regression**：PASS 47/47（2026-06-17）
 
 ## 5. Current Focus
 

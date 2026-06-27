@@ -12,7 +12,7 @@
 | **Next Version** | `0.2.0` |
 | **Development Stage** | Late Beta / 早期生产 |
 | **Build** | **PASS**（2026-06-17） |
-| **Regression** | **PASS** 46/46（2026-06-17） |
+| **Regression** | **PASS** 47/47（2026-06-17） |
 
 ## Current Focus
 
