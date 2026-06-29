@@ -1,4 +1,4 @@
-export type FeedChannel = "推荐" | "最新";
+export type FeedChannel = "推荐" | "附近" | "最新";
 
 export const POST_CATEGORIES = [
   "探店",
@@ -29,6 +29,9 @@ export function normalizePostCategory(value: string): PostCategory {
   return LEGACY_CATEGORY_ALIASES[value] ?? "其他";
 }
 
+import { postMatchesSelectedRegion } from "@/lib/feed/match-post-region";
+import type { SelectedRegion } from "@/lib/feed/regions";
+import { DEFAULT_SELECTED_REGION } from "@/lib/feed/regions";
 import type { RiskLevel } from "@/lib/moderation/constants";
 import { sortPostsWithMerchantsFirst } from "@/lib/merchant/sort-posts";
 
@@ -83,7 +86,7 @@ export interface Post {
   linkedCoupon?: PostLinkedCouponSummary | null;
 }
 
-export const channels: FeedChannel[] = ["推荐", "最新"];
+export const channels: FeedChannel[] = ["推荐", "附近", "最新"];
 
 export const categories: PostCategory[] = [...POST_CATEGORIES];
 
@@ -335,6 +338,7 @@ export function filterPosts(
   posts: Post[],
   channel: FeedChannel,
   category: PostCategory | null,
+  selectedRegion: SelectedRegion = DEFAULT_SELECTED_REGION,
 ): Post[] {
   let result = posts;
 
@@ -342,6 +346,17 @@ export function filterPosts(
     result = result.filter(
       (post) => normalizePostCategory(post.category) === category,
     );
+  }
+
+  if (channel === "附近") {
+    result = result.filter((post) =>
+      postMatchesSelectedRegion(post, selectedRegion),
+    );
+    return [...result].sort((left, right) => {
+      const leftTime = left.createdAt ? Date.parse(left.createdAt) : 0;
+      const rightTime = right.createdAt ? Date.parse(right.createdAt) : 0;
+      return rightTime - leftTime;
+    });
   }
 
   if (channel === "最新") {

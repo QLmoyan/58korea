@@ -679,18 +679,10 @@ async function main() {
     await service.auth.admin.deleteUser(otherUser.id);
   });
 
-  await check("1.6j Honest UI V2 — 无假关注/附近/距离 (静态)", async () => {
+  await check("1.6j Honest UI V2 — 无假关注/距离 (静态)", async () => {
     const postsData = readFileSync(
       resolve(process.cwd(), "lib/data/posts.ts"),
       "utf8",
-    );
-    assert(
-      postsData.includes('FeedChannel = "推荐" | "最新"'),
-      "FeedChannel must be 推荐 | 最新",
-    );
-    assert(
-      postsData.includes('["推荐", "最新"]'),
-      "channels must be 推荐 and 最新 only",
     );
     assert(
       !postsData.includes("post.following") && !postsData.includes("post.nearby"),
@@ -714,6 +706,10 @@ async function main() {
       !postCard.includes("post.distance"),
       "PostCard must not display post.distance",
     );
+    assert(
+      !/\d\s*m\b/.test(postCard) && !postCard.includes("km"),
+      "PostCard must not display m/km distance labels",
+    );
 
     const postStore = readFileSync(
       resolve(process.cwd(), "lib/store/post-store.tsx"),
@@ -722,6 +718,60 @@ async function main() {
     assert(
       !postStore.includes("randomItem("),
       "post-store must not assign random distance on publish",
+    );
+  });
+
+  await check("1.6q Nearby Lite V1 — 地区附近 Tab (静态)", async () => {
+    const postsData = readFileSync(
+      resolve(process.cwd(), "lib/data/posts.ts"),
+      "utf8",
+    );
+    assert(
+      postsData.includes('FeedChannel = "推荐" | "附近" | "最新"'),
+      "FeedChannel must include 推荐 / 附近 / 最新",
+    );
+    assert(
+      postsData.includes('["推荐", "附近", "最新"]'),
+      "channels must include 附近 tab",
+    );
+    assert(
+      postsData.includes("postMatchesSelectedRegion"),
+      "filterPosts must use region matching for 附近",
+    );
+    assert(
+      !postsData.includes("post.distance"),
+      "nearby filter must not use post.distance",
+    );
+
+    const regions = readFileSync(
+      resolve(process.cwd(), "lib/feed/regions.ts"),
+      "utf8",
+    );
+    assert(
+      regions.includes('hanquan:selected-region'),
+      "selected region must use hanquan localStorage key",
+    );
+    assert(
+      !regions.includes("58korea"),
+      "selected region must not use 58korea key",
+    );
+
+    const postFeed = readFileSync(
+      resolve(process.cwd(), "components/home/PostFeed.tsx"),
+      "utf8",
+    );
+    assert(
+      postFeed.includes("当前地区还没有帖子"),
+      "nearby empty state must be honest",
+    );
+
+    const homeFeed = readFileSync(
+      resolve(process.cwd(), "components/home/HomeFeed.tsx"),
+      "utf8",
+    );
+    assert(
+      homeFeed.includes("RegionSelector"),
+      "HomeFeed must render region selector for nearby tab",
     );
   });
 

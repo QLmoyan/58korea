@@ -2,7 +2,14 @@
 
 > 自动生成文件。请勿手改。更新 `docs/project-state.json` 后运行 `npm run sync-docs`。
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.2.0**（v0.2.0 / 早期生产）。
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.2.1**（v0.2.1 / 早期生产）。
+
+## [0.2.1] Nearby Lite V1 — 2026-06-17
+
+- 首页 Feed 恢复「推荐 / 附近 / 最新」；附近按 post.location 匹配用户选择地区
+- 地区选择器 + localStorage hanquan:selected-region，默认首尔
+- 发帖可选地区/位置文案；不显示 m/km 假距离、不接 GPS
+- regression 1.6q；build/regression PASS
 
 ## [0.2.0] v0.2.0 Release — 2026-06-17
 

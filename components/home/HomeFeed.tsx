@@ -7,23 +7,26 @@ import {
   type PostCategory,
 } from "@/lib/data/posts";
 import { FEED_UI_DEADLINE_MS } from "@/lib/constants/network";
+import { useSelectedRegion } from "@/lib/feed/use-selected-region";
 import { useLoadingDeadline } from "@/lib/hooks/use-loading-deadline";
 import { usePostStore } from "@/lib/store/post-store";
 import CategoryScroll from "./CategoryScroll";
 import ChannelTabs from "./ChannelTabs";
 import HomeSearchBar from "./HomeSearchBar";
 import PostFeed from "./PostFeed";
+import RegionSelector from "./RegionSelector";
 
 export default function HomeFeed() {
   const { posts, hydrated, feedError, reloadFeed } = usePostStore();
   const [channel, setChannel] = useState<FeedChannel>("推荐");
   const [category, setCategory] = useState<PostCategory | null>(null);
+  const { region, setSelectedRegion } = useSelectedRegion();
   const loading = !hydrated;
   const loadingOverdue = useLoadingDeadline(loading, FEED_UI_DEADLINE_MS);
 
   const filteredPosts = useMemo(
-    () => filterPosts(posts, channel, category),
-    [posts, channel, category],
+    () => filterPosts(posts, channel, category, region),
+    [posts, channel, category, region],
   );
 
   const displayError =
@@ -44,11 +47,15 @@ export default function HomeFeed() {
         <div className="border-b border-zinc-100 lg:px-4 lg:py-2">
           <ChannelTabs active={channel} onChange={handleChannelChange} />
         </div>
+        {channel === "附近" ? (
+          <RegionSelector active={region} onChange={setSelectedRegion} />
+        ) : null}
         <CategoryScroll active={category} onChange={setCategory} />
       </header>
       <PostFeed
         posts={filteredPosts}
         channel={channel}
+        selectedRegion={region}
         loading={loading && !displayError}
         error={displayError}
         onRetry={reloadFeed}

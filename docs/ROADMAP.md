@@ -2,7 +2,7 @@
 
 > 自动生成文件。请勿手改。更新 `docs/project-state.json` 后运行 `npm run sync-docs`。
 
-最后更新：**2026-06-17** · 当前版本 `0.2.0` · 下一目标 `0.3.0`
+最后更新：**2026-06-17** · 当前版本 `0.2.1` · 下一目标 `0.3.0`
 
 ## 已完成（近期收口）
 
@@ -22,6 +22,7 @@
 - ✅ **Types Sync V2** (`types-sync-v2`)
 - ✅ **Global Error Pages** (`global-error-pages`)
 - ✅ **v0.2.0 Release Check** (`v0.2.0-release-check`)
+- ✅ **Nearby Lite V1** (`nearby-lite-v1`)
 
 ## P1 — 优先（信任与账号基础）
 

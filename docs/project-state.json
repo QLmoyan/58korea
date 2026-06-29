@@ -1,7 +1,7 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "nextVersion": "0.3.0",
-  "developmentStage": "v0.2.0 / 早期生产",
+  "developmentStage": "v0.2.1 / 早期生产",
   "productName": "韩圈",
   "productTagline": "韩国华人生活社区",
   "lastUpdated": "2026-06-17",
@@ -15,8 +15,8 @@
   },
   "regression": {
     "status": "PASS",
-    "passed": 60,
-    "total": 60,
+    "passed": 61,
+    "total": 61,
     "lastVerified": "2026-06-17",
     "command": "npm run regression-check"
   },
@@ -145,6 +145,11 @@
       "id": "v0.2.0-release-check",
       "name": "v0.2.0 Release Check",
       "summary": "build + regression 60/60 PASS；无用户可见旧品牌/假关注/裸 login；package.json 对齐 0.2.0"
+    },
+    {
+      "id": "nearby-lite-v1",
+      "name": "Nearby Lite V1",
+      "summary": "恢复附近 Tab：按用户选择地区匹配 post.location；hanquan:selected-region；无 GPS/假距离"
     }
   ],
   "pendingV2": [],
@@ -212,7 +217,8 @@
       "login-redirect-v2",
       "types-sync-v2",
       "global-error-pages",
-      "v0.2.0-release-check"
+      "v0.2.0-release-check",
+      "nearby-lite-v1"
     ],
     "deferred": [
       {
@@ -260,6 +266,17 @@
     ]
   },
   "changelog": [
+    {
+      "version": "0.2.1",
+      "date": "2026-06-17",
+      "title": "Nearby Lite V1",
+      "items": [
+        "首页 Feed 恢复「推荐 / 附近 / 最新」；附近按 post.location 匹配用户选择地区",
+        "地区选择器 + localStorage hanquan:selected-region，默认首尔",
+        "发帖可选地区/位置文案；不显示 m/km 假距离、不接 GPS",
+        "regression 1.6q；build/regression PASS"
+      ]
+    },
     {
       "version": "0.2.0",
       "date": "2026-06-17",

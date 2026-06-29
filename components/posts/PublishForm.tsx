@@ -60,6 +60,7 @@ export default function PublishForm() {
   const [content, setContent] = useState("");
   const [categorySelection, setCategorySelection] =
     useState<PublishCategorySelection>(AI_AUTO_CATEGORY);
+  const [location, setLocation] = useState("");
   const [images, setImages] = useState<SelectedImage[]>([]);
   const [couponBinding, setCouponBinding] = useState<PostCouponBindingInput>({
     mode: "none",
@@ -215,6 +216,7 @@ export default function PublishForm() {
         title,
         content,
         categorySelection,
+        location,
         images: images.map((image) => image.file),
         couponBinding: showCouponSettings ? couponBinding : { mode: "none" },
       });
@@ -321,6 +323,25 @@ export default function PublishForm() {
               disabled={submitting}
               className="w-full resize-none rounded-xl bg-zinc-50 px-3 py-3 text-base leading-6 text-zinc-900 outline-none ring-1 ring-zinc-200 placeholder:text-zinc-400 focus:ring-rose-300 disabled:opacity-60"
             />
+          </section>
+
+          <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-100">
+            <label className="mb-2 block text-sm font-medium text-zinc-700">
+              地区/位置
+            </label>
+            <input
+              value={location}
+              onChange={(event) => {
+                setLocation(event.target.value);
+                setError("");
+              }}
+              placeholder="例如：首尔 建大入口 / 釜山 西面"
+              disabled={submitting}
+              className="w-full rounded-xl bg-zinc-50 px-3 py-3 text-base text-zinc-900 outline-none ring-1 ring-zinc-200 placeholder:text-zinc-400 focus:ring-rose-300 disabled:opacity-60"
+            />
+            <p className="mt-2 text-xs leading-5 text-zinc-400">
+              填写城市或区域，方便同城用户在「附近」Tab 找到你的帖子
+            </p>
           </section>
 
           <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-100">

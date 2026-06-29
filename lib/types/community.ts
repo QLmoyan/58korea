@@ -58,6 +58,7 @@ export interface CreatePostInput {
   title: string;
   content: string;
   categorySelection: PublishCategorySelection;
+  location?: string;
   images?: File[];
   couponBinding?: PostCouponBindingInput;
 }

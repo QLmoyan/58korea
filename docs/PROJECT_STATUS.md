@@ -8,11 +8,11 @@
 
 | 项 | 值 |
 |---|---|
-| **Current Version** | `0.2.0` |
+| **Current Version** | `0.2.1` |
 | **Next Version** | `0.3.0` |
-| **Development Stage** | v0.2.0 / 早期生产 |
+| **Development Stage** | v0.2.1 / 早期生产 |
 | **Build** | **PASS**（2026-06-17） |
-| **Regression** | **PASS** 60/60（2026-06-17） |
+| **Regression** | **PASS** 61/61（2026-06-17） |
 
 ## Current Focus
 
@@ -52,6 +52,7 @@
 - **Types Sync V2** (`types-sync-v2`) — database.types.ts 补齐 admin_users；移除 as never 绕过；notifications/square_banners 与 schema 对齐
 - **Global Error Pages** (`global-error-pages`) — 自定义 not-found / error / global-error；韩圈风格文案，不暴露技术细节
 - **v0.2.0 Release Check** (`v0.2.0-release-check`) — build + regression 60/60 PASS；无用户可见旧品牌/假关注/裸 login；package.json 对齐 0.2.0
+- **Nearby Lite V1** (`nearby-lite-v1`) — 恢复附近 Tab：按用户选择地区匹配 post.location；hanquan:selected-region；无 GPS/假距离
 
 ## 待优化模块（V2）
 

@@ -10,6 +10,7 @@ import {
 } from "react";
 import type { Post, PostImage } from "@/lib/data/posts";
 import { resolveAuthorNameFromAuth } from "@/lib/auth/author";
+import { loadSelectedRegion } from "@/lib/feed/selected-region";
 import { sortPostsWithMerchantsFirst } from "@/lib/merchant/sort-posts";
 import { useAuthStore } from "@/lib/store/auth-store";
 import {
@@ -389,11 +390,14 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
 
   const addPost = useCallback(async (input: CreatePostInput) => {
     const author = resolveAuthorNameFromAuth(user, profile);
+    const location =
+      input.location?.trim() || loadSelectedRegion();
+
     const result = await publishPostAction({
       title: input.title.trim(),
       content: input.content.trim(),
       author,
-      location: "首尔",
+      location,
       distance: DEFAULT_POST_DISTANCE,
       categorySelection: input.categorySelection,
       nearby: false,
