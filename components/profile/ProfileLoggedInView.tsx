@@ -34,6 +34,7 @@ export default function ProfileLoggedInView({
   const {
     displayName,
     displayBio,
+    displayUsername,
     isMerchant,
     merchantDetails,
     merchantDetailsLoading,
@@ -135,6 +136,7 @@ export default function ProfileLoggedInView({
   const header = (
     <ProfileHeader
       displayName={displayName}
+      displayUsername={displayUsername}
       bio={displayBio}
       avatarLabel={displayName}
       avatarUrl={avatarUrl}
@@ -167,8 +169,8 @@ export default function ProfileLoggedInView({
 
   if (layout === "desktop") {
     return (
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-8 px-8 py-8">
-        <aside className="w-80 shrink-0">
+      <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-5 py-6 lg:px-8">
+        <aside className="w-full max-w-sm shrink-0 lg:w-80">
           {header}
           {stats}
         </aside>

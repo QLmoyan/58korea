@@ -40,7 +40,7 @@ export async function generateMetadata({
   } catch {
     return buildShareMetadata({
       title: `用户主页 - ${SITE_NAME}`,
-      description: "查看 58韩国 用户主页",
+      description: `查看 ${SITE_NAME} 用户主页`,
       path: buildProfileSharePath(normalized),
     });
   }

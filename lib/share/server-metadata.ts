@@ -78,7 +78,7 @@ export async function fetchPublicProfileForMetadata(username: string) {
   const description =
     merchant?.description?.trim() ||
     profile?.bio?.trim() ||
-    `${displayName} 的 58韩国主页`;
+    `${displayName} 的 韩圈主页`;
   const isMerchant = Boolean(merchant?.is_active);
 
   return {

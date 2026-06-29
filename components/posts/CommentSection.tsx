@@ -25,6 +25,7 @@ import {
 import { isMerchantAuthorComment } from "@/lib/merchant/identify";
 import { buildFavoriteLoginHref } from "@/lib/engagement/pending-favorite";
 import { buildPostSharePath } from "@/lib/share/paths";
+import { SITE_NAME } from "@/lib/share/constants";
 
 interface CommentSectionProps {
   postId: number;
@@ -246,7 +247,7 @@ function CommentItem({
 
 export default function CommentSection({
   postId,
-  postTitle = "58韩国帖子",
+  postTitle = `${SITE_NAME}帖子`,
   postAuthor = "",
   adminCapabilities = null,
   postLikes = 0,

@@ -9,7 +9,7 @@ interface ArticleDetailViewProps {
 }
 
 export default function ArticleDetailView({ article }: ArticleDetailViewProps) {
-  const authorLabel = article.author?.nickname ?? "58韩国";
+  const authorLabel = article.author?.nickname ?? "韩圈";
   const authorHref = article.author?.username
     ? `/profile/${article.author.username}`
     : null;
@@ -19,7 +19,7 @@ export default function ArticleDetailView({ article }: ArticleDetailViewProps) {
 
   return (
     <article className="bg-white">
-      <div className="border-b border-zinc-100/40 px-4 py-4 lg:px-0">
+      <div className="border-b border-zinc-100/40 px-3 py-4 lg:px-0">
         <Link
           href={`/channels/${article.channel.slug}`}
           className="text-xs font-medium text-rose-500"
@@ -54,7 +54,7 @@ export default function ArticleDetailView({ article }: ArticleDetailViewProps) {
         </div>
       ) : null}
 
-      <div className="px-4 py-6 lg:px-0">
+      <div className="px-3 py-6 lg:px-0">
         <MarkdownContent content={article.content_markdown} />
       </div>
     </article>

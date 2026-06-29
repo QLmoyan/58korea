@@ -21,9 +21,9 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
   const content = (
     <div className="bg-white">
-      <div className="border-b border-zinc-100/40 px-4 py-5 lg:px-0">
+      <div className="border-b border-zinc-100/40 px-3 py-5 lg:px-0">
         <Link href="/square" className="text-xs font-medium text-rose-500">
-          返回广场
+          返回发现
         </Link>
         <h1 className="mt-3 text-xl font-semibold text-zinc-900">{channel.name}</h1>
         {channel.description ? (
@@ -31,7 +31,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
         ) : null}
       </div>
 
-      <div className="px-4 lg:px-0">
+      <div className="px-3 lg:px-0">
         {articles.length > 0 ? (
           articles.map((article) => (
             <ChannelArticleListItem key={article.id} article={article} />
@@ -47,7 +47,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
   return (
     <>
-      <div className="relative mx-auto min-h-screen max-w-md bg-white pb-24 lg:hidden">
+      <div className="relative mx-auto min-h-screen w-full max-w-md bg-white pb-24 lg:hidden">
         <main>{content}</main>
         <BottomNav />
       </div>

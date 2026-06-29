@@ -16,17 +16,17 @@ function run() {
   );
 
   const metadata = buildShareMetadata({
-    title: "测试帖子 - 58韩国",
+    title: "测试帖子 - 韩圈",
     description: "这是一段测试描述",
     path: "/posts/603",
   });
 
   assert(
-    metadata.openGraph?.title === "测试帖子 - 58韩国",
+    metadata.openGraph?.title === "测试帖子 - 韩圈",
     "openGraph title",
   );
   assert(
-    metadata.twitter?.title === "测试帖子 - 58韩国",
+    metadata.twitter?.title === "测试帖子 - 韩圈",
     "twitter title",
   );
   assert(Boolean(metadata.openGraph?.images), "openGraph images");

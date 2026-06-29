@@ -129,7 +129,7 @@ function SearchPageInner() {
   return (
     <div className="mx-auto min-h-screen w-full max-w-md bg-zinc-50 pb-8 lg:max-w-[920px]">
       <header className="sticky top-0 z-50 border-b border-zinc-100 bg-white/95 backdrop-blur-md">
-        <div className="flex items-center gap-3 px-4 py-3 lg:px-0">
+        <div className="flex items-center gap-3 px-3 py-3 lg:px-0">
           <Link
             href="/"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-700 transition-colors hover:bg-zinc-100"

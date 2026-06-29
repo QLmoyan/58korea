@@ -137,7 +137,7 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
     (itemsLoadingOverdue ? "加载消息超时，请检查网络后重试" : null);
 
   return (
-    <div className="min-h-[60vh] rounded-2xl bg-white lg:shadow-sm lg:ring-1 lg:ring-zinc-100">
+    <div className="flex w-full min-h-screen flex-col bg-white lg:min-h-[60vh] lg:rounded-2xl lg:shadow-sm lg:ring-1 lg:ring-zinc-100">
       <div className="border-b border-zinc-100 px-4 py-4 lg:px-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -212,8 +212,10 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
 export default function MessageCenterContent() {
   return (
     <>
-      <div className="relative mx-auto min-h-screen max-w-md bg-zinc-50 pb-24 lg:hidden">
-        <MessagePanel showBackButton />
+      <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col bg-zinc-50 pb-24 lg:hidden">
+        <main className="w-full flex-1">
+          <MessagePanel showBackButton />
+        </main>
         <BottomNav />
       </div>
 

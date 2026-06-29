@@ -1,6 +1,5 @@
 import Link from "next/link";
 import BottomNav from "@/components/home/BottomNav";
-import TopNav from "@/components/home/TopNav";
 import { buildLoginHref, buildRegisterHref } from "@/lib/auth/redirect";
 
 export default function ProfileGuestView() {
@@ -8,9 +7,8 @@ export default function ProfileGuestView() {
   const registerHref = buildRegisterHref("/profile");
 
   return (
-    <div className="relative mx-auto min-h-screen max-w-md bg-zinc-50 pb-24 lg:hidden">
-      <TopNav />
-      <main className="px-4 pt-20 pb-6">
+    <div className="relative mx-auto min-h-screen w-full max-w-lg bg-zinc-50 pb-24 lg:hidden">
+      <main className="px-3 pt-4 pb-6">
         <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-100">
           <div className="text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-2xl text-zinc-400">

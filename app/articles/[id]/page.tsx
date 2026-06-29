@@ -19,7 +19,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   const content = (
     <div>
-      <div className="border-b border-zinc-100/40 px-4 py-3 lg:px-0">
+      <div className="border-b border-zinc-100/40 px-3 py-3 lg:px-0">
         <Link href={`/channels/${article.channel.slug}`} className="text-xs text-zinc-500">
           ← 返回 {article.channel.name}
         </Link>
@@ -30,7 +30,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   return (
     <>
-      <div className="relative mx-auto min-h-screen max-w-md bg-white pb-24 lg:hidden">
+      <div className="relative mx-auto min-h-screen w-full max-w-md bg-white pb-24 lg:hidden">
         <main>{content}</main>
         <BottomNav />
       </div>

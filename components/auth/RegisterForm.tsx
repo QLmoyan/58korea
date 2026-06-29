@@ -62,10 +62,10 @@ export default function RegisterForm() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-zinc-50 pb-32 pb-safe">
+    <div className="mx-auto min-h-screen w-full max-w-md bg-zinc-50 pb-32 pb-safe">
       <PageHeader title="注册" backHref="/profile" />
 
-      <main className="px-4 pt-20">
+      <main className="px-3 pt-20">
         <form id="register-form" onSubmit={handleSubmit} className="space-y-5">
           <section className="space-y-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-100">
             <AuthField
@@ -136,7 +136,7 @@ export default function RegisterForm() {
       </main>
 
       <div className="fixed right-0 bottom-0 left-0 z-40 border-t border-zinc-100 bg-white/95 backdrop-blur-md pb-safe">
-        <div className="mx-auto max-w-md px-4 py-3">
+        <div className="mx-auto w-full max-w-md px-3 py-3">
           <button
             type="submit"
             form="register-form"

@@ -24,6 +24,9 @@ function parseAllowedDevOrigins() {
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: parseAllowedDevOrigins(),
+  devIndicators: {
+    position: "top-left",
+  },
   images: {
     remotePatterns: [
       {

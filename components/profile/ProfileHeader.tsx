@@ -7,6 +7,7 @@ import type { MerchantProfile } from "@/lib/types/merchant";
 
 interface ProfileHeaderProps {
   displayName: string;
+  displayUsername: string;
   bio: string;
   avatarLabel: string;
   avatarUrl?: string | null;
@@ -28,7 +29,7 @@ function MerchantInfoItem({
   value: string | null | undefined;
 }) {
   return (
-    <div>
+    <div className="text-center">
       <dt className="text-xs text-zinc-400">{label}</dt>
       <dd className="mt-0.5 text-sm text-zinc-600">{value?.trim() || "未填写"}</dd>
     </div>
@@ -37,6 +38,7 @@ function MerchantInfoItem({
 
 export default function ProfileHeader({
   displayName,
+  displayUsername,
   bio,
   avatarLabel,
   avatarUrl,
@@ -73,17 +75,55 @@ export default function ProfileHeader({
     <section
       className={
         isDesktop
-          ? "rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-100"
-          : "border-b border-zinc-100 bg-white px-4 pb-5 pt-2"
+          ? "relative rounded-2xl bg-white px-5 py-6 text-center shadow-sm ring-1 ring-zinc-100"
+          : "relative border-b border-zinc-100 bg-white px-3 pb-5 pt-3 text-center"
       }
     >
-      <div className="flex items-start gap-4">
+      <div className="absolute top-3 right-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onEditProfile}
+          className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+        >
+          编辑资料
+        </button>
+
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 transition-colors hover:bg-zinc-100"
+            aria-label="设置"
+            aria-expanded={menuOpen}
+          >
+            <SettingsIcon />
+          </button>
+
+          {menuOpen ? (
+            <div className="absolute top-9 right-0 z-20 min-w-[120px] overflow-hidden rounded-xl border border-zinc-100 bg-white py-1 text-left shadow-lg">
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onSignOut();
+                }}
+                disabled={signingOut}
+                className="block w-full px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-60"
+              >
+                {signingOut ? "退出中..." : "退出登录"}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mx-auto flex max-w-md flex-col items-center">
         {avatarUrl ? (
           <div
             className={
               showMerchantInfo
-                ? "relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-amber-50 ring-1 ring-amber-200/70 lg:h-20 lg:w-20"
-                : "relative h-16 w-16 shrink-0 overflow-hidden rounded-full ring-1 ring-zinc-200 lg:h-20 lg:w-20"
+                ? "relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-amber-50 ring-1 ring-amber-200/70 lg:h-24 lg:w-24"
+                : "relative h-20 w-20 shrink-0 overflow-hidden rounded-full ring-1 ring-zinc-200 lg:h-24 lg:w-24"
             }
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -94,88 +134,46 @@ export default function ProfileHeader({
             />
           </div>
         ) : (
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-orange-300 text-xl font-bold text-white lg:h-20 lg:w-20 lg:text-2xl">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-orange-300 text-2xl font-bold text-white lg:h-24 lg:w-24 lg:text-3xl">
             {avatarLabel.slice(0, 1)}
           </div>
         )}
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="truncate text-lg font-bold text-zinc-900 lg:text-xl">
-                  {displayName}
-                </h1>
-                {showMerchantInfo ? <MerchantVerifiedBadge size="sm" /> : null}
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                onClick={onEditProfile}
-                className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
-              >
-                编辑资料
-              </button>
-
-              <div className="relative" ref={menuRef}>
-                <button
-                  type="button"
-                  onClick={() => setMenuOpen((open) => !open)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 transition-colors hover:bg-zinc-100"
-                  aria-label="设置"
-                  aria-expanded={menuOpen}
-                >
-                  <SettingsIcon />
-                </button>
-
-                {menuOpen ? (
-                  <div className="absolute top-9 right-0 z-20 min-w-[120px] overflow-hidden rounded-xl border border-zinc-100 bg-white py-1 shadow-lg">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onSignOut();
-                      }}
-                      disabled={signingOut}
-                      className="block w-full px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-60"
-                    >
-                      {signingOut ? "退出中..." : "退出登录"}
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <p className="mt-3 text-sm leading-6 text-zinc-500">
-            {bio || "还没有简介"}
-          </p>
-
-          {showMerchantInfo ? (
-            <div className="mt-4 space-y-4">
-              {merchantDetailsLoading ? (
-                <p className="text-xs text-zinc-400">商家信息加载中...</p>
-              ) : (
-                <dl className="space-y-2">
-                  <MerchantInfoItem label="地址" value={merchantDetails?.address} />
-                  <MerchantInfoItem
-                    label="营业时间"
-                    value={merchantDetails?.businessHours}
-                  />
-                  <MerchantInfoItem label="电话" value={merchantDetails?.phone} />
-                </dl>
-              )}
-
-              <MerchantCouponRedeemForm />
-            </div>
-          ) : null}
-
-          {signOutError ? (
-            <p className="mt-2 text-xs text-rose-500">{signOutError}</p>
-          ) : null}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <h1 className="text-xl font-bold text-zinc-900 lg:text-2xl">
+            {displayName}
+          </h1>
+          {showMerchantInfo ? <MerchantVerifiedBadge size="sm" /> : null}
         </div>
+
+        <p className="mt-1.5 text-sm text-zinc-400">@{displayUsername}</p>
+
+        <p className="mt-3 max-w-sm text-sm leading-6 text-zinc-500">
+          {bio || "还没有简介"}
+        </p>
+
+        {showMerchantInfo ? (
+          <div className="mt-5 w-full max-w-sm space-y-4">
+            {merchantDetailsLoading ? (
+              <p className="text-xs text-zinc-400">商家信息加载中...</p>
+            ) : (
+              <dl className="space-y-3">
+                <MerchantInfoItem label="地址" value={merchantDetails?.address} />
+                <MerchantInfoItem
+                  label="营业时间"
+                  value={merchantDetails?.businessHours}
+                />
+                <MerchantInfoItem label="电话" value={merchantDetails?.phone} />
+              </dl>
+            )}
+
+            <MerchantCouponRedeemForm />
+          </div>
+        ) : null}
+
+        {signOutError ? (
+          <p className="mt-3 text-xs text-rose-500">{signOutError}</p>
+        ) : null}
       </div>
     </section>
   );

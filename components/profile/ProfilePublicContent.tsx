@@ -2,7 +2,6 @@
 
 import BottomNav from "@/components/home/BottomNav";
 import DesktopHomeSidebar from "@/components/home/DesktopHomeSidebar";
-import TopNav from "@/components/home/TopNav";
 import ProfilePublicView from "@/components/profile/ProfilePublicView";
 
 interface ProfilePublicContentProps {
@@ -14,9 +13,8 @@ export default function ProfilePublicContent({
 }: ProfilePublicContentProps) {
   return (
     <>
-      <div className="relative mx-auto min-h-screen max-w-md bg-zinc-50 pb-24 lg:hidden">
-        <TopNav />
-        <main className="pt-14">
+      <div className="relative mx-auto min-h-screen w-full max-w-lg bg-zinc-50 pb-24 lg:hidden">
+        <main>
           <ProfilePublicView username={username} layout="mobile" />
         </main>
         <BottomNav />

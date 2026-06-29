@@ -21,7 +21,7 @@ export async function generateMetadata({
   if (!Number.isFinite(postId)) {
     return buildShareMetadata({
       title: `帖子 - ${SITE_NAME}`,
-      description: "查看 58韩国 社区帖子",
+      description: `查看 ${SITE_NAME} 社区帖子`,
       path: `/posts/${id}`,
     });
   }
@@ -45,7 +45,7 @@ export async function generateMetadata({
   } catch {
     return buildShareMetadata({
       title: `帖子 - ${SITE_NAME}`,
-      description: "查看 58韩国 社区帖子",
+      description: `查看 ${SITE_NAME} 社区帖子`,
       path: buildPostSharePath(postId),
     });
   }

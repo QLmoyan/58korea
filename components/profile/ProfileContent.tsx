@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import BottomNav from "@/components/home/BottomNav";
 import DesktopHomeSidebar from "@/components/home/DesktopHomeSidebar";
-import TopNav from "@/components/home/TopNav";
 import ProfileGuestView from "@/components/profile/ProfileGuestView";
 import ProfileLoggedInView from "@/components/profile/ProfileLoggedInView";
 import AsyncStatePanel from "@/components/ui/AsyncStatePanel";
@@ -74,7 +73,7 @@ export default function ProfileContent() {
   if (loading && !authError) {
     return (
       <>
-        <div className="relative mx-auto flex min-h-screen max-w-md items-center justify-center bg-zinc-50 pb-24 lg:hidden">
+        <div className="relative mx-auto flex min-h-screen w-full max-w-md items-center justify-center bg-zinc-50 pb-24 lg:hidden">
           <AsyncStatePanel message="加载中..." />
         </div>
         <div className="hidden min-h-screen items-center justify-center bg-zinc-50 pl-[220px] lg:flex">
@@ -87,7 +86,7 @@ export default function ProfileContent() {
   if (authError && !user) {
     return (
       <>
-        <div className="relative mx-auto flex min-h-screen max-w-md items-center justify-center bg-zinc-50 pb-24 lg:hidden">
+        <div className="relative mx-auto flex min-h-screen w-full max-w-md items-center justify-center bg-zinc-50 pb-24 lg:hidden">
           <AsyncStatePanel
             message={authError}
             tone="error"
@@ -144,9 +143,8 @@ export default function ProfileContent() {
         <ProfileSavedToast />
       </Suspense>
 
-      <div className="relative mx-auto min-h-screen max-w-md bg-zinc-50 pb-24 lg:hidden">
-        <TopNav />
-        <main className="pt-14">
+      <div className="relative mx-auto min-h-screen w-full max-w-lg bg-zinc-50 pb-24 lg:hidden">
+        <main>
           <ProfileLoggedInView
             layout="mobile"
             onSignOut={handleSignOut}

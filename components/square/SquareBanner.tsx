@@ -39,7 +39,7 @@ export default function SquareBanner({ banners }: SquareBannerProps) {
   const external = isExternalSquareBanner(activeBanner);
 
   return (
-    <section className="px-4 pt-3 lg:px-0">
+    <section className="px-3 pt-3 lg:px-0">
       <div className="relative overflow-hidden rounded-2xl bg-zinc-900 shadow-sm ring-1 ring-zinc-200/80">
         <div
           className="flex transition-transform duration-500 ease-out"

@@ -7,7 +7,7 @@ import { useNotificationUnreadCounts } from "@/lib/messages/use-notification-unr
 
 const navItems = [
   { label: "首页", href: "/", icon: HomeIcon },
-  { label: "广场", href: "/square", icon: SquareIcon },
+  { label: "发现", href: "/square", icon: SquareIcon },
   { label: "发布", href: "/publish", icon: PlusIcon, highlight: true },
   { label: "消息", href: "/messages", icon: ChatIcon },
   { label: "我的", href: "/profile", icon: UserIcon },

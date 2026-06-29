@@ -18,7 +18,7 @@ export default function ProfileStats({
       className={
         isDesktop
           ? "mt-4 grid grid-cols-3 gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-100"
-          : "grid grid-cols-3 gap-2 border-b border-zinc-100 bg-white px-4 py-4"
+          : "grid grid-cols-3 gap-2 border-b border-zinc-100 bg-white px-3 py-4"
       }
     >
       <StatItem label="帖子" value={postCount} />

@@ -3,7 +3,7 @@ import { MESSAGE_LOGIN_PROMPT } from "@/lib/messages/constants";
 
 export default function MessageLoginPrompt() {
   return (
-    <section className="flex flex-col items-center justify-center px-6 py-20 text-center">
+    <section className="flex w-full flex-col items-center justify-center px-6 py-20 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-2xl">
         💬
       </div>

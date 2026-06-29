@@ -46,7 +46,7 @@ export default function MerchantCouponRedeemForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-4 space-y-3 rounded-2xl border border-zinc-100 bg-zinc-50 p-4"
+      className="mb-0 w-full space-y-3 rounded-2xl border border-zinc-100 bg-zinc-50 p-4 text-left"
     >
       <div>
         <h3 className="text-sm font-semibold text-zinc-900">核销优惠券</h3>

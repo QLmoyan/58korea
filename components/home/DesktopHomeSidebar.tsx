@@ -11,7 +11,7 @@ import { useAuthStore } from "@/lib/store/auth-store";
 const mainNavItems = [
   { label: "首页", href: "/", icon: HomeIcon },
   { label: "发布", href: "/publish", icon: PlusIcon },
-  { label: "广场", href: "/square", icon: SquareIcon },
+  { label: "发现", href: "/square", icon: SquareIcon },
   { label: "消息", href: "/messages", icon: ChatIcon },
   { label: "我的", href: "/profile", icon: UserIcon },
 ];
@@ -56,7 +56,7 @@ export default function DesktopHomeSidebar() {
     <aside className="fixed top-0 left-0 z-40 flex h-screen w-[220px] flex-col border-r border-zinc-100 bg-white px-4 py-6">
       <Link href="/" className="mb-8 px-2">
         <span className="bg-gradient-to-r from-rose-500 to-orange-400 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
-          58韩国
+          韩圈
         </span>
       </Link>
 

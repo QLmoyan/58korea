@@ -8,7 +8,7 @@ interface ChannelModuleCardProps {
 
 export default function ChannelModuleCard({ channel }: ChannelModuleCardProps) {
   return (
-    <section className="border-b border-zinc-100/40 px-4 py-5 last:border-b-0 lg:px-0">
+    <section className="border-b border-zinc-100/40 px-3 py-5 last:border-b-0 lg:px-0">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <Link
