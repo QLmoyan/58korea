@@ -1,16 +1,20 @@
 import SquareBanner from "@/components/square/SquareBanner";
 import ChannelModuleCard from "@/components/channels/ChannelModuleCard";
-import { SQUARE_BANNERS } from "@/lib/square/banners";
+import type { SquareBannerItem } from "@/lib/square/banners";
 import type { ChannelWithArticles } from "@/lib/types/channel-articles";
 
 interface ChannelSquareContentProps {
   modules: ChannelWithArticles[];
+  banners: SquareBannerItem[];
 }
 
-export default function ChannelSquareContent({ modules }: ChannelSquareContentProps) {
+export default function ChannelSquareContent({
+  modules,
+  banners,
+}: ChannelSquareContentProps) {
   return (
     <>
-      <SquareBanner banners={SQUARE_BANNERS} />
+      <SquareBanner banners={banners} />
       <div className="mt-1 bg-white">
         {modules.length > 0 ? (
           modules.map((channel) => (

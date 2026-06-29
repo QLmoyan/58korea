@@ -8,21 +8,21 @@
 
 | 项 | 值 |
 |---|---|
-| **Current Version** | `0.1.0` |
-| **Next Version** | `0.2.0` |
-| **Development Stage** | Late Beta / 早期生产 |
+| **Current Version** | `0.2.0` |
+| **Next Version** | `0.3.0` |
+| **Development Stage** | v0.2.0 / 早期生产 |
 | **Build** | **PASS**（2026-06-17） |
-| **Regression** | **PASS** 50/50（2026-06-17） |
+| **Regression** | **PASS** 60/60（2026-06-17） |
 
 ## Current Focus
 
-- 消除假功能误导（关注按钮、关注 Tab）
+- v0.3.0 规划
 
 验证命令：`npm run build` · `npm run regression-check`
 
 ## 产品与技术
 
-- **产品**：58korea（韩国华人生活社区）
+- **产品**：韩圈（韩国华人生活社区）
 - **技术栈**：Next.js 16 · React 19 · Supabase · Tailwind 4
 
 ## 已完成模块（V1）
@@ -44,16 +44,18 @@
 - **内容安全与运营后台 V1** (`moderation-admin-v1`) — 审核/举报/规则/频道 CMS、前台管理员能力
 - **移动端体验收口 V1** (`mobile-ux-v1`) — Loading 超时、LAN 访问、券/发帖移动端优化
 - **我的评论 Tab V2** (`profile-comments-v2`) — 按 user_id 查 published 评论、批量关联帖子标题、分页加载更多
+- **Honest UI V2** (`honest-ui-v2`) — 移除假关注按钮/Tab、停用 nearby/following 筛选、Feed 改为推荐/最新、前台不展示 distance
+- **System Notifications V2** (`system-notifications-v2`) — 消息中心系统 Tab 查询 notifications.type=system；券到期/下架等真实系统通知；诚实空态
+- **Square Banners V2** (`square-banners-v2`) — square_banners 表 + Admin 广场 Banner Tab；发现页轮播读库，无硬编码 picsum
+- **Admin Admins V2** (`admin-admins-v2`) — /admin/admins 只读管理员列表；admins.manage 门禁；消除 Dashboard 死链
+- **Login Redirect V2** (`login-redirect-v2`) — 消息页/桌面侧栏/发帖/领券等入口统一 buildLoginHref；resolveRedirectTarget 防开放跳转
+- **Types Sync V2** (`types-sync-v2`) — database.types.ts 补齐 admin_users；移除 as never 绕过；notifications/square_banners 与 schema 对齐
+- **Global Error Pages** (`global-error-pages`) — 自定义 not-found / error / global-error；韩圈风格文案，不暴露技术细节
+- **v0.2.0 Release Check** (`v0.2.0-release-check`) — build + regression 60/60 PASS；无用户可见旧品牌/假关注/裸 login；package.json 对齐 0.2.0
 
 ## 待优化模块（V2）
 
-- **消除假功能误导** (`honest-ui-v2`) — 关注按钮、关注 Tab — 隐藏或接最小实现
-- **系统通知 Tab** (`system-notifications-v2`) — 利用现有 notifications 表与券到期 cron
-- **广场 Banner 可运营** (`square-banners-v2`) — 替换 lib/square/banners.ts 硬编码
-- **Admin 管理员管理页** (`admin-admins-v2`) — 补 /admin/admins，消除死链
-- **登录 redirect 剩余入口** (`login-redirect-v2`) — 消息页、桌面侧栏等入口统一 buildLoginHref
-- **「附近」产品定义** (`nearby-feed-v2`) — 改文案或接真实定位，避免随机 distance 误导
-- **database.types.ts 同步** (`types-sync-v2`) — admin_users 等 schema 与类型文件对齐
+
 
 ## 未开始模块
 
@@ -67,12 +69,7 @@
 
 ## 当前 Bug / 体验债
 
-- **[medium]** `follow-button-noop` — PostDetailTopBar「关注作者」按钮无 onClick / 无 API
-- **[low]** `follow-tab-misleading` — 首页「关注」Tab 依赖 post.following 字段，用户发帖恒为 false
-- **[low]** `admin-admins-404` — AdminDashboard 链接 /admin/admins 但路由不存在
 - **[low]** `emoji-stub` — 评论 Emoji 按钮仍为「功能开发中」
-- **[low]** `system-notifications-empty` — 消息中心系统 Tab 空态，文案「后续版本开放」
-- **[low]** `square-banners-static` — 广场 Banner 硬编码 picsum 链接
 
 ## 建议下一步
 

@@ -10,6 +10,7 @@ import {
   createMerchantCouponAction,
   updateMerchantCouponAction,
 } from "@/lib/actions/merchant-coupons";
+import { buildLoginHrefFromPath } from "@/lib/auth/redirect";
 import { isCouponPubliclyVisible } from "@/lib/merchant/coupon-utils";
 import { useAuthStore } from "@/lib/store/auth-store";
 import {
@@ -156,7 +157,10 @@ export default function MerchantCouponsSection({
 
   function handleLoginRequired() {
     router.push(
-      `/login?redirect=${encodeURIComponent(window.location.pathname)}`,
+      buildLoginHrefFromPath(
+        window.location.pathname,
+        window.location.search,
+      ),
     );
   }
 

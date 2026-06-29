@@ -2,18 +2,12 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isAdminRole } from "@/lib/admin/permissions";
 import type { AdminMembership } from "@/lib/types/admin-auth";
 
-type AdminUsersRow = {
-  user_id: string;
-  role: string;
-  enabled: boolean;
-};
-
 export async function loadAdminMembership(
   userId: string,
 ): Promise<AdminMembership | null> {
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
-    .from("admin_users" as never)
+    .from("admin_users")
     .select("user_id, role, enabled")
     .eq("user_id", userId)
     .maybeSingle();
@@ -26,15 +20,13 @@ export async function loadAdminMembership(
     return null;
   }
 
-  const row = data as AdminUsersRow;
-
-  if (!isAdminRole(row.role)) {
+  if (!isAdminRole(data.role)) {
     throw new Error("管理员角色无效");
   }
 
   return {
-    userId: row.user_id,
-    role: row.role,
-    enabled: row.enabled,
+    userId: data.user_id,
+    role: data.role,
+    enabled: data.enabled,
   };
 }

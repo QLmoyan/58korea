@@ -10,11 +10,11 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type DbNotification = Database["public"]["Tables"]["notifications"]["Row"];
 
-const TAB_TYPES: Record<MessageTabId, DbNotification["type"][] | null> = {
+const TAB_TYPES: Record<MessageTabId, DbNotification["type"][]> = {
   comment: ["comment"],
   reply: ["reply"],
   like: ["like"],
-  system: null,
+  system: ["system"],
 };
 
 function getAvatarLabel(body: string, actorId: string | null) {
@@ -26,7 +26,7 @@ function getAvatarLabel(body: string, actorId: string | null) {
   return actorId ? "用户" : "58";
 }
 
-function mapNotification(row: DbNotification): MessageItem | null {
+function mapEngagementNotification(row: DbNotification): MessageItem | null {
   if (!row.post_id) {
     return null;
   }
@@ -49,6 +49,24 @@ function mapNotification(row: DbNotification): MessageItem | null {
   };
 }
 
+function mapSystemNotification(row: DbNotification): MessageItem | null {
+  if (row.type !== "system") {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    tab: "system",
+    title: row.title,
+    content: row.body,
+    time: formatRelativeMessageTime(row.created_at),
+    avatarLabel: "系统",
+    postId: null,
+    isRead: row.is_read,
+    thumbnailUrl: null,
+  };
+}
+
 export async function fetchNotificationsByTabAction(
   tab: MessageTabId,
 ): Promise<MessageItem[]> {
@@ -58,10 +76,6 @@ export async function fetchNotificationsByTabAction(
   }
 
   const types = TAB_TYPES[tab];
-  if (!types) {
-    return [];
-  }
-
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("notifications")
@@ -72,6 +86,17 @@ export async function fetchNotificationsByTabAction(
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (tab === "system") {
+    const items: MessageItem[] = [];
+    for (const row of data ?? []) {
+      const item = mapSystemNotification(row);
+      if (item) {
+        items.push(item);
+      }
+    }
+    return items;
   }
 
   const postIds = Array.from(
@@ -108,8 +133,8 @@ export async function fetchNotificationsByTabAction(
   const items: MessageItem[] = [];
 
   for (const row of data ?? []) {
-    const item = mapNotification(row);
-    if (!item) {
+    const item = mapEngagementNotification(row);
+    if (!item || item.postId == null) {
       continue;
     }
 
@@ -147,10 +172,6 @@ export async function markAllNotificationsReadAction(tab: MessageTabId) {
   }
 
   const types = TAB_TYPES[tab];
-  if (!types) {
-    return;
-  }
-
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase
     .from("notifications")

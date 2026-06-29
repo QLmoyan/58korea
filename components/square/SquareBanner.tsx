@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  isExternalSquareBanner,
+  isExternalSquareBannerLink,
   resolveSquareBannerHref,
   type SquareBannerItem,
 } from "@/lib/square/banners";
@@ -14,6 +13,48 @@ interface SquareBannerProps {
 }
 
 const AUTO_PLAY_MS = 4500;
+
+function BannerSlide({
+  banner,
+  priority,
+}: {
+  banner: SquareBannerItem;
+  priority?: boolean;
+}) {
+  const href = resolveSquareBannerHref(banner.linkUrl);
+  const external = isExternalSquareBannerLink(banner.linkUrl);
+  const image = (
+    <div className="relative aspect-[5/2] w-full sm:aspect-[3/1]">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={banner.imageUrl}
+        alt={banner.title}
+        className="h-full w-full object-cover"
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+        <h2 className="text-base font-semibold sm:text-lg">{banner.title}</h2>
+      </div>
+    </div>
+  );
+
+  if (!href) {
+    return <div className="relative block min-w-full">{image}</div>;
+  }
+
+  return (
+    <Link
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+      className="relative block min-w-full"
+    >
+      {image}
+    </Link>
+  );
+}
 
 export default function SquareBanner({ banners }: SquareBannerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -35,8 +76,7 @@ export default function SquareBanner({ banners }: SquareBannerProps) {
   }
 
   const activeBanner = banners[activeIndex];
-  const href = resolveSquareBannerHref(activeBanner);
-  const external = isExternalSquareBanner(activeBanner);
+  const activeHref = resolveSquareBannerHref(activeBanner.linkUrl);
 
   return (
     <section className="px-3 pt-3 lg:px-0">
@@ -45,38 +85,13 @@ export default function SquareBanner({ banners }: SquareBannerProps) {
           className="flex transition-transform duration-500 ease-out"
           style={{ transform: `translateX(-${activeIndex * 100}%)` }}
         >
-          {banners.map((banner) => {
-            const bannerHref = resolveSquareBannerHref(banner);
-            const bannerExternal = isExternalSquareBanner(banner);
-
-            return (
-              <Link
-                key={banner.id}
-                href={bannerHref}
-                target={bannerExternal ? "_blank" : undefined}
-                rel={bannerExternal ? "noopener noreferrer" : undefined}
-                className="relative block min-w-full"
-              >
-                <div className="relative aspect-[5/2] w-full sm:aspect-[3/1]">
-                  <Image
-                    src={banner.image}
-                    alt={banner.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 720px"
-                    priority={banner.id === banners[0]?.id}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                    <h2 className="text-base font-semibold sm:text-lg">{banner.title}</h2>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/85 sm:text-sm">
-                      {banner.description}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+          {banners.map((banner, index) => (
+            <BannerSlide
+              key={banner.id}
+              banner={banner}
+              priority={index === 0}
+            />
+          ))}
         </div>
 
         {banners.length > 1 ? (
@@ -100,10 +115,14 @@ export default function SquareBanner({ banners }: SquareBannerProps) {
         ) : null}
       </div>
 
-      <p className="sr-only">
-        当前 Banner：{activeBanner.title}，链接 {href}
-        {external ? "（外部链接）" : ""}
-      </p>
+      {activeHref ? (
+        <p className="sr-only">
+          当前 Banner：{activeBanner.title}，链接 {activeHref}
+          {isExternalSquareBannerLink(activeBanner.linkUrl) ? "（外部链接）" : ""}
+        </p>
+      ) : (
+        <p className="sr-only">当前 Banner：{activeBanner.title}</p>
+      )}
     </section>
   );
 }

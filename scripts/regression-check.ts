@@ -2,7 +2,7 @@
  * Full regression check. Run: npx tsx scripts/regression-check.ts
  * Requires: .env.local, dev server on localhost:3000 for HTTP checks.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { createBrowserClient, createServerClient } from "@supabase/ssr";
@@ -70,6 +70,57 @@ function loadEnv() {
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
+}
+
+function collectFrontendSourceFiles(dir: string, files: string[] = []): string[] {
+  for (const entry of readdirSync(dir)) {
+    const fullPath = resolve(dir, entry);
+    if (statSync(fullPath).isDirectory()) {
+      if (entry === "admin" || entry === "node_modules") {
+        continue;
+      }
+      collectFrontendSourceFiles(fullPath, files);
+      continue;
+    }
+
+    if (fullPath.endsWith(".tsx") || fullPath.endsWith(".ts")) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+function scanForBareLoginViolations(): string[] {
+  const roots = [
+    resolve(process.cwd(), "components"),
+    resolve(process.cwd(), "app"),
+  ];
+  const violations: string[] = [];
+
+  for (const root of roots) {
+    for (const file of collectFrontendSourceFiles(root)) {
+      if (file.includes(`${resolve(process.cwd(), "app")}\\admin`)) {
+        continue;
+      }
+      if (file.includes(`${resolve(process.cwd(), "app")}/admin`)) {
+        continue;
+      }
+
+      const source = readFileSync(file, "utf8");
+      if (/href=["']\/login["']/.test(source)) {
+        violations.push(`${file}: bare href="/login"`);
+      }
+      if (/router\.push\(["']\/login["']\)/.test(source)) {
+        violations.push(`${file}: bare router.push("/login")`);
+      }
+      if (/`\/login\?redirect=\$\{encodeURIComponent/.test(source)) {
+        violations.push(`${file}: manual login redirect encoding`);
+      }
+    }
+  }
+
+  return violations;
 }
 
 async function check(name: string, fn: () => Promise<void> | void) {
@@ -221,6 +272,10 @@ async function main() {
     assert(!html.includes("暂无动态，去发布第一条吧"), "square should not show post feed");
     assert(html.includes("韩国新闻") || html.includes("官方公告"), "square should show channel modules");
     assert(html.includes("进入频道"), "square should link to channel pages");
+    assert(
+      !html.includes("picsum.photos/seed/square-banner"),
+      "square page must not render hardcoded picsum banners",
+    );
   });
 
   await check("1.2 帖子详情可打开", async () => {
@@ -624,6 +679,389 @@ async function main() {
     await service.auth.admin.deleteUser(otherUser.id);
   });
 
+  await check("1.6j Honest UI V2 — 无假关注/附近/距离 (静态)", async () => {
+    const postsData = readFileSync(
+      resolve(process.cwd(), "lib/data/posts.ts"),
+      "utf8",
+    );
+    assert(
+      postsData.includes('FeedChannel = "推荐" | "最新"'),
+      "FeedChannel must be 推荐 | 最新",
+    );
+    assert(
+      postsData.includes('["推荐", "最新"]'),
+      "channels must be 推荐 and 最新 only",
+    );
+    assert(
+      !postsData.includes("post.following") && !postsData.includes("post.nearby"),
+      "filterPosts must not filter by following/nearby flags",
+    );
+
+    const topBar = readFileSync(
+      resolve(process.cwd(), "components/posts/PostDetailTopBar.tsx"),
+      "utf8",
+    );
+    assert(
+      !topBar.includes('aria-label="关注作者"'),
+      "PostDetailTopBar must not render follow-author button",
+    );
+
+    const postCard = readFileSync(
+      resolve(process.cwd(), "components/home/PostCard.tsx"),
+      "utf8",
+    );
+    assert(
+      !postCard.includes("post.distance"),
+      "PostCard must not display post.distance",
+    );
+
+    const postStore = readFileSync(
+      resolve(process.cwd(), "lib/store/post-store.tsx"),
+      "utf8",
+    );
+    assert(
+      !postStore.includes("randomItem("),
+      "post-store must not assign random distance on publish",
+    );
+  });
+
+  await check("1.6k System Notifications V2 — 系统 Tab 真实数据源 (静态)", async () => {
+    const constants = readFileSync(
+      resolve(process.cwd(), "lib/messages/constants.ts"),
+      "utf8",
+    );
+    assert(
+      constants.includes('MESSAGE_EMPTY_SYSTEM = "暂无系统通知"'),
+      "system empty state must be honest",
+    );
+    assert(
+      !constants.includes("后续版本开放"),
+      "system tab must not show placeholder copy",
+    );
+
+    const notificationsAction = readFileSync(
+      resolve(process.cwd(), "lib/actions/notifications.ts"),
+      "utf8",
+    );
+    assert(
+      notificationsAction.includes('system: ["system"]'),
+      "system tab must query notifications.type = system",
+    );
+    assert(
+      notificationsAction.includes("mapSystemNotification"),
+      "notifications action must map system notifications",
+    );
+    assert(
+      !notificationsAction.includes("system: null"),
+      "system tab must not short-circuit to empty array",
+    );
+
+    const messageCenter = readFileSync(
+      resolve(process.cwd(), "components/messages/MessageCenterContent.tsx"),
+      "utf8",
+    );
+    assert(
+      !messageCenter.includes("后续版本开放"),
+      "MessageCenter must not render placeholder system copy",
+    );
+
+    const listItem = readFileSync(
+      resolve(process.cwd(), "components/messages/MessageListItem.tsx"),
+      "utf8",
+    );
+    assert(
+      listItem.includes('item.tab === "system"'),
+      "system notifications must not fake post deep links",
+    );
+  });
+
+  await check("1.6l Square Banners V2 — 数据库 Banner 无硬编码 (静态)", async () => {
+    const bannersModule = readFileSync(
+      resolve(process.cwd(), "lib/square/banners.ts"),
+      "utf8",
+    );
+    assert(
+      !bannersModule.includes("SQUARE_BANNERS"),
+      "lib/square/banners.ts must not export hardcoded banner list",
+    );
+    assert(
+      !bannersModule.includes("picsum.photos"),
+      "lib/square/banners.ts must not reference picsum",
+    );
+
+    const queries = readFileSync(
+      resolve(process.cwd(), "lib/square/queries.ts"),
+      "utf8",
+    );
+    assert(
+      queries.includes('from("square_banners")'),
+      "square banners must load from square_banners table",
+    );
+    assert(
+      queries.includes('.eq("is_active", true)'),
+      "square banners must filter active rows only",
+    );
+    assert(
+      queries.includes('order("sort_order", { ascending: true })'),
+      "square banners must sort by sort_order ASC",
+    );
+
+    const squareContent = readFileSync(
+      resolve(process.cwd(), "components/channels/ChannelSquareContent.tsx"),
+      "utf8",
+    );
+    assert(
+      !squareContent.includes("SQUARE_BANNERS"),
+      "ChannelSquareContent must not import hardcoded banners",
+    );
+
+    const squareBanner = readFileSync(
+      resolve(process.cwd(), "components/square/SquareBanner.tsx"),
+      "utf8",
+    );
+    assert(
+      squareBanner.includes("banners.length === 0"),
+      "SquareBanner must hide when no banners",
+    );
+
+    const adminPanel = readFileSync(
+      resolve(process.cwd(), "components/admin/SquareBannersPanel.tsx"),
+      "utf8",
+    );
+    assert(
+      adminPanel.includes("listAdminSquareBannersAction"),
+      "admin square banner panel must exist",
+    );
+
+    const adminUi = readFileSync(
+      resolve(process.cwd(), "lib/admin/admin-panel-ui.ts"),
+      "utf8",
+    );
+    assert(
+      adminUi.includes('"squareBanners"'),
+      "admin panel must expose squareBanners tab",
+    );
+  });
+
+  await check("1.6m Admin Admins V2 — 管理员页无死链 (静态)", async () => {
+    const pagePath = resolve(process.cwd(), "app/admin/admins/page.tsx");
+    const pageSource = readFileSync(pagePath, "utf8");
+    assert(pageSource.includes("AdminAdminsPanel"), "admin admins page must render panel");
+
+    const panel = readFileSync(
+      resolve(process.cwd(), "components/admin/AdminAdminsPanel.tsx"),
+      "utf8",
+    );
+    assert(
+      panel.includes("listAdminUsersAction"),
+      "admin admins panel must load real admin_users data",
+    );
+    assert(
+      !panel.includes("新建管理员") && !panel.includes("删除管理员"),
+      "admin admins panel must not show fake write buttons",
+    );
+    assert(
+      panel.includes("create-admin-user.ts"),
+      "admin admins panel must show honest script guidance",
+    );
+
+    const action = readFileSync(
+      resolve(process.cwd(), "lib/actions/admin-admins.ts"),
+      "utf8",
+    );
+    assert(
+      action.includes('assertAdminPermission("admins.manage")'),
+      "list admin users must require admins.manage",
+    );
+
+    const dashboard = readFileSync(
+      resolve(process.cwd(), "components/admin/AdminDashboard.tsx"),
+      "utf8",
+    );
+    assert(
+      dashboard.includes('href="/admin/admins"'),
+      "AdminDashboard must link to /admin/admins",
+    );
+  });
+
+  await check("1.6n Login Redirect V2 — 统一 redirect 与安全 (静态)", async () => {
+    const {
+      buildLoginHref,
+      resolveRedirectTarget,
+    } = await import("../lib/auth/redirect");
+
+    assert(
+      resolveRedirectTarget("https://evil.com") === "/profile",
+      "external URL must fall back to /profile",
+    );
+    assert(
+      resolveRedirectTarget("//evil.com/path") === "/profile",
+      "protocol-relative URL must be blocked",
+    );
+    assert(
+      resolveRedirectTarget("/messages") === "/messages",
+      "same-origin path must be accepted",
+    );
+    assert(
+      resolveRedirectTarget("/login") === "/profile",
+      "login page must not be a redirect target",
+    );
+    assert(
+      buildLoginHref("/messages") === "/login?redirect=%2Fmessages",
+      "buildLoginHref must encode once",
+    );
+
+    const violations = scanForBareLoginViolations();
+    assert(
+      violations.length === 0,
+      `bare login links found: ${violations.join("; ")}`,
+    );
+
+    const messagePrompt = readFileSync(
+      resolve(process.cwd(), "components/messages/MessageLoginPrompt.tsx"),
+      "utf8",
+    );
+    assert(
+      messagePrompt.includes('buildLoginHref("/messages")'),
+      "MessageLoginPrompt must redirect back to /messages",
+    );
+
+    const publishForm = readFileSync(
+      resolve(process.cwd(), "components/posts/PublishForm.tsx"),
+      "utf8",
+    );
+    assert(
+      publishForm.includes('buildLoginHref("/publish")'),
+      "PublishForm must redirect back to /publish",
+    );
+
+    const profileGuest = readFileSync(
+      resolve(process.cwd(), "components/profile/ProfileGuestView.tsx"),
+      "utf8",
+    );
+    assert(
+      profileGuest.includes('buildLoginHref("/profile")'),
+      "ProfileGuestView must redirect back to /profile",
+    );
+
+    const sidebar = readFileSync(
+      resolve(process.cwd(), "components/home/DesktopHomeSidebar.tsx"),
+      "utf8",
+    );
+    assert(
+      sidebar.includes("buildLoginHrefFromPath"),
+      "DesktopHomeSidebar must use buildLoginHrefFromPath",
+    );
+  });
+
+  await check("1.6o Types Sync V2 — database.types 与 schema 对齐 (静态)", async () => {
+    const typesPath = resolve(process.cwd(), "lib/supabase/database.types.ts");
+    const typesSource = readFileSync(typesPath, "utf8");
+
+    assert(
+      typesSource.includes("admin_users:"),
+      "database.types must define admin_users table",
+    );
+    assert(
+      /admin_users:[\s\S]*enabled:\s*boolean/.test(typesSource),
+      "admin_users must include enabled column",
+    );
+    assert(
+      !/admin_users:[\s\S]*permissions:/.test(typesSource),
+      "admin_users must not include fake permissions column",
+    );
+    assert(
+      !/admin_users:[\s\S]*email:/.test(typesSource),
+      "admin_users must not include fake email column",
+    );
+    assert(
+      typesSource.includes("square_banners:"),
+      "database.types must define square_banners table",
+    );
+    assert(
+      /notifications:[\s\S]*type:\s*"comment"\s*\|\s*"reply"\s*\|\s*"like"\s*\|\s*"system"/.test(
+        typesSource,
+      ),
+      "notifications.type must include system",
+    );
+    assert(
+      /notifications:[\s\S]*post_id:\s*number\s*\|\s*null/.test(typesSource),
+      "notifications.post_id must be nullable",
+    );
+    assert(
+      /notifications:[\s\S]*comment_id:\s*string\s*\|\s*null/.test(
+        typesSource,
+      ),
+      "notifications.comment_id must be nullable",
+    );
+
+    const loadMembership = readFileSync(
+      resolve(process.cwd(), "lib/admin/load-admin-membership.ts"),
+      "utf8",
+    );
+    assert(
+      !loadMembership.includes("as never"),
+      "load-admin-membership must not bypass admin_users typing",
+    );
+
+    const adminAdmins = readFileSync(
+      resolve(process.cwd(), "lib/actions/admin-admins.ts"),
+      "utf8",
+    );
+    assert(
+      !adminAdmins.includes("as never"),
+      "admin-admins action must not bypass admin_users typing",
+    );
+  });
+
+  await check("1.6p Global Error Pages — 自定义 404/error (静态)", async () => {
+    const notFoundPath = resolve(process.cwd(), "app/not-found.tsx");
+    const errorPath = resolve(process.cwd(), "app/error.tsx");
+    assert(
+      readFileSync(notFoundPath, "utf8").length > 0,
+      "app/not-found.tsx must exist",
+    );
+    const notFound = readFileSync(notFoundPath, "utf8");
+    const errorPage = readFileSync(errorPath, "utf8");
+
+    assert(notFound.includes("页面走丢了"), "not-found must show friendly title");
+    assert(
+      notFound.includes("返回首页") && notFound.includes('href="/"'),
+      "not-found must link home",
+    );
+    assert(
+      notFound.includes("去发现") && notFound.includes('href="/square"'),
+      "not-found must link to square",
+    );
+    assert(
+      notFound.includes("页面走丢了｜"),
+      "not-found metadata title must include 页面走丢了｜",
+    );
+
+    assert(
+      errorPage.includes("页面暂时无法打开"),
+      "error page must show friendly title",
+    );
+    assert(
+      errorPage.includes("返回首页") && errorPage.includes('href="/"'),
+      "error page must link home",
+    );
+    assert(
+      errorPage.includes("重试") && errorPage.includes("reset"),
+      "error page must offer retry via reset",
+    );
+    assert(
+      errorPage.includes("console.error"),
+      "error page should log to console",
+    );
+    assert(
+      !errorPage.includes("{error.message}") &&
+        !errorPage.includes("{error.stack}") &&
+        !errorPage.includes("<pre"),
+      "error page must not expose technical details to users",
+    );
+  });
+
   await check("1.7 前台管理员按钮 UI 对普通用户不可见 (静态)", async () => {
     const postDetail = readFileSync(
       resolve(process.cwd(), "components/posts/PostDetailContent.tsx"),
@@ -747,9 +1185,27 @@ async function main() {
     assert(res.ok, `GET /admin status=${res.status}`);
   });
 
+  await check("2.7b /admin/admins 可访问 (owner)", async () => {
+    const { cookieStore } = await signInWithCookieStore(
+      url,
+      anonKey,
+      "admin@users.58korea.com",
+      adminPassword,
+    );
+    const res = await fetchWithTimeout("/admin/admins", {
+      cookie: cookieStore.cookieHeader(),
+    });
+    assert(res.ok, `GET /admin/admins status=${res.status}`);
+    const html = await res.text();
+    assert(
+      html.includes("管理员管理") || html.includes("AdminAdminsPanel"),
+      "admin admins page should render management shell",
+    );
+  });
+
   await check("2.8 后台 Tab 正常显示 (owner)", async () => {
     const tabs = listAccessibleAdminPanelTabs(listPermissions("owner"));
-    assert(tabs.length === 6, `owner tabs=${tabs.map((t) => t.id).join(",")}`);
+    assert(tabs.length === 7, `owner tabs=${tabs.map((t) => t.id).join(",")}`);
     assert(tabs[0]?.id === "dashboard", "dashboard should be first tab");
   });
 
@@ -857,7 +1313,7 @@ async function main() {
     assert(hasPermission("owner", "dashboard.read"), "owner should have dashboard.read");
     assert(hasPermission("moderator", "dashboard.read"), "moderator should have dashboard.read");
     const adminTabs = listAccessibleAdminPanelTabs(listPermissions("admin"));
-    assert(adminTabs.length === 6, "admin should see 6 tabs");
+    assert(adminTabs.length === 7, "admin should see 7 tabs");
     assert(adminTabs[0]?.id === "dashboard", "dashboard should be first tab");
     const modTabs = listAccessibleAdminPanelTabs(listPermissions("moderator"));
     assert(
@@ -1004,6 +1460,30 @@ async function main() {
       status: "draft",
     });
     assert(error, "anon should not insert channel_articles");
+  });
+
+  await check("RLS anon 可读启用 square_banners", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon
+      .from("square_banners")
+      .select("id")
+      .eq("is_active", true)
+      .limit(1);
+    assert(!error, `anon should read active square_banners: ${error?.message}`);
+  });
+
+  await check("RLS anon 不可写入 square_banners", async () => {
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon.from("square_banners").insert({
+      title: "blocked banner",
+      image_url: "https://example.com/banner.jpg",
+      is_active: true,
+    });
+    assert(error, "anon should not insert square_banners");
   });
 
   await check("1.5 用户主页可打开", async () => {

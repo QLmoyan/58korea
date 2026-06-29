@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import NotificationDot from "@/components/ui/NotificationDot";
 import { getAdminCapabilitiesAction } from "@/lib/actions/admin-capabilities";
+import { buildLoginHrefFromPath } from "@/lib/auth/redirect";
 import { useNotificationUnreadCounts } from "@/lib/messages/use-notification-unread-counts";
 import { useAuthStore } from "@/lib/store/auth-store";
 
@@ -19,6 +20,9 @@ const mainNavItems = [
 export default function DesktopHomeSidebar() {
   const pathname = usePathname();
   const { user, profile, loading } = useAuthStore();
+  const [loginHref, setLoginHref] = useState(() =>
+    buildLoginHrefFromPath(pathname),
+  );
   const { counts } = useNotificationUnreadCounts();
   const showMessageUnreadDot = counts.totalUnread > 0;
   const [showAdminLink, setShowAdminLink] = useState(false);
@@ -28,6 +32,15 @@ export default function DesktopHomeSidebar() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setLoginHref(
+      buildLoginHrefFromPath(
+        window.location.pathname,
+        window.location.search,
+      ),
+    );
+  }, [pathname]);
 
   useEffect(() => {
     let cancelled = false;
@@ -124,7 +137,7 @@ export default function DesktopHomeSidebar() {
           </div>
         ) : (
           <Link
-            href="/login"
+            href={loginHref}
             className="flex items-center gap-3 rounded-xl bg-rose-500 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-600"
           >
             <LoginIcon className="h-5 w-5" />

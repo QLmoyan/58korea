@@ -3,6 +3,7 @@ import BottomNav from "@/components/home/BottomNav";
 import DesktopHomeSidebar from "@/components/home/DesktopHomeSidebar";
 import ChannelSquareContent from "@/components/channels/ChannelSquareContent";
 import { fetchSquareChannelModules } from "@/lib/channels/queries";
+import { fetchActiveSquareBanners } from "@/lib/square/queries";
 import { SITE_NAME } from "@/lib/share/constants";
 
 export const metadata: Metadata = {
@@ -10,13 +11,16 @@ export const metadata: Metadata = {
 };
 
 export default async function SquarePage() {
-  const modules = await fetchSquareChannelModules();
+  const [modules, banners] = await Promise.all([
+    fetchSquareChannelModules(),
+    fetchActiveSquareBanners(),
+  ]);
 
   return (
     <>
       <div className="relative mx-auto min-h-screen w-full max-w-md bg-white pb-24 lg:hidden">
         <main>
-          <ChannelSquareContent modules={modules} />
+          <ChannelSquareContent modules={modules} banners={banners} />
         </main>
         <BottomNav />
       </div>
@@ -25,7 +29,7 @@ export default async function SquarePage() {
         <DesktopHomeSidebar />
         <div className="pl-[220px]">
           <div className="mx-auto min-h-screen max-w-2xl px-8 py-6">
-            <ChannelSquareContent modules={modules} />
+            <ChannelSquareContent modules={modules} banners={banners} />
           </div>
         </div>
       </div>

@@ -2,7 +2,63 @@
 
 > 自动生成文件。请勿手改。更新 `docs/project-state.json` 后运行 `npm run sync-docs`。
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.1.0**（Late Beta / 早期生产）。
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.2.0**（v0.2.0 / 早期生产）。
+
+## [0.2.0] v0.2.0 Release — 2026-06-17
+
+- 发布前检查：build + regression 60/60 PASS
+- 用户可见面无 58korea/58韩国、假关注 Tab、square picsum、裸 /login
+- /admin/admins、not-found、error 页就绪；admin_users 类型无 as never
+- knownBugs 仅保留 emoji-stub；package.json 版本升至 0.2.0
+
+## [0.2.0] Global Error Pages — 2026-06-17
+
+- 新增 app/not-found.tsx：页面走丢了｜韩圈，返回首页 / 去发现
+- 新增 app/error.tsx：友好错误页，重试 + 返回首页，console.error 记录
+- 新增 app/global-error.tsx：根布局级错误兜底
+- regression 1.6p；build/regression PASS
+
+## [0.2.0] Types Sync V2 — 2026-06-17
+
+- database.types.ts 补齐 admin_users（id/user_id/role/enabled/created_at/updated_at）
+- 移除 admin_users 相关 as never 绕过；load-admin-membership / admin-admins 使用真实类型
+- 核对 square_banners、notifications（含 system、可空 post_id/comment_id）与 migrations 一致
+- regression 1.6o；build/regression PASS
+
+## [0.2.0] Login Redirect V2 — 2026-06-17
+
+- 消息页、桌面侧栏、发帖、领券等入口统一 buildLoginHref / buildLoginHrefFromPath
+- 移除裸 href="/login" 与手写 encodeURIComponent redirect
+- resolveRedirectTarget 拒绝外部 URL 与 /login、/register 循环
+- regression 1.6n；build/regression PASS
+
+## [0.2.0] Admin Admins V2 — 2026-06-17
+
+- 新增 /admin/admins 只读管理员列表页，消除 Dashboard 死链
+- 展示账号、角色、启用状态、权限摘要、创建/更新时间
+- 仅 owner（admins.manage）可访问；变更说明指向 create-admin-user 脚本
+- regression 1.6m + 2.7b；build/regression PASS
+
+## [0.2.0] Square Banners V2 — 2026-06-17
+
+- 新增 square_banners 表与 RLS；发现页轮播读库（is_active + sort_order）
+- 移除 lib/square/banners.ts 硬编码 picsum；无启用 Banner 时不显示轮播区
+- Admin「广场 Banner」Tab：列表/新增/编辑/启用/删除/排序（image_url 文本配置）
+- regression 1.6l + RLS square_banners；build/regression PASS
+
+## [0.2.0] System Notifications V2 — 2026-06-17
+
+- 系统 Tab 查询 notifications.type=system（券到期提醒、优惠券已失效等）
+- 诚实空态「暂无系统通知」；系统通知点击标记已读、无假跳转
+- 系统 Tab 支持全部已读；regression 1.6k
+- build + regression PASS
+
+## [0.2.0] Honest UI V2 — 2026-06-17
+
+- 移除帖子详情假「关注作者」按钮
+- 首页 Feed Tab 改为「推荐 / 最新」，移除关注 Tab 与 nearby/following 假筛选
+- PostCard 不再展示 distance；发帖不再随机写入距离
+- regression 1.6j + build/regression PASS
 
 ## [0.1.0] 我的评论 Tab V2 — 2026-06-17
 

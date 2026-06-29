@@ -4,7 +4,7 @@ import {
   type PostCategory,
 } from "@/lib/data/posts";
 
-const SYSTEM_PROMPT = `你是 58korea 的帖子分类器。
+const SYSTEM_PROMPT = `你是韩圈的帖子分类器。
 只能从以下分类中选择一个：
 探店、求助、房屋、二手、招聘、攻略、其他。
 根据标题和正文判断最合适分类。

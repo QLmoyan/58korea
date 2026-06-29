@@ -1,4 +1,4 @@
-export type FeedChannel = "推荐" | "附近" | "关注";
+export type FeedChannel = "推荐" | "最新";
 
 export const POST_CATEGORIES = [
   "探店",
@@ -83,7 +83,7 @@ export interface Post {
   linkedCoupon?: PostLinkedCouponSummary | null;
 }
 
-export const channels: FeedChannel[] = ["推荐", "附近", "关注"];
+export const channels: FeedChannel[] = ["推荐", "最新"];
 
 export const categories: PostCategory[] = [...POST_CATEGORIES];
 
@@ -338,16 +338,18 @@ export function filterPosts(
 ): Post[] {
   let result = posts;
 
-  if (channel === "附近") {
-    result = result.filter((post) => post.nearby);
-  } else if (channel === "关注") {
-    result = result.filter((post) => post.following);
-  }
-
   if (category) {
     result = result.filter(
       (post) => normalizePostCategory(post.category) === category,
     );
+  }
+
+  if (channel === "最新") {
+    return [...result].sort((left, right) => {
+      const leftTime = left.createdAt ? Date.parse(left.createdAt) : 0;
+      const rightTime = right.createdAt ? Date.parse(right.createdAt) : 0;
+      return rightTime - leftTime;
+    });
   }
 
   return sortPostsWithMerchantsFirst(result);

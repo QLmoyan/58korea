@@ -90,7 +90,7 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
   }
 
   async function handleMarkAllRead() {
-    if (activeTab === "system" || items.length === 0) {
+    if (items.length === 0) {
       return;
     }
 
@@ -153,7 +153,7 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
             <h1 className="text-lg font-semibold text-zinc-900">消息</h1>
           </div>
 
-          {user && activeTab !== "system" && hasUnread ? (
+          {user && hasUnread ? (
             <button
               type="button"
               onClick={() => void handleMarkAllRead()}

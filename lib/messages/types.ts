@@ -7,7 +7,7 @@ export interface MessageItem {
   content: string;
   time: string;
   avatarLabel: string;
-  postId: number;
+  postId?: number | null;
   isRead: boolean;
   thumbnailUrl?: string | null;
 }

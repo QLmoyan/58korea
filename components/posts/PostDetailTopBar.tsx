@@ -94,16 +94,6 @@ export default function PostDetailTopBar({
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
-          {!deleteConfirming ? (
-            <button
-              type="button"
-              className="touch-manipulation rounded-full border border-rose-500 px-2.5 py-1 text-[11px] font-semibold text-rose-500"
-              aria-label="关注作者"
-            >
-              关注
-            </button>
-          ) : null}
-
           {deleteConfirming ? (
             <div className="flex items-center gap-1">
               <button

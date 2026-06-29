@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { Post, PostDistance, PostImage } from "@/lib/data/posts";
+import type { Post, PostImage } from "@/lib/data/posts";
 import { resolveAuthorNameFromAuth } from "@/lib/auth/author";
 import { sortPostsWithMerchantsFirst } from "@/lib/merchant/sort-posts";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -99,18 +99,7 @@ interface PostStoreValue {
 
 const PostStoreContext = createContext<PostStoreValue | null>(null);
 
-const distances: PostDistance[] = [
-  "100m",
-  "350m",
-  "800m",
-  "1.2km",
-  "2.4km",
-  "3.8km",
-];
-
-function randomItem<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)];
-}
+const DEFAULT_POST_DISTANCE = "350m" as const;
 
 export function PostStoreProvider({ children }: { children: React.ReactNode }) {
   const { user, profile } = useAuthStore();
@@ -405,9 +394,9 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
       content: input.content.trim(),
       author,
       location: "首尔",
-      distance: randomItem(distances),
+      distance: DEFAULT_POST_DISTANCE,
       categorySelection: input.categorySelection,
-      nearby: true,
+      nearby: false,
       following: false,
       couponBinding: input.couponBinding,
     });

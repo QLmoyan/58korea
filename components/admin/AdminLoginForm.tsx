@@ -33,7 +33,7 @@ export default function AdminLoginForm() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md items-center justify-center bg-zinc-50 px-4">
       <div className="w-full rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-100">
-        <h1 className="text-lg font-semibold text-zinc-900">58korea 运营后台</h1>
+        <h1 className="text-lg font-semibold text-zinc-900">韩圈运营后台</h1>
         <p className="mt-1 text-sm text-zinc-500">请输入后台密码登录</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">

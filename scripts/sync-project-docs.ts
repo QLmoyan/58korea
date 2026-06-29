@@ -240,7 +240,7 @@ function renderDecisions(state: ProjectState): string {
 
 > 自动生成文件。请勿手改。重大决策写入 \`docs/project-state.json\` → \`decisions\` 数组**顶部**，然后运行 \`${state.docCommands.sync}\`。
 
-58korea 重大产品与技术决策记录。新决策只追加到 JSON，不删改历史条目。
+${state.productName} 重大产品与技术决策记录。新决策只追加到 JSON，不删改历史条目。
 
 最后更新：**${state.lastUpdated}**
 
@@ -293,13 +293,13 @@ function renderAiContext(state: ProjectState): string {
 
   return `# AI_CONTEXT
 
-> **任何 AI 第一次接手 58korea 必须先读本文档。** 自动生成，勿手改。来源：\`docs/project-state.json\` · 最后更新 **${state.lastUpdated}**
+> **任何 AI 第一次接手 ${state.productName} 必须先读本文档。** 自动生成，勿手改。来源：\`docs/project-state.json\` · 最后更新 **${state.lastUpdated}**
 
 ---
 
 ## 1. 一句话
 
-**58korea** 是面向在韩华人的 **轻量生活社区**（探店、房屋、招聘、二手、求助、攻略），Next.js + Supabase，当前 ${stage}。
+**${state.productName}** 是面向在韩华人的 **轻量生活社区**（探店、房屋、招聘、二手、求助、攻略），Next.js + Supabase，当前 ${stage}。
 
 ## 2. 产品定位
 

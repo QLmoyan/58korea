@@ -10,30 +10,22 @@ interface MessageListItemProps {
   onRead?: (id: string) => void;
 }
 
-export default function MessageListItem({ item, onRead }: MessageListItemProps) {
-  async function handleClick() {
-    if (item.isRead) {
-      return;
-    }
+const itemClassName = (isRead: boolean) =>
+  `flex items-start gap-3 py-4 transition-colors ${
+    isRead ? "opacity-80" : "bg-rose-50/40"
+  }`;
 
-    try {
-      await markNotificationReadAction(item.id);
-      onRead?.(item.id);
-    } catch (error) {
-      console.error("Failed to mark notification read:", error);
-    }
-  }
-
+function MessageListItemBody({ item }: { item: MessageItem }) {
   return (
-    <Link
-      href={`/posts/${item.postId}`}
-      onClick={handleClick}
-      className={`flex items-start gap-3 py-4 transition-colors ${
-        item.isRead ? "opacity-80" : "bg-rose-50/40"
-      }`}
-    >
+    <>
       <div className="relative shrink-0">
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-orange-300 text-xs font-bold text-white">
+        <div
+          className={`flex h-11 w-11 items-center justify-center rounded-full text-xs font-bold text-white ${
+            item.tab === "system"
+              ? "bg-gradient-to-br from-sky-500 to-indigo-500"
+              : "bg-gradient-to-br from-rose-400 to-orange-300"
+          }`}
+        >
           {item.avatarLabel.slice(0, 2)}
         </div>
         {!item.isRead ? (
@@ -62,6 +54,43 @@ export default function MessageListItem({ item, onRead }: MessageListItemProps) 
           />
         </div>
       ) : null}
+    </>
+  );
+}
+
+export default function MessageListItem({ item, onRead }: MessageListItemProps) {
+  async function handleMarkRead() {
+    if (item.isRead) {
+      return;
+    }
+
+    try {
+      await markNotificationReadAction(item.id);
+      onRead?.(item.id);
+    } catch (error) {
+      console.error("Failed to mark notification read:", error);
+    }
+  }
+
+  if (item.tab === "system" || item.postId == null) {
+    return (
+      <button
+        type="button"
+        onClick={() => void handleMarkRead()}
+        className={`w-full text-left ${itemClassName(item.isRead)}`}
+      >
+        <MessageListItemBody item={item} />
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href={`/posts/${item.postId}`}
+      onClick={handleMarkRead}
+      className={itemClassName(item.isRead)}
+    >
+      <MessageListItemBody item={item} />
     </Link>
   );
 }

@@ -6,7 +6,8 @@ export type AdminPanelTab =
   | "reports"
   | "rules"
   | "tester"
-  | "channelArticles";
+  | "channelArticles"
+  | "squareBanners";
 
 export const ADMIN_PANEL_TABS: Array<{
   id: AdminPanelTab;
@@ -19,6 +20,7 @@ export const ADMIN_PANEL_TABS: Array<{
   { id: "rules", label: "规则管理", permission: "rules.read" },
   { id: "tester", label: "规则测试器", permission: "rules.test" },
   { id: "channelArticles", label: "频道文章", permission: "channel_articles.read" },
+  { id: "squareBanners", label: "广场 Banner", permission: "channel_articles.read" },
 ];
 
 export function canAccessAdminPanelTab(

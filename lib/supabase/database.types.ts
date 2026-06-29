@@ -53,6 +53,41 @@ export interface Database {
         };
         Relationships: [];
       };
+      admin_users: {
+        Row: {
+          id: string;
+          user_id: string;
+          role: "owner" | "admin" | "moderator";
+          enabled: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          role: "owner" | "admin" | "moderator";
+          enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          role?: "owner" | "admin" | "moderator";
+          enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       merchant_profiles: {
         Row: {
           id: string;
@@ -891,6 +926,39 @@ export interface Database {
             referencedColumns: ["id"];
           },
         ];
+      };
+      square_banners: {
+        Row: {
+          id: string;
+          title: string;
+          image_url: string;
+          link_url: string | null;
+          sort_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          image_url: string;
+          link_url?: string | null;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          image_url?: string;
+          link_url?: string | null;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       content_reports: {
         Row: {

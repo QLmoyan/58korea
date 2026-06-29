@@ -11,6 +11,7 @@ import type { PostLinkedCouponSummary } from "@/lib/data/posts";
 import type { MerchantCoupon } from "@/lib/types/merchant-coupon";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { fetchUserClaimedCouponIds } from "@/lib/supabase/merchant-coupon-queries";
+import { buildLoginHref } from "@/lib/auth/redirect";
 import { buildPostSharePath } from "@/lib/share/paths";
 
 interface PostLinkedCouponSectionProps {
@@ -120,7 +121,7 @@ export default function PostLinkedCouponSection({
   }
 
   function handleLoginRequired() {
-    router.push(`/login?redirect=${encodeURIComponent(`/posts/${postId}`)}`);
+    router.push(buildLoginHref(buildPostSharePath(postId)));
   }
 
   async function handleSaved(coupon: PostLinkedCouponSummary) {

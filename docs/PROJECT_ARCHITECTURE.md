@@ -8,7 +8,7 @@
 
 ## 1. 整体架构
 
-58korea 是 **Next.js App Router 全栈应用**：浏览器 React 客户端 + Server Actions / Server Components，数据持久化在 **Supabase**（Auth + Postgres + Storage + RLS）。
+韩圈是 **Next.js App Router 全栈应用**：浏览器 React 客户端 + Server Actions / Server Components，数据持久化在 **Supabase**（Auth + Postgres + Storage + RLS）。
 
 ### 1.1 技术栈
 

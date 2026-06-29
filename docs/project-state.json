@@ -1,12 +1,12 @@
 {
-  "version": "0.1.0",
-  "nextVersion": "0.2.0",
-  "developmentStage": "Late Beta / 早期生产",
-  "productName": "58korea",
+  "version": "0.2.0",
+  "nextVersion": "0.3.0",
+  "developmentStage": "v0.2.0 / 早期生产",
+  "productName": "韩圈",
   "productTagline": "韩国华人生活社区",
   "lastUpdated": "2026-06-17",
   "currentFocus": [
-    "消除假功能误导（关注按钮、关注 Tab）"
+    "v0.3.0 规划"
   ],
   "build": {
     "status": "PASS",
@@ -15,8 +15,8 @@
   },
   "regression": {
     "status": "PASS",
-    "passed": 50,
-    "total": 50,
+    "passed": 60,
+    "total": 60,
     "lastVerified": "2026-06-17",
     "command": "npm run regression-check"
   },
@@ -105,45 +105,49 @@
       "id": "profile-comments-v2",
       "name": "我的评论 Tab V2",
       "summary": "按 user_id 查 published 评论、批量关联帖子标题、分页加载更多"
-    }
-  ],
-  "pendingV2": [
+    },
     {
       "id": "honest-ui-v2",
-      "name": "消除假功能误导",
-      "summary": "关注按钮、关注 Tab — 隐藏或接最小实现"
+      "name": "Honest UI V2",
+      "summary": "移除假关注按钮/Tab、停用 nearby/following 筛选、Feed 改为推荐/最新、前台不展示 distance"
     },
     {
       "id": "system-notifications-v2",
-      "name": "系统通知 Tab",
-      "summary": "利用现有 notifications 表与券到期 cron"
+      "name": "System Notifications V2",
+      "summary": "消息中心系统 Tab 查询 notifications.type=system；券到期/下架等真实系统通知；诚实空态"
     },
     {
       "id": "square-banners-v2",
-      "name": "广场 Banner 可运营",
-      "summary": "替换 lib/square/banners.ts 硬编码"
+      "name": "Square Banners V2",
+      "summary": "square_banners 表 + Admin 广场 Banner Tab；发现页轮播读库，无硬编码 picsum"
     },
     {
       "id": "admin-admins-v2",
-      "name": "Admin 管理员管理页",
-      "summary": "补 /admin/admins，消除死链"
+      "name": "Admin Admins V2",
+      "summary": "/admin/admins 只读管理员列表；admins.manage 门禁；消除 Dashboard 死链"
     },
     {
       "id": "login-redirect-v2",
-      "name": "登录 redirect 剩余入口",
-      "summary": "消息页、桌面侧栏等入口统一 buildLoginHref"
-    },
-    {
-      "id": "nearby-feed-v2",
-      "name": "「附近」产品定义",
-      "summary": "改文案或接真实定位，避免随机 distance 误导"
+      "name": "Login Redirect V2",
+      "summary": "消息页/桌面侧栏/发帖/领券等入口统一 buildLoginHref；resolveRedirectTarget 防开放跳转"
     },
     {
       "id": "types-sync-v2",
-      "name": "database.types.ts 同步",
-      "summary": "admin_users 等 schema 与类型文件对齐"
+      "name": "Types Sync V2",
+      "summary": "database.types.ts 补齐 admin_users；移除 as never 绕过；notifications/square_banners 与 schema 对齐"
+    },
+    {
+      "id": "global-error-pages",
+      "name": "Global Error Pages",
+      "summary": "自定义 not-found / error / global-error；韩圈风格文案，不暴露技术细节"
+    },
+    {
+      "id": "v0.2.0-release-check",
+      "name": "v0.2.0 Release Check",
+      "summary": "build + regression 60/60 PASS；无用户可见旧品牌/假关注/裸 login；package.json 对齐 0.2.0"
     }
   ],
+  "pendingV2": [],
   "notStarted": [
     {
       "id": "dm-chat",
@@ -183,83 +187,15 @@
   ],
   "knownBugs": [
     {
-      "id": "follow-button-noop",
-      "severity": "medium",
-      "summary": "PostDetailTopBar「关注作者」按钮无 onClick / 无 API"
-    },
-    {
-      "id": "follow-tab-misleading",
-      "severity": "low",
-      "summary": "首页「关注」Tab 依赖 post.following 字段，用户发帖恒为 false"
-    },
-    {
-      "id": "admin-admins-404",
-      "severity": "low",
-      "summary": "AdminDashboard 链接 /admin/admins 但路由不存在"
-    },
-    {
       "id": "emoji-stub",
       "severity": "low",
       "summary": "评论 Emoji 按钮仍为「功能开发中」"
-    },
-    {
-      "id": "system-notifications-empty",
-      "severity": "low",
-      "summary": "消息中心系统 Tab 空态，文案「后续版本开放」"
-    },
-    {
-      "id": "square-banners-static",
-      "severity": "low",
-      "summary": "广场 Banner 硬编码 picsum 链接"
     }
   ],
   "roadmap": {
-    "p1": [
-      {
-        "id": "honest-ui-v2",
-        "name": "消除假功能误导",
-        "status": "pending"
-      }
-    ],
-    "p2": [
-      {
-        "id": "system-notifications-v2",
-        "name": "系统通知 Tab 落地",
-        "status": "pending"
-      },
-      {
-        "id": "square-banners-v2",
-        "name": "广场 Banner 可运营",
-        "status": "pending"
-      },
-      {
-        "id": "admin-admins-v2",
-        "name": "Admin 管理员管理页",
-        "status": "pending"
-      },
-      {
-        "id": "login-redirect-v2",
-        "name": "登录 redirect 剩余入口收口",
-        "status": "pending"
-      }
-    ],
-    "p3": [
-      {
-        "id": "nearby-feed-v2",
-        "name": "「附近」产品定义",
-        "status": "pending"
-      },
-      {
-        "id": "types-sync-v2",
-        "name": "database.types.ts 同步",
-        "status": "pending"
-      },
-      {
-        "id": "global-error-pages",
-        "name": "自定义 404 / error 页",
-        "status": "pending"
-      }
-    ],
+    "p1": [],
+    "p2": [],
+    "p3": [],
     "completed": [
       "bootstrap-v1",
       "mobile-ux-v1",
@@ -268,7 +204,15 @@
       "auth-profile-v1",
       "share-v1",
       "favorites-v1",
-      "admin-dashboard-v1"
+      "admin-dashboard-v1",
+      "honest-ui-v2",
+      "system-notifications-v2",
+      "square-banners-v2",
+      "admin-admins-v2",
+      "login-redirect-v2",
+      "types-sync-v2",
+      "global-error-pages",
+      "v0.2.0-release-check"
     ],
     "deferred": [
       {
@@ -316,6 +260,94 @@
     ]
   },
   "changelog": [
+    {
+      "version": "0.2.0",
+      "date": "2026-06-17",
+      "title": "v0.2.0 Release",
+      "items": [
+        "发布前检查：build + regression 60/60 PASS",
+        "用户可见面无 58korea/58韩国、假关注 Tab、square picsum、裸 /login",
+        "/admin/admins、not-found、error 页就绪；admin_users 类型无 as never",
+        "knownBugs 仅保留 emoji-stub；package.json 版本升至 0.2.0"
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "date": "2026-06-17",
+      "title": "Global Error Pages",
+      "items": [
+        "新增 app/not-found.tsx：页面走丢了｜韩圈，返回首页 / 去发现",
+        "新增 app/error.tsx：友好错误页，重试 + 返回首页，console.error 记录",
+        "新增 app/global-error.tsx：根布局级错误兜底",
+        "regression 1.6p；build/regression PASS"
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "date": "2026-06-17",
+      "title": "Types Sync V2",
+      "items": [
+        "database.types.ts 补齐 admin_users（id/user_id/role/enabled/created_at/updated_at）",
+        "移除 admin_users 相关 as never 绕过；load-admin-membership / admin-admins 使用真实类型",
+        "核对 square_banners、notifications（含 system、可空 post_id/comment_id）与 migrations 一致",
+        "regression 1.6o；build/regression PASS"
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "date": "2026-06-17",
+      "title": "Login Redirect V2",
+      "items": [
+        "消息页、桌面侧栏、发帖、领券等入口统一 buildLoginHref / buildLoginHrefFromPath",
+        "移除裸 href=\"/login\" 与手写 encodeURIComponent redirect",
+        "resolveRedirectTarget 拒绝外部 URL 与 /login、/register 循环",
+        "regression 1.6n；build/regression PASS"
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "date": "2026-06-17",
+      "title": "Admin Admins V2",
+      "items": [
+        "新增 /admin/admins 只读管理员列表页，消除 Dashboard 死链",
+        "展示账号、角色、启用状态、权限摘要、创建/更新时间",
+        "仅 owner（admins.manage）可访问；变更说明指向 create-admin-user 脚本",
+        "regression 1.6m + 2.7b；build/regression PASS"
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "date": "2026-06-17",
+      "title": "Square Banners V2",
+      "items": [
+        "新增 square_banners 表与 RLS；发现页轮播读库（is_active + sort_order）",
+        "移除 lib/square/banners.ts 硬编码 picsum；无启用 Banner 时不显示轮播区",
+        "Admin「广场 Banner」Tab：列表/新增/编辑/启用/删除/排序（image_url 文本配置）",
+        "regression 1.6l + RLS square_banners；build/regression PASS"
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "date": "2026-06-17",
+      "title": "System Notifications V2",
+      "items": [
+        "系统 Tab 查询 notifications.type=system（券到期提醒、优惠券已失效等）",
+        "诚实空态「暂无系统通知」；系统通知点击标记已读、无假跳转",
+        "系统 Tab 支持全部已读；regression 1.6k",
+        "build + regression PASS"
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "date": "2026-06-17",
+      "title": "Honest UI V2",
+      "items": [
+        "移除帖子详情假「关注作者」按钮",
+        "首页 Feed Tab 改为「推荐 / 最新」，移除关注 Tab 与 nearby/following 假筛选",
+        "PostCard 不再展示 distance；发帖不再随机写入距离",
+        "regression 1.6j + build/regression PASS"
+      ]
+    },
     {
       "version": "0.1.0",
       "date": "2026-06-17",
@@ -554,7 +586,7 @@
       "date": "2026-06-17",
       "id": "no-merchant-saas",
       "decision": "不做复杂商家后台与经营统计 SaaS",
-      "reason": "58korea 是社区不是 B 端 SaaS",
+      "reason": "韩圈是社区不是 B 端 SaaS",
       "rejected": "券分析大盘、商家独立运营台"
     },
     {

@@ -187,7 +187,7 @@ async function verifySchema(
     errors.length = 0;
 
     const { error: adminUsersError } = await supabase
-      .from("admin_users" as never)
+      .from("admin_users")
       .select("id")
       .limit(1);
 

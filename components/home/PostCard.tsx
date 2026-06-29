@@ -162,12 +162,12 @@ export default function PostCard({ post, highlightQuery }: PostCardProps) {
             </p>
           ) : null}
 
-          <p className="truncate text-[11px] leading-tight text-zinc-400">
-            <span aria-hidden="true">📍 </span>
-            {post.location}
-            <span className="mx-1 text-zinc-300">·</span>
-            <span className="text-[10px] text-zinc-400">{post.distance}</span>
-          </p>
+          {post.location?.trim() ? (
+            <p className="truncate text-[11px] leading-tight text-zinc-400">
+              <span aria-hidden="true">📍 </span>
+              {post.location}
+            </p>
+          ) : null}
 
           <div className="flex items-center justify-between gap-2 pt-0.5">
             <PostAuthorLink

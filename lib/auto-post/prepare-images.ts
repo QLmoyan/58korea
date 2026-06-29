@@ -3,7 +3,7 @@ import type { AutoPostImageCandidate, AutoPostTemplate } from "./types";
 async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType: string }> {
   const response = await fetch(url, {
     headers: {
-      "User-Agent": "58korea-auto-post/1.0",
+      "User-Agent": "hanquan-auto-post/1.0",
     },
   });
 

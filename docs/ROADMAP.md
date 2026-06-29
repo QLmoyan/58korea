@@ -2,7 +2,7 @@
 
 > 自动生成文件。请勿手改。更新 `docs/project-state.json` 后运行 `npm run sync-docs`。
 
-最后更新：**2026-06-17** · 当前版本 `0.1.0` · 下一目标 `0.2.0`
+最后更新：**2026-06-17** · 当前版本 `0.2.0` · 下一目标 `0.3.0`
 
 ## 已完成（近期收口）
 
@@ -14,24 +14,26 @@
 - ✅ **收藏系统收口 V1** (`favorites-v1`)
 - ✅ **统一分享系统 V1** (`share-v1`)
 - ✅ **移动端体验收口 V1** (`mobile-ux-v1`)
+- ✅ **Honest UI V2** (`honest-ui-v2`)
+- ✅ **System Notifications V2** (`system-notifications-v2`)
+- ✅ **Square Banners V2** (`square-banners-v2`)
+- ✅ **Admin Admins V2** (`admin-admins-v2`)
+- ✅ **Login Redirect V2** (`login-redirect-v2`)
+- ✅ **Types Sync V2** (`types-sync-v2`)
+- ✅ **Global Error Pages** (`global-error-pages`)
+- ✅ **v0.2.0 Release Check** (`v0.2.0-release-check`)
 
 ## P1 — 优先（信任与账号基础）
 
-- ⏳ **消除假功能误导** (`honest-ui-v2`)
-- ⏳ **我的评论 Tab 补全** (`profile-comments-v2`)
+
 
 ## P2 — 运营与体验补全
 
-- ⏳ **系统通知 Tab 落地** (`system-notifications-v2`)
-- ⏳ **广场 Banner 可运营** (`square-banners-v2`)
-- ⏳ **Admin 管理员管理页** (`admin-admins-v2`)
-- ⏳ **登录 redirect 剩余入口收口** (`login-redirect-v2`)
+
 
 ## P3 — polish / 工程
 
-- ⏳ **「附近」产品定义** (`nearby-feed-v2`)
-- ⏳ **database.types.ts 同步** (`types-sync-v2`)
-- ⏳ **自定义 404 / error 页** (`global-error-pages`)
+
 
 ## 暂缓（Deferred）
 

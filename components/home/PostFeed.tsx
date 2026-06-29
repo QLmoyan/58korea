@@ -13,12 +13,8 @@ interface PostFeedProps {
 }
 
 function getDefaultEmptyMessage(channel: FeedChannel) {
-  if (channel === "关注") {
-    return "还没有关注的内容，去发现更多吧";
-  }
-
-  if (channel === "附近") {
-    return "附近暂无相关内容";
+  if (channel === "最新") {
+    return "暂无最新内容";
   }
 
   return "该分类下暂无内容";

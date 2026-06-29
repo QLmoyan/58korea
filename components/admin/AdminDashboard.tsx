@@ -13,6 +13,7 @@ import ReviewQueuePanel from "@/components/admin/ReviewQueuePanel";
 import RulesManagementPanel from "@/components/admin/rules/RulesManagementPanel";
 import RuleTesterPanel from "@/components/admin/rules/RuleTesterPanel";
 import ChannelArticlesPanel from "@/components/admin/ChannelArticlesPanel";
+import SquareBannersPanel from "@/components/admin/SquareBannersPanel";
 import DashboardPanel from "@/components/admin/DashboardPanel";
 import { useAdminCapabilities } from "@/components/admin/AdminCapabilitiesProvider";
 
@@ -47,7 +48,7 @@ export default function AdminDashboard() {
       <header className="sticky top-0 z-20 border-b border-zinc-100 bg-white/95 backdrop-blur-md">
         <div className="flex items-center justify-between px-4 py-4 lg:px-6">
           <div>
-            <h1 className="text-lg font-semibold text-zinc-900">58korea 运营后台</h1>
+            <h1 className="text-lg font-semibold text-zinc-900">韩圈运营后台</h1>
             <p className="text-xs text-zinc-500">运营概览、内容安全审核、举报处理、规则管理与测试</p>
           </div>
           <div className="flex items-center gap-2">
@@ -102,6 +103,10 @@ export default function AdminDashboard() {
         {tab === "channelArticles" &&
         canAccessAdminPanelTab(permissions, "channelArticles") ? (
           <ChannelArticlesPanel />
+        ) : null}
+        {tab === "squareBanners" &&
+        canAccessAdminPanelTab(permissions, "squareBanners") ? (
+          <SquareBannersPanel />
         ) : null}
       </main>
     </div>

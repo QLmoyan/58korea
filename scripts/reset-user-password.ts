@@ -1,5 +1,5 @@
 /**
- * Manual password reset for 58korea (Plan A — operator only).
+ * Manual password reset for 韩圈 (Plan A — operator only).
  *
  * Usage:
  *   npx tsx scripts/reset-user-password.ts <username> <new-password>

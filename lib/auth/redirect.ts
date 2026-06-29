@@ -27,6 +27,16 @@ export function resolveRedirectTarget(
   return trimmed;
 }
 
+/** Join pathname + search for login redirect (caller passes raw search, no double-encoding). */
+export function buildLoginHrefFromPath(
+  pathname: string,
+  search = "",
+): string {
+  const query =
+    search.startsWith("?") ? search : search ? `?${search}` : "";
+  return buildLoginHref(`${pathname}${query}`);
+}
+
 export function buildLoginHref(redirectTo?: string | null): string {
   if (redirectTo == null || redirectTo === "") {
     return "/login";

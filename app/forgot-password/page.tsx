@@ -12,7 +12,7 @@ export default function ForgotPasswordPage() {
           <h1 className="text-base font-semibold text-zinc-900">如何找回密码</h1>
 
           <p className="text-sm leading-6 text-zinc-600">
-            58korea 使用<strong className="font-medium text-zinc-800">用户名</strong>
+            韩圈使用<strong className="font-medium text-zinc-800">用户名</strong>
             登录，不是邮箱登录。当前版本暂不支持自助邮件重置密码。
           </p>
 

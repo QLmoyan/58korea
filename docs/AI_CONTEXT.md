@@ -1,12 +1,12 @@
 # AI_CONTEXT
 
-> **任何 AI 第一次接手 58korea 必须先读本文档。** 自动生成，勿手改。来源：`docs/project-state.json` · 最后更新 **2026-06-17**
+> **任何 AI 第一次接手 韩圈 必须先读本文档。** 自动生成，勿手改。来源：`docs/project-state.json` · 最后更新 **2026-06-17**
 
 ---
 
 ## 1. 一句话
 
-**58korea** 是面向在韩华人的 **轻量生活社区**（探店、房屋、招聘、二手、求助、攻略），Next.js + Supabase，当前 Late Beta / 早期生产。
+**韩圈** 是面向在韩华人的 **轻量生活社区**（探店、房屋、招聘、二手、求助、攻略），Next.js + Supabase，当前 v0.2.0 / 早期生产。
 
 ## 2. 产品定位
 
@@ -17,18 +17,18 @@
 
 ## 3. 当前开发阶段
 
-**Late Beta / 早期生产** — V1 主链路已收口；当前以 **V2 体验债与诚实 UI** 为主，不扩 scope。
+**v0.2.0 / 早期生产** — V1 主链路已收口；当前以 **V2 体验债与诚实 UI** 为主，不扩 scope。
 
 ## 4. 当前版本
 
-- **Current Version**：`0.1.0`
-- **Next Version（目标）**：`0.2.0`
+- **Current Version**：`0.2.0`
+- **Next Version（目标）**：`0.3.0`
 - **Build**：PASS（2026-06-17）
-- **Regression**：PASS 50/50（2026-06-17）
+- **Regression**：PASS 60/60（2026-06-17）
 
 ## 5. Current Focus
 
-- 消除假功能误导（关注按钮、关注 Tab）
+- v0.3.0 规划
 
 ## 6. 产品铁律（不可违背）
 
@@ -42,7 +42,7 @@
 
 ## 7. 已完成模块（摘要）
 
-密码方案 A、运营 Dashboard V1、项目 Bootstrap V1、首页 Feed V1、帖子与评论 V1、账号与资料 V1、搜索 V1、商家体系 V1、优惠券全链路 V1、发帖体验 V1 等共 17 项（完整见 PROJECT_STATUS）
+密码方案 A、运营 Dashboard V1、项目 Bootstrap V1、首页 Feed V1、帖子与评论 V1、账号与资料 V1、搜索 V1、商家体系 V1、优惠券全链路 V1、发帖体验 V1 等共 25 项（完整见 PROJECT_STATUS）
 
 完整列表与 Bug 见 [PROJECT_STATUS.md](./PROJECT_STATUS.md)。
 

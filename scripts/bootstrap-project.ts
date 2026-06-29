@@ -30,6 +30,7 @@ const APPLY_SCRIPTS: string[] = [
   "scripts/apply-profile-edit-v1.ts",
   "scripts/apply-search-users-merchants-v1.ts",
   "scripts/apply-channel-articles-v1.ts",
+  "scripts/apply-square-banners-v1.ts",
   "scripts/apply-merchant-profiles-v1.ts",
   "scripts/apply-merchant-coupons-v1.ts",
   "scripts/apply-post-linked-coupon-v1.ts",
@@ -198,7 +199,7 @@ function printManualSteps(warnings: string[]) {
 }
 
 async function main() {
-  console.log("58korea project bootstrap V1");
+  console.log("韩圈 project bootstrap V1");
   console.log(`Working directory: ${process.cwd()}`);
 
   logStep("1. Load and validate environment");

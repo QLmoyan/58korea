@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { buildLoginHref, buildRegisterHref } from "@/lib/auth/redirect";
 import { MESSAGE_LOGIN_PROMPT } from "@/lib/messages/constants";
 
 export default function MessageLoginPrompt() {
+  const loginHref = buildLoginHref("/messages");
+  const registerHref = buildRegisterHref("/messages");
   return (
     <section className="flex w-full flex-col items-center justify-center px-6 py-20 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-2xl">
@@ -12,13 +15,13 @@ export default function MessageLoginPrompt() {
       </p>
       <div className="mt-6 flex w-full max-w-xs flex-col gap-3">
         <Link
-          href="/login"
+          href={loginHref}
           className="rounded-full bg-gradient-to-r from-rose-500 to-orange-400 py-3 text-sm font-semibold text-white shadow-sm"
         >
           登录
         </Link>
         <Link
-          href="/register"
+          href={registerHref}
           className="rounded-full bg-zinc-100 py-3 text-sm font-medium text-zinc-700"
         >
           注册

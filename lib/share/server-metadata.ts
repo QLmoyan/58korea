@@ -1,4 +1,5 @@
 import { normalizeUsername } from "@/lib/auth/username";
+import { SITE_NAME } from "@/lib/share/constants";
 import {
   mapPostRow,
   POST_SELECT_WITH_LINKED_COUPON_SINGLE,
@@ -78,7 +79,7 @@ export async function fetchPublicProfileForMetadata(username: string) {
   const description =
     merchant?.description?.trim() ||
     profile?.bio?.trim() ||
-    `${displayName} 的 韩圈主页`;
+    `${displayName} 的${SITE_NAME}主页`;
   const isMerchant = Boolean(merchant?.is_active);
 
   return {

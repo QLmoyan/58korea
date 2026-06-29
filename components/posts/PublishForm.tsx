@@ -23,6 +23,7 @@ import {
   type PublishCategorySelection,
 } from "@/lib/types/community";
 import { AI_AUTO_CATEGORY } from "@/lib/posts/resolve-post-category";
+import { buildLoginHref } from "@/lib/auth/redirect";
 import { getDisplayUsername } from "@/lib/auth/username";
 import { resolveAuthorNameFromAuth } from "@/lib/auth/author";
 
@@ -177,7 +178,7 @@ export default function PublishForm() {
     }
 
     if (!user) {
-      router.push(`/login?redirect=${encodeURIComponent("/publish")}`);
+      router.push(buildLoginHref("/publish"));
       return;
     }
 
@@ -240,7 +241,7 @@ export default function PublishForm() {
         <main className="flex min-h-[60vh] flex-col items-center justify-center px-6 pt-20 text-center">
           <p className="text-sm text-zinc-500">登录后即可发布帖子</p>
           <Link
-            href={`/login?redirect=${encodeURIComponent("/publish")}`}
+            href={buildLoginHref("/publish")}
             className="mt-4 rounded-full bg-gradient-to-r from-rose-500 to-orange-400 px-6 py-3 text-sm font-semibold text-white"
           >
             去登录

@@ -1,4 +1,4 @@
-# 58korea 部署与初始化清单
+# 韩圈 部署与初始化清单
 
 > 项目状态见 [PROJECT_STATUS.md](./PROJECT_STATUS.md)。新 AI / 新成员按 [NEW_CHAT_GUIDE.md](./NEW_CHAT_GUIDE.md) 阅读，首读 [AI_CONTEXT.md](./AI_CONTEXT.md)。
 

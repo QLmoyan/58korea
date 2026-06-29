@@ -6,7 +6,7 @@ import type { Database } from "../lib/supabase/database.types";
 
 const ADMIN_USERNAME = "admin";
 const ADMIN_NICKNAME = "站长";
-const ADMIN_BIO = "58korea 管理员";
+const ADMIN_BIO = "韩圈管理员";
 const ADMIN_ROLE = "owner" as const;
 
 function loadEnv() {
@@ -133,7 +133,7 @@ async function main() {
   }
 
   const { error: adminUserError } = await supabase
-    .from("admin_users" as never)
+    .from("admin_users")
     .upsert(
       {
         user_id: user.id,
