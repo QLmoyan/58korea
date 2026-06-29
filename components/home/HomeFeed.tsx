@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   filterPosts,
   type FeedChannel,
   type PostCategory,
 } from "@/lib/data/posts";
 import { FEED_UI_DEADLINE_MS } from "@/lib/constants/network";
+import { useNearbyLocation } from "@/lib/feed/use-nearby-location";
 import { useSelectedRegion } from "@/lib/feed/use-selected-region";
 import { useLoadingDeadline } from "@/lib/hooks/use-loading-deadline";
 import { usePostStore } from "@/lib/store/post-store";
@@ -17,11 +18,32 @@ import PostFeed from "./PostFeed";
 import RegionSelector from "./RegionSelector";
 
 export default function HomeFeed() {
-  const { posts, hydrated, feedError, reloadFeed } = usePostStore();
+  const { posts, hydrated: feedHydrated, feedError, reloadFeed } = usePostStore();
   const [channel, setChannel] = useState<FeedChannel>("推荐");
   const [category, setCategory] = useState<PostCategory | null>(null);
-  const { region, setSelectedRegion } = useSelectedRegion();
-  const loading = !hydrated;
+  const {
+    region,
+    locationMode,
+    hasPersistedRegion,
+    hydrated: regionHydrated,
+    applyAutoRegion,
+    selectRegionManually,
+    enableAutoMode,
+  } = useSelectedRegion();
+
+  const handleRegionResolved = useCallback(
+    (nextRegion: Parameters<typeof applyAutoRegion>[0]) => {
+      applyAutoRegion(nextRegion);
+    },
+    [applyAutoRegion],
+  );
+
+  const { status: locationStatus, requestLocation, retryLocation } =
+    useNearbyLocation({
+      onRegionResolved: handleRegionResolved,
+    });
+
+  const loading = !feedHydrated || !regionHydrated;
   const loadingOverdue = useLoadingDeadline(loading, FEED_UI_DEADLINE_MS);
 
   const filteredPosts = useMemo(
@@ -33,9 +55,40 @@ export default function HomeFeed() {
     feedError ??
     (loadingOverdue ? "帖子加载超时，请检查网络后重试" : null);
 
+  useEffect(() => {
+    if (channel !== "附近" || !regionHydrated) {
+      return;
+    }
+
+    if (locationMode === "manual") {
+      return;
+    }
+
+    if (hasPersistedRegion) {
+      return;
+    }
+
+    requestLocation();
+  }, [
+    channel,
+    regionHydrated,
+    locationMode,
+    hasPersistedRegion,
+    requestLocation,
+  ]);
+
   function handleChannelChange(nextChannel: FeedChannel) {
     setChannel(nextChannel);
     setCategory(null);
+  }
+
+  function handleRetryLocate() {
+    enableAutoMode();
+    retryLocation();
+  }
+
+  function handleManualSelect(nextRegion: Parameters<typeof selectRegionManually>[0]) {
+    selectRegionManually(nextRegion);
   }
 
   return (
@@ -48,7 +101,13 @@ export default function HomeFeed() {
           <ChannelTabs active={channel} onChange={handleChannelChange} />
         </div>
         {channel === "附近" ? (
-          <RegionSelector active={region} onChange={setSelectedRegion} />
+          <RegionSelector
+            active={region}
+            locationMode={locationMode}
+            locationStatus={locationStatus}
+            onManualSelect={handleManualSelect}
+            onRetryLocate={handleRetryLocate}
+          />
         ) : null}
         <CategoryScroll active={category} onChange={setCategory} />
       </header>

@@ -10,7 +10,6 @@ import {
 } from "react";
 import type { Post, PostImage } from "@/lib/data/posts";
 import { resolveAuthorNameFromAuth } from "@/lib/auth/author";
-import { loadSelectedRegion } from "@/lib/feed/selected-region";
 import { sortPostsWithMerchantsFirst } from "@/lib/merchant/sort-posts";
 import { useAuthStore } from "@/lib/store/auth-store";
 import {
@@ -390,8 +389,11 @@ export function PostStoreProvider({ children }: { children: React.ReactNode }) {
 
   const addPost = useCallback(async (input: CreatePostInput) => {
     const author = resolveAuthorNameFromAuth(user, profile);
-    const location =
-      input.location?.trim() || loadSelectedRegion();
+    const location = input.location?.trim();
+
+    if (!location) {
+      throw new Error("缺少发布地区，请先获取或选择地区");
+    }
 
     const result = await publishPostAction({
       title: input.title.trim(),

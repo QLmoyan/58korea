@@ -8,11 +8,11 @@
 
 | 项 | 值 |
 |---|---|
-| **Current Version** | `0.2.1` |
+| **Current Version** | `0.2.2` |
 | **Next Version** | `0.3.0` |
-| **Development Stage** | v0.2.1 / 早期生产 |
+| **Development Stage** | v0.2.2 / 早期生产 |
 | **Build** | **PASS**（2026-06-17） |
-| **Regression** | **PASS** 61/61（2026-06-17） |
+| **Regression** | **PASS** 62/62（2026-06-17） |
 
 ## Current Focus
 
@@ -53,6 +53,8 @@
 - **Global Error Pages** (`global-error-pages`) — 自定义 not-found / error / global-error；韩圈风格文案，不暴露技术细节
 - **v0.2.0 Release Check** (`v0.2.0-release-check`) — build + regression 60/60 PASS；无用户可见旧品牌/假关注/裸 login；package.json 对齐 0.2.0
 - **Nearby Lite V1** (`nearby-lite-v1`) — 恢复附近 Tab：按用户选择地区匹配 post.location；hanquan:selected-region；无 GPS/假距离
+- **Nearby Auto Region V1** (`nearby-auto-region-v1`) — 附近 Tab 自动 geolocation 映射地区；hanquan:location-mode auto/manual；不写经纬度入库
+- **Publish Location UX V1** (`publish-location-v1`) — 发帖页移除自由输入；post.location 仅来自自动定位或 Bottom Sheet 选区；定位失败不阻塞页面
 
 ## 待优化模块（V2）
 

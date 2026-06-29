@@ -1,4 +1,16 @@
 export const SELECTED_REGION_STORAGE_KEY = "hanquan:selected-region";
+export const LOCATION_MODE_STORAGE_KEY = "hanquan:location-mode";
+
+export const LOCATION_MODES = ["auto", "manual"] as const;
+export type LocationMode = (typeof LOCATION_MODES)[number];
+
+export function isLocationMode(
+  value: string | null | undefined,
+): value is LocationMode {
+  return (
+    value != null && (LOCATION_MODES as readonly string[]).includes(value)
+  );
+}
 
 export const SELECTABLE_REGIONS = [
   "首尔",

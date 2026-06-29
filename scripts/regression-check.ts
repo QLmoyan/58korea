@@ -775,6 +775,104 @@ async function main() {
     );
   });
 
+  await check("1.6r Nearby Auto Region V1 — 自动定位地区 (静态)", async () => {
+    const nearbyHook = readFileSync(
+      resolve(process.cwd(), "lib/feed/use-nearby-location.ts"),
+      "utf8",
+    );
+    assert(
+      nearbyHook.includes('"use client"') &&
+        nearbyHook.includes("navigator.geolocation"),
+      "geolocation must live in client nearby hook only",
+    );
+
+    const regions = readFileSync(
+      resolve(process.cwd(), "lib/feed/regions.ts"),
+      "utf8",
+    );
+    assert(
+      regions.includes('hanquan:selected-region') &&
+        regions.includes('hanquan:location-mode'),
+      "nearby storage keys must use hanquan namespace",
+    );
+
+    const selectedRegion = readFileSync(
+      resolve(process.cwd(), "lib/feed/selected-region.ts"),
+      "utf8",
+    );
+    assert(
+      selectedRegion.includes("saveManualSelectedRegion") &&
+        selectedRegion.includes('saveLocationMode("manual")'),
+      "manual region selection must persist manual mode",
+    );
+
+    const homeFeed = readFileSync(
+      resolve(process.cwd(), "components/home/HomeFeed.tsx"),
+      "utf8",
+    );
+    assert(
+      homeFeed.includes('locationMode === "manual"') &&
+        homeFeed.includes("hasPersistedRegion"),
+      "HomeFeed must skip auto locate for manual mode or persisted region",
+    );
+
+    const geoRegion = readFileSync(
+      resolve(process.cwd(), "lib/feed/geo-region.ts"),
+      "utf8",
+    );
+    assert(
+      geoRegion.includes("getRegionFromCoordinates"),
+      "geo-region mapper must exist",
+    );
+
+    const postCard = readFileSync(
+      resolve(process.cwd(), "components/home/PostCard.tsx"),
+      "utf8",
+    );
+    assert(
+      !postCard.includes("post.distance"),
+      "PostCard must not display distance",
+    );
+
+    const publishAction = readFileSync(
+      resolve(process.cwd(), "lib/actions/publish-content.ts"),
+      "utf8",
+    );
+    assert(
+      !publishAction.includes("latitude") && !publishAction.includes("longitude"),
+      "publish must not write latitude/longitude",
+    );
+
+    const publishForm = readFileSync(
+      resolve(process.cwd(), "components/posts/PublishForm.tsx"),
+      "utf8",
+    );
+    assert(
+      publishForm.includes("PublishLocationSection"),
+      "PublishForm must use PublishLocationSection",
+    );
+    assert(
+      !publishForm.includes("例如：首尔 建大入口") &&
+        !publishForm.includes('placeholder="例如'),
+      "PublishForm must not expose free-text location input",
+    );
+
+    const publishLocationSection = readFileSync(
+      resolve(process.cwd(), "components/posts/PublishLocationSection.tsx"),
+      "utf8",
+    );
+    assert(
+      publishLocationSection.includes("无法获取位置") &&
+        publishLocationSection.includes("选择地区") &&
+        publishLocationSection.includes("RegionPickerSheet"),
+      "publish location must support retry and region picker sheet",
+    );
+    assert(
+      publishLocationSection.includes("resolvePublishLocation"),
+      "publish location must resolve from selected region only",
+    );
+  });
+
   await check("1.6k System Notifications V2 — 系统 Tab 真实数据源 (静态)", async () => {
     const constants = readFileSync(
       resolve(process.cwd(), "lib/messages/constants.ts"),

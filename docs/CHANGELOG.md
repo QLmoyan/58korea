@@ -2,7 +2,17 @@
 
 > 自动生成文件。请勿手改。更新 `docs/project-state.json` 后运行 `npm run sync-docs`。
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.2.1**（v0.2.1 / 早期生产）。
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.2.2**（v0.2.2 / 早期生产）。
+
+## [0.2.2] Nearby Auto Region V1 + Publish Location UX — 2026-06-17
+
+- 点击「附近」Tab 时自动 geolocation 映射地区（首尔/釜山/京畿等粗略范围）
+- hanquan:location-mode auto/manual；手动选择不被自动覆盖
+- 定位失败 fallback 手动选择；不写经纬度到 Supabase
+- 发帖页移除地区自由输入；PublishLocationSection + RegionPickerSheet
+- post.location 仅来自 resolvePublishLocation(region)；无 location 时阻止发布并提示
+- localStorage 仅 hanquan:selected-region / hanquan:location-mode
+- regression 1.6r（含 PublishForm 静态检查）；build/regression 62/62 PASS
 
 ## [0.2.1] Nearby Lite V1 — 2026-06-17
 
