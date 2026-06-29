@@ -38,7 +38,6 @@ export default function ProfileLoggedInView({
     merchantDetails,
     merchantDetailsLoading,
     myPosts,
-    myComments,
     totalLikes,
     favoritePosts,
     favoriteCount,
@@ -63,7 +62,7 @@ export default function ProfileLoggedInView({
   const waitingForFeed = !hydrated;
   const waitingForEngagement =
     (activeTab === "favorites" || activeTab === "history") && !engagementHydrated;
-  const tabNeedsFeed = activeTab === "posts" || activeTab === "comments";
+  const tabNeedsFeed = activeTab === "posts";
   const tabNeedsEngagement =
     activeTab === "favorites" || activeTab === "history";
   const waitingForTabData =
@@ -111,7 +110,7 @@ export default function ProfileLoggedInView({
           />
         );
       case "comments":
-        return <ProfileCommentsList comments={myComments} />;
+        return user ? <ProfileCommentsList userId={user.id} /> : null;
       case "favorites":
         return (
           <ProfileFavoriteFeed

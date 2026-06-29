@@ -433,6 +433,197 @@ async function main() {
     }
   });
 
+  await check("1.6h 我的评论 Tab 使用 user_id 查询 (静态)", async () => {
+    const useProfileData = readFileSync(
+      resolve(process.cwd(), "components/profile/useProfileData.ts"),
+      "utf8",
+    );
+    assert(
+      !useProfileData.includes("myComments"),
+      "useProfileData must not build myComments from post-store",
+    );
+    assert(
+      !useProfileData.includes("getOwnedCommentIds"),
+      "useProfileData must not filter comments via local owned IDs",
+    );
+    assert(
+      !useProfileData.includes("comment.author === authorName"),
+      "useProfileData must not match comments by author nickname",
+    );
+
+    const commentsList = readFileSync(
+      resolve(process.cwd(), "components/profile/ProfileCommentsList.tsx"),
+      "utf8",
+    );
+    assert(
+      commentsList.includes("fetchUserProfileComments"),
+      "ProfileCommentsList must load comments via fetchUserProfileComments",
+    );
+
+    const queries = readFileSync(
+      resolve(process.cwd(), "lib/supabase/profile-comment-queries.ts"),
+      "utf8",
+    );
+    assert(
+      queries.includes('.eq("user_id", userId)'),
+      "profile-comment-queries must filter by user_id",
+    );
+    assert(
+      queries.includes('.eq("moderation_status", "published")'),
+      "profile-comment-queries must only return published comments",
+    );
+    assert(
+      queries.includes('order("created_at", { ascending: false })'),
+      "profile-comment-queries must sort by created_at DESC",
+    );
+  });
+
+  await check("1.6i 我的评论 V2 查询 (集成)", async () => {
+    assert(publishedPostId > 0, "missing publishedPostId");
+
+    const stamp = Date.now();
+    const username = `pc_${String(stamp).slice(-7)}`;
+    const otherUsername = `pco_${String(stamp).slice(-6)}`;
+    const password = "Test123456!";
+
+    const { error: createUserError } = await service.auth.admin.createUser({
+      email: toInternalEmail(username),
+      password,
+      email_confirm: true,
+      user_metadata: { username, nickname: "评论V2回归" },
+    });
+    assert(!createUserError, createUserError?.message ?? "create user failed");
+
+    const { error: createOtherError } = await service.auth.admin.createUser({
+      email: toInternalEmail(otherUsername),
+      password,
+      email_confirm: true,
+      user_metadata: { username: otherUsername, nickname: "他人回归" },
+    });
+    assert(!createOtherError, createOtherError?.message ?? "create other user failed");
+
+    const { data: listedUsers } = await service.auth.admin.listUsers();
+    const user = listedUsers.users.find((entry) => entry.email === toInternalEmail(username));
+    const otherUser = listedUsers.users.find(
+      (entry) => entry.email === toInternalEmail(otherUsername),
+    );
+    assert(user?.id, "missing test user");
+    assert(otherUser?.id, "missing other user");
+
+    const { error: profileError } = await service.from("profiles").insert([
+      { id: user.id, username, nickname: "评论V2回归" },
+      { id: otherUser.id, username: otherUsername, nickname: "他人回归" },
+    ]);
+    assert(!profileError, profileError?.message ?? "insert profiles failed");
+
+    const { data: post } = await service
+      .from("posts")
+      .select("id, title")
+      .eq("id", publishedPostId)
+      .maybeSingle();
+    assert(post?.title, "missing post title");
+
+    const olderCommentId = randomUUID();
+    const newerCommentId = randomUUID();
+    const hiddenCommentId = randomUUID();
+    const otherCommentId = randomUUID();
+    const now = Date.now();
+    const publishedAt = new Date(now).toISOString();
+
+    const baseComment = {
+      post_id: publishedPostId,
+      author: "评论V2回归",
+      moderation_status: "published" as const,
+      risk_score: 0,
+      risk_level: "low" as const,
+      published_at: publishedAt,
+      parent_id: null,
+      reply_to_author: null,
+      image_url: null,
+      image_storage_path: null,
+      moderation_note: null,
+    };
+
+    const { error: insertError } = await service.from("comments").insert([
+      {
+        ...baseComment,
+        id: olderCommentId,
+        user_id: user.id,
+        content: "older profile comment",
+        created_at: new Date(now - 60_000).toISOString(),
+      },
+      {
+        ...baseComment,
+        id: newerCommentId,
+        user_id: user.id,
+        content: "newer profile comment",
+        created_at: new Date(now - 1_000).toISOString(),
+      },
+      {
+        ...baseComment,
+        id: hiddenCommentId,
+        user_id: user.id,
+        content: "hidden profile comment",
+        moderation_status: "hidden",
+        published_at: null,
+      },
+      {
+        ...baseComment,
+        id: otherCommentId,
+        user_id: otherUser.id,
+        content: "other user comment",
+        created_at: publishedAt,
+      },
+    ]);
+    assert(!insertError, insertError?.message ?? "insert comments failed");
+
+    const userClient = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error: signInError } = await userClient.auth.signInWithPassword({
+      email: toInternalEmail(username),
+      password,
+    });
+    assert(!signInError, signInError?.message ?? "sign in failed");
+
+    const { fetchUserProfileComments } = await import(
+      "../lib/supabase/profile-comment-queries"
+    );
+    const result = await fetchUserProfileComments({
+      userId: user.id,
+      client: userClient,
+    });
+
+    assert(result.entries.length === 2, `expected 2 comments, got ${result.entries.length}`);
+    assert(
+      result.entries.every((entry) => entry.comment.content !== "other user comment"),
+      "should not include other user's comments",
+    );
+    assert(
+      result.entries.every((entry) => entry.comment.content !== "hidden profile comment"),
+      "should not include non-published comments",
+    );
+    assert(
+      result.entries[0]?.comment.id === newerCommentId,
+      "comments should be ordered by created_at DESC",
+    );
+    assert(
+      result.entries[0]?.post?.id === post.id &&
+        result.entries[0]?.post?.title === post.title,
+      "post title should resolve for profile comments",
+    );
+
+    await service.from("comments").delete().in("id", [
+      olderCommentId,
+      newerCommentId,
+      hiddenCommentId,
+      otherCommentId,
+    ]);
+    await service.from("profiles").delete().in("id", [user.id, otherUser.id]);
+    await service.auth.admin.deleteUser(user.id);
+    await service.auth.admin.deleteUser(otherUser.id);
+  });
+
   await check("1.7 前台管理员按钮 UI 对普通用户不可见 (静态)", async () => {
     const postDetail = readFileSync(
       resolve(process.cwd(), "components/posts/PostDetailContent.tsx"),

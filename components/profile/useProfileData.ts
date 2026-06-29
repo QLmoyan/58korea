@@ -3,10 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { resolveAuthorNameFromAuth } from "@/lib/auth/author";
 import { getDisplayUsername } from "@/lib/auth/username";
-import {
-  getOwnedCommentIds,
-  getOwnedPostIds,
-} from "@/lib/local/owned-content";
+import { getOwnedPostIds } from "@/lib/local/owned-content";
 import {
   isVerifiedMerchantAccount,
 } from "@/lib/merchant/identify";
@@ -18,7 +15,7 @@ import type { MerchantProfile } from "@/lib/types/merchant";
 
 export function useProfileData() {
   const { user, profile } = useAuthStore();
-  const { posts, comments, hydrated, favoritePosts, historyPosts, engagementHydrated, feedError, reloadFeed } =
+  const { posts, hydrated, favoritePosts, historyPosts, engagementHydrated, feedError, reloadFeed } =
     usePostStore();
   const merchantStore = useMerchantStoreOptional();
   const [merchantDetails, setMerchantDetails] = useState<MerchantProfile | null>(
@@ -119,24 +116,6 @@ export function useProfileData() {
     );
   }, [posts, user, authorName]);
 
-  const myComments = useMemo(() => {
-    if (!user) {
-      return [];
-    }
-
-    const ownedIds = new Set(getOwnedCommentIds());
-
-    return comments
-      .filter(
-        (comment) =>
-          comment.author === authorName || ownedIds.has(comment.id),
-      )
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-  }, [comments, user, authorName]);
-
   const totalLikes = useMemo(
     () => myPosts.reduce((sum, post) => sum + post.likes, 0),
     [myPosts],
@@ -158,7 +137,6 @@ export function useProfileData() {
     merchantDetails,
     merchantDetailsLoading,
     myPosts,
-    myComments,
     totalLikes,
     favoritePosts,
     favoriteCount,

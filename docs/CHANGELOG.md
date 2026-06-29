@@ -4,6 +4,13 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.1.0**（Late Beta / 早期生产）。
 
+## [0.1.0] 我的评论 Tab V2 — 2026-06-17
+
+- 按 comments.user_id 查询 published 评论，created_at DESC，每页 20 条
+- 批量关联帖子标题与 /posts/{id} 跳转；原帖不可见时显示「原帖已删除」
+- regression 1.6h/1.6i + scripts/test-profile-comments-v2.ts
+- build + regression 50/50 PASS
+
 ## [0.1.0] 隐藏帖子详情假浏览量 — 2026-06-17
 
 - 移除 CommentSection 底部假浏览量（likes + 评论*5 公式）

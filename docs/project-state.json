@@ -6,8 +6,7 @@
   "productTagline": "韩国华人生活社区",
   "lastUpdated": "2026-06-17",
   "currentFocus": [
-    "消除假功能误导（关注按钮、关注 Tab）",
-    "我的评论 Tab 全量查询"
+    "消除假功能误导（关注按钮、关注 Tab）"
   ],
   "build": {
     "status": "PASS",
@@ -16,8 +15,8 @@
   },
   "regression": {
     "status": "PASS",
-    "passed": 48,
-    "total": 48,
+    "passed": 50,
+    "total": 50,
     "lastVerified": "2026-06-17",
     "command": "npm run regression-check"
   },
@@ -101,6 +100,11 @@
       "id": "mobile-ux-v1",
       "name": "移动端体验收口 V1",
       "summary": "Loading 超时、LAN 访问、券/发帖移动端优化"
+    },
+    {
+      "id": "profile-comments-v2",
+      "name": "我的评论 Tab V2",
+      "summary": "按 user_id 查 published 评论、批量关联帖子标题、分页加载更多"
     }
   ],
   "pendingV2": [
@@ -108,11 +112,6 @@
       "id": "honest-ui-v2",
       "name": "消除假功能误导",
       "summary": "关注按钮、关注 Tab — 隐藏或接最小实现"
-    },
-    {
-      "id": "profile-comments-v2",
-      "name": "我的评论 Tab 补全",
-      "summary": "按 user_id 查全量评论，非 session 片段"
     },
     {
       "id": "system-notifications-v2",
@@ -212,11 +211,6 @@
       "id": "square-banners-static",
       "severity": "low",
       "summary": "广场 Banner 硬编码 picsum 链接"
-    },
-    {
-      "id": "profile-comments-partial",
-      "severity": "low",
-      "summary": "我的页评论 Tab 仅 session 内已加载评论 + local owned IDs"
     }
   ],
   "roadmap": {
@@ -224,11 +218,6 @@
       {
         "id": "honest-ui-v2",
         "name": "消除假功能误导",
-        "status": "pending"
-      },
-      {
-        "id": "profile-comments-v2",
-        "name": "我的评论 Tab 补全",
         "status": "pending"
       }
     ],
@@ -327,6 +316,17 @@
     ]
   },
   "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-06-17",
+      "title": "我的评论 Tab V2",
+      "items": [
+        "按 comments.user_id 查询 published 评论，created_at DESC，每页 20 条",
+        "批量关联帖子标题与 /posts/{id} 跳转；原帖不可见时显示「原帖已删除」",
+        "regression 1.6h/1.6i + scripts/test-profile-comments-v2.ts",
+        "build + regression 50/50 PASS"
+      ]
+    },
     {
       "version": "0.1.0",
       "date": "2026-06-17",
@@ -498,8 +498,7 @@
     }
   ],
   "nextRecommended": [
-    "消除假功能误导（关注按钮、关注 Tab）",
-    "我的评论 Tab 全量查询"
+    "消除假功能误导（关注按钮、关注 Tab）"
   ],
   "decisions": [
     {

@@ -24,12 +24,11 @@
 - **Current Version**：`0.1.0`
 - **Next Version（目标）**：`0.2.0`
 - **Build**：PASS（2026-06-17）
-- **Regression**：PASS 48/48（2026-06-17）
+- **Regression**：PASS 50/50（2026-06-17）
 
 ## 5. Current Focus
 
 - 消除假功能误导（关注按钮、关注 Tab）
-- 我的评论 Tab 全量查询
 
 ## 6. 产品铁律（不可违背）
 
@@ -43,7 +42,7 @@
 
 ## 7. 已完成模块（摘要）
 
-密码方案 A、运营 Dashboard V1、项目 Bootstrap V1、首页 Feed V1、帖子与评论 V1、账号与资料 V1、搜索 V1、商家体系 V1、优惠券全链路 V1、发帖体验 V1 等共 16 项（完整见 PROJECT_STATUS）
+密码方案 A、运营 Dashboard V1、项目 Bootstrap V1、首页 Feed V1、帖子与评论 V1、账号与资料 V1、搜索 V1、商家体系 V1、优惠券全链路 V1、发帖体验 V1 等共 17 项（完整见 PROJECT_STATUS）
 
 完整列表与 Bug 见 [PROJECT_STATUS.md](./PROJECT_STATUS.md)。
 

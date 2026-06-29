@@ -12,12 +12,11 @@
 | **Next Version** | `0.2.0` |
 | **Development Stage** | Late Beta / 早期生产 |
 | **Build** | **PASS**（2026-06-17） |
-| **Regression** | **PASS** 48/48（2026-06-17） |
+| **Regression** | **PASS** 50/50（2026-06-17） |
 
 ## Current Focus
 
 - 消除假功能误导（关注按钮、关注 Tab）
-- 我的评论 Tab 全量查询
 
 验证命令：`npm run build` · `npm run regression-check`
 
@@ -44,11 +43,11 @@
 - **频道与广场 V1** (`channels-v1`) — Square 模块、频道文章、Markdown 详情
 - **内容安全与运营后台 V1** (`moderation-admin-v1`) — 审核/举报/规则/频道 CMS、前台管理员能力
 - **移动端体验收口 V1** (`mobile-ux-v1`) — Loading 超时、LAN 访问、券/发帖移动端优化
+- **我的评论 Tab V2** (`profile-comments-v2`) — 按 user_id 查 published 评论、批量关联帖子标题、分页加载更多
 
 ## 待优化模块（V2）
 
 - **消除假功能误导** (`honest-ui-v2`) — 关注按钮、关注 Tab — 隐藏或接最小实现
-- **我的评论 Tab 补全** (`profile-comments-v2`) — 按 user_id 查全量评论，非 session 片段
 - **系统通知 Tab** (`system-notifications-v2`) — 利用现有 notifications 表与券到期 cron
 - **广场 Banner 可运营** (`square-banners-v2`) — 替换 lib/square/banners.ts 硬编码
 - **Admin 管理员管理页** (`admin-admins-v2`) — 补 /admin/admins，消除死链
@@ -74,12 +73,10 @@
 - **[low]** `emoji-stub` — 评论 Emoji 按钮仍为「功能开发中」
 - **[low]** `system-notifications-empty` — 消息中心系统 Tab 空态，文案「后续版本开放」
 - **[low]** `square-banners-static` — 广场 Banner 硬编码 picsum 链接
-- **[low]** `profile-comments-partial` — 我的页评论 Tab 仅 session 内已加载评论 + local owned IDs
 
 ## 建议下一步
 
 - 消除假功能误导（关注按钮、关注 Tab）
-- 我的评论 Tab 全量查询
 
 ## 相关文档
 
