@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import type { InboxConversationItem } from "@/lib/messages/inbox-types";
+import type { UnifiedInboxItem } from "@/lib/messages/inbox-types";
 
 interface MessageInboxItemProps {
-  item: InboxConversationItem;
+  item: UnifiedInboxItem;
   onClick: () => void;
 }
 
@@ -21,18 +21,25 @@ export default function MessageInboxItem({
   onClick,
 }: MessageInboxItemProps) {
   const badge = formatUnreadBadge(item.unreadCount);
+  const avatarKind = item.kind === "notification" ? item.avatarKind : "user";
+  const avatarLabel = item.avatarLabel;
+  const avatarUrl = item.avatarUrl;
+  const title = item.kind === "chat" ? item.title : item.title;
+  const summary = item.summary;
+  const time = item.time;
 
   return (
     <button
       type="button"
       onClick={onClick}
       className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-zinc-50 active:bg-zinc-100 lg:px-6"
+      data-inbox-kind={item.kind}
     >
       <div className="relative shrink-0">
-        {item.avatarUrl ? (
+        {avatarUrl ? (
           <div className="relative h-12 w-12 overflow-hidden rounded-full bg-zinc-100 ring-1 ring-zinc-100">
             <Image
-              src={item.avatarUrl}
+              src={avatarUrl}
               alt=""
               fill
               className="object-cover"
@@ -42,12 +49,12 @@ export default function MessageInboxItem({
         ) : (
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold text-white ${
-              item.avatarKind === "system"
+              avatarKind === "system"
                 ? "bg-gradient-to-br from-sky-500 to-indigo-500"
                 : "bg-gradient-to-br from-rose-400 to-orange-300"
             }`}
           >
-            {item.avatarLabel.slice(0, 2)}
+            {avatarLabel.slice(0, 2)}
           </div>
         )}
         {item.unreadCount > 0 ? (
@@ -58,14 +65,14 @@ export default function MessageInboxItem({
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-3">
           <h3 className="truncate text-[15px] font-semibold text-zinc-900">
-            {item.title}
+            {title}
           </h3>
-          {item.time ? (
-            <time className="shrink-0 text-xs text-zinc-400">{item.time}</time>
+          {time ? (
+            <time className="shrink-0 text-xs text-zinc-400">{time}</time>
           ) : null}
         </div>
         <div className="mt-1 flex items-center justify-between gap-3">
-          <p className="truncate text-sm text-zinc-500">{item.summary}</p>
+          <p className="truncate text-sm text-zinc-500">{summary}</p>
           {badge ? (
             <span className="inline-flex min-w-[20px] shrink-0 items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[11px] leading-none font-semibold text-white">
               {badge}

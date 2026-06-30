@@ -1,16 +1,18 @@
 "use server";
 
+import { fetchChatInboxAction } from "@/lib/actions/chat";
 import {
   buildInboxConversations,
   type InboxActorProfile,
 } from "@/lib/messages/build-inbox";
-import type { InboxConversationItem } from "@/lib/messages/inbox-types";
+import { mergeInboxItems } from "@/lib/messages/merge-inbox";
+import type { UnifiedInboxItem } from "@/lib/messages/inbox-types";
 import {
   createSupabaseServerClient,
   getServerAuthUser,
 } from "@/lib/supabase/server";
 
-export async function fetchMessageInboxAction(): Promise<InboxConversationItem[]> {
+export async function fetchUnifiedInboxAction(): Promise<UnifiedInboxItem[]> {
   const user = await getServerAuthUser();
   if (!user) {
     throw new Error("请先登录");
@@ -55,5 +57,19 @@ export async function fetchMessageInboxAction(): Promise<InboxConversationItem[]
     }
   }
 
-  return buildInboxConversations(rows, actorProfiles);
+  const notificationItems = buildInboxConversations(rows, actorProfiles);
+  const chatItems = await fetchChatInboxAction();
+
+  return mergeInboxItems(chatItems, notificationItems);
+}
+
+/** @deprecated Use fetchUnifiedInboxAction */
+export async function fetchMessageInboxAction() {
+  const user = await getServerAuthUser();
+  if (!user) {
+    throw new Error("请先登录");
+  }
+
+  const items = await fetchUnifiedInboxAction();
+  return items.filter((item) => item.kind === "notification");
 }

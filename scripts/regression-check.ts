@@ -1197,8 +1197,8 @@ async function main() {
       "MessageCenter must render inbox header shortcuts",
     );
     assert(
-      messageCenter.includes('fetchMessageInboxAction'),
-      "MessageCenter must load inbox from server action",
+      messageCenter.includes("fetchUnifiedInboxAction"),
+      "MessageCenter must load unified inbox from server action",
     );
     assert(
       messageCenter.includes("fetchInboxDetailNotificationsAction"),
@@ -1309,6 +1309,142 @@ async function main() {
     assert(
       notificationsAction.includes('system: ["system"]'),
       "system notifications must still query notifications.type = system",
+    );
+  });
+
+  await check("1.6x Chat V1 — 私信会话与收件箱合并 (静态)", async () => {
+    const migration = readFileSync(
+      resolve(process.cwd(), "scripts/apply-chat-v1.sql"),
+      "utf8",
+    );
+    assert(
+      migration.includes("CREATE TABLE IF NOT EXISTS public.chat_conversations"),
+      "chat migration must create chat_conversations",
+    );
+    assert(
+      migration.includes("CREATE TABLE IF NOT EXISTS public.chat_messages"),
+      "chat migration must create chat_messages",
+    );
+    assert(
+      migration.includes("participant_a < participant_b"),
+      "chat conversations must enforce participant ordering",
+    );
+    assert(
+      migration.includes("chat_conversations_participants_unique_idx"),
+      "chat conversations must enforce one conversation per pair",
+    );
+    assert(
+      migration.includes("chat_conversations_select_participant"),
+      "chat conversations RLS must exist",
+    );
+    assert(
+      migration.includes("chat_messages_insert_sender"),
+      "chat messages insert RLS must require sender participant",
+    );
+    assert(
+      migration.includes("CREATE TABLE IF NOT EXISTS public.chat_user_blocks"),
+      "chat_user_blocks reserve table must exist",
+    );
+
+    const chatActions = readFileSync(
+      resolve(process.cwd(), "lib/actions/chat.ts"),
+      "utf8",
+    );
+    assert(
+      chatActions.includes("getOrCreateConversationAction"),
+      "chat actions must support starting conversations",
+    );
+    assert(
+      chatActions.includes("sendChatMessageAction"),
+      "chat actions must support sending messages",
+    );
+    assert(
+      chatActions.includes("fetchChatInboxAction"),
+      "chat actions must support inbox fetch",
+    );
+    assert(
+      !chatActions.includes("follow") && !chatActions.includes("mutual"),
+      "chat must not require follow or mutual follow",
+    );
+
+    const messageInbox = readFileSync(
+      resolve(process.cwd(), "lib/actions/message-inbox.ts"),
+      "utf8",
+    );
+    assert(
+      messageInbox.includes("mergeInboxItems"),
+      "message inbox must merge chat and notification sessions",
+    );
+    assert(
+      messageInbox.includes("fetchChatInboxAction"),
+      "unified inbox must load real chat conversations",
+    );
+
+    const messageCenter = readFileSync(
+      resolve(process.cwd(), "components/messages/MessageCenterContent.tsx"),
+      "utf8",
+    );
+    assert(
+      messageCenter.includes("onChatSelect"),
+      "MessageCenter must open chat conversations from inbox",
+    );
+    assert(
+      messageCenter.includes("/messages/chat/"),
+      "MessageCenter must route to chat detail page",
+    );
+    assert(
+      !messageCenter.includes("假好友") &&
+        !messageCenter.includes("mockChat") &&
+        !messageCenter.includes("fakeChat"),
+      "MessageCenter must not render fake chat rows",
+    );
+
+    const chatPage = readFileSync(
+      resolve(process.cwd(), "app/messages/chat/[id]/page.tsx"),
+      "utf8",
+    );
+    assert(
+      chatPage.includes("ChatConversationContent"),
+      "/messages/chat/[id] page must exist",
+    );
+
+    const startChat = readFileSync(
+      resolve(process.cwd(), "components/chat/StartChatButton.tsx"),
+      "utf8",
+    );
+    assert(
+      startChat.includes("getOrCreateConversationAction"),
+      "profile start chat must create real conversations",
+    );
+    assert(
+      startChat.includes("buildLoginHref"),
+      "start chat must redirect unauthenticated users to login",
+    );
+    assert(
+      !startChat.includes("follow"),
+      "start chat must not gate on follow relationship",
+    );
+
+    const profileHeader = readFileSync(
+      resolve(process.cwd(), "components/profile/ProfilePublicHeader.tsx"),
+      "utf8",
+    );
+    assert(
+      profileHeader.includes("StartChatButton"),
+      "public profile must expose start chat entry",
+    );
+
+    const typesSource = readFileSync(
+      resolve(process.cwd(), "lib/supabase/database.types.ts"),
+      "utf8",
+    );
+    assert(
+      typesSource.includes("chat_conversations:"),
+      "database.types must define chat_conversations",
+    );
+    assert(
+      typesSource.includes("chat_messages:"),
+      "database.types must define chat_messages",
     );
   });
 

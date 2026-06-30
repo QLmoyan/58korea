@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import BottomNav from "@/components/home/BottomNav";
 import DesktopHomeAside from "@/components/home/DesktopHomeAside";
@@ -13,7 +14,7 @@ import MessageLoginPrompt from "@/components/messages/MessageLoginPrompt";
 import AsyncStatePanel from "@/components/ui/AsyncStatePanel";
 import { CLIENT_FETCH_TIMEOUT_MS, LOADING_UI_DEADLINE_MS } from "@/lib/constants/network";
 import { useLoadingDeadline } from "@/lib/hooks/use-loading-deadline";
-import { fetchMessageInboxAction } from "@/lib/actions/message-inbox";
+import { fetchUnifiedInboxAction } from "@/lib/actions/message-inbox";
 import {
   fetchInboxDetailNotificationsAction,
   markAllInboxDetailReadAction,
@@ -24,9 +25,9 @@ import {
   MESSAGE_INBOX_EMPTY,
 } from "@/lib/messages/inbox-constants";
 import type {
-  InboxConversationItem,
   InboxDetailId,
   MessageCenterView,
+  UnifiedInboxItem,
 } from "@/lib/messages/inbox-types";
 import type { MessageItem } from "@/lib/messages/types";
 import { dispatchNotificationUnreadRefresh } from "@/lib/messages/unread-events";
@@ -41,11 +42,12 @@ function isInboxDetailView(view: MessageCenterView): view is InboxDetailId {
 }
 
 function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) {
+  const router = useRouter();
   const { user, loading, initError, retryInit } = useAuthStore();
   const { counts: unreadCounts, refresh: refreshUnreadCounts } =
     useNotificationUnreadCounts();
   const [view, setView] = useState<MessageCenterView>("inbox");
-  const [inboxItems, setInboxItems] = useState<InboxConversationItem[]>([]);
+  const [inboxItems, setInboxItems] = useState<UnifiedInboxItem[]>([]);
   const [detailItems, setDetailItems] = useState<MessageItem[]>([]);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState("");
@@ -62,7 +64,7 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
 
     try {
       const data = await withTimeout(
-        fetchMessageInboxAction(),
+        fetchUnifiedInboxAction(),
         CLIENT_FETCH_TIMEOUT_MS,
         "加载消息超时，请检查网络后重试",
       );
@@ -128,11 +130,16 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
       void loadInbox();
     } else if (isInboxDetailView(view)) {
       setInboxItems((current) =>
-        current.map((item) =>
-          item.id === view
-            ? { ...item, unreadCount: Math.max(0, item.unreadCount - 1) }
-            : item,
-        ),
+        current.map((item) => {
+          if (item.kind !== "notification" || item.id !== view) {
+            return item;
+          }
+
+          return {
+            ...item,
+            unreadCount: Math.max(0, item.unreadCount - 1),
+          };
+        }),
       );
     }
   }
@@ -149,9 +156,13 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
       await markAllInboxDetailReadAction(view);
       setDetailItems((current) => current.map((item) => ({ ...item, isRead: true })));
       setInboxItems((current) =>
-        current.map((item) =>
-          item.id === view ? { ...item, unreadCount: 0 } : item,
-        ),
+        current.map((item) => {
+          if (item.kind !== "notification" || item.id !== view) {
+            return item;
+          }
+
+          return { ...item, unreadCount: 0 };
+        }),
       );
       void refreshUnreadCounts();
       dispatchNotificationUnreadRefresh();
@@ -162,6 +173,10 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
     } finally {
       setMarkingAll(false);
     }
+  }
+
+  function openChat(conversationId: string) {
+    router.push(`/messages/chat/${conversationId}`);
   }
 
   function openDetail(detailId: InboxDetailId) {
@@ -280,7 +295,11 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
               </p>
             </section>
           ) : (
-            <MessageInboxList items={inboxItems} onSelect={openDetail} />
+            <MessageInboxList
+              items={inboxItems}
+              onNotificationSelect={openDetail}
+              onChatSelect={openChat}
+            />
           )}
         </>
       ) : dataError ? (

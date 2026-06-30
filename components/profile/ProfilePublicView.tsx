@@ -104,6 +104,8 @@ export default function ProfilePublicView({
     [posts],
   );
 
+  const authorId = merchantDetails?.userId ?? profile?.id ?? null;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -130,6 +132,7 @@ export default function ProfilePublicView({
       isMerchant={isMerchant}
       merchantDetails={merchantDetails}
       layout={layout}
+      targetUserId={authorId}
     />
   );
 

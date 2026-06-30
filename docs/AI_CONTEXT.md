@@ -24,11 +24,12 @@
 - **Current Version**：`0.3.0-dev`
 - **Next Version（目标）**：`0.3.0`
 - **Build**：PASS（2026-06-17）
-- **Regression**：PASS 67/67（2026-06-17）
+- **Regression**：PASS 68/68（2026-06-17）
 
 ## 5. Current Focus
 
-- Chat V1
+- Chat V1 验收
+- Share V2
 - Post Edit V1
 
 ## 6. 产品铁律（不可违背）

@@ -4,6 +4,14 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.3.0-dev**（v0.3.0-dev / Place Hub 阶段）。
 
+## [0.3.0-dev] Chat V1 — 2026-06-17
+
+- chat_conversations / chat_messages / chat_user_blocks 表 + RLS
+- 任意登录用户可私信，无互关/好友申请门槛
+- getOrCreateConversation、发消息、拉取会话与消息 Server Actions
+- 用户主页「发消息」→ /messages/chat/{id}；收件箱合并真实聊天会话
+- 未读 = 对方发送且 is_read=false；regression 1.6x；build/regression PASS
+
 ## [0.3.0-dev] Messages Inbox V1 — 2026-06-17
 
 - /messages 重做：顶部通讯录/系统通知入口 + 会话列表

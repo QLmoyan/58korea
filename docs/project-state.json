@@ -6,7 +6,8 @@
   "productTagline": "韩国华人生活社区",
   "lastUpdated": "2026-06-17",
   "currentFocus": [
-    "Chat V1",
+    "Chat V1 验收",
+    "Share V2",
     "Post Edit V1"
   ],
   "build": {
@@ -16,8 +17,8 @@
   },
   "regression": {
     "status": "PASS",
-    "passed": 67,
-    "total": 67,
+    "passed": 68,
+    "total": 68,
     "lastVerified": "2026-06-17",
     "command": "npm run regression-check"
   },
@@ -285,6 +286,18 @@
     ]
   },
   "changelog": [
+    {
+      "version": "0.3.0-dev",
+      "date": "2026-06-17",
+      "title": "Chat V1",
+      "items": [
+        "chat_conversations / chat_messages / chat_user_blocks 表 + RLS",
+        "任意登录用户可私信，无互关/好友申请门槛",
+        "getOrCreateConversation、发消息、拉取会话与消息 Server Actions",
+        "用户主页「发消息」→ /messages/chat/{id}；收件箱合并真实聊天会话",
+        "未读 = 对方发送且 is_read=false；regression 1.6x；build/regression PASS"
+      ]
+    },
     {
       "version": "0.3.0-dev",
       "date": "2026-06-17",

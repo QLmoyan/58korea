@@ -1,6 +1,7 @@
 "use client";
 
 import MerchantVerifiedBadge from "@/components/merchant/MerchantVerifiedBadge";
+import StartChatButton from "@/components/chat/StartChatButton";
 import ShareButton from "@/components/share/ShareButton";
 import { buildProfileSharePath } from "@/lib/share/paths";
 import type { MerchantProfile } from "@/lib/types/merchant";
@@ -14,6 +15,7 @@ interface ProfilePublicHeaderProps {
   isMerchant: boolean;
   merchantDetails?: MerchantProfile | null;
   layout?: "mobile" | "desktop";
+  targetUserId?: string | null;
 }
 
 function MerchantInfoItem({
@@ -44,8 +46,10 @@ export default function ProfilePublicHeader({
   isMerchant,
   merchantDetails,
   layout = "mobile",
+  targetUserId,
 }: ProfilePublicHeaderProps) {
   const isDesktop = layout === "desktop";
+  const profilePath = buildProfileSharePath(username);
 
   return (
     <section
@@ -112,16 +116,24 @@ export default function ProfilePublicHeader({
         </div>
         </div>
 
-        <ShareButton
-          variant="pill"
-          path={buildProfileSharePath(username)}
-          title={displayName}
-          text={
-            isMerchant
-              ? `${displayName} 的商家主页`
-              : `${displayName} 的主页`
-          }
-        />
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          {targetUserId ? (
+            <StartChatButton
+              targetUserId={targetUserId}
+              profilePath={profilePath}
+            />
+          ) : null}
+          <ShareButton
+            variant="pill"
+            path={profilePath}
+            title={displayName}
+            text={
+              isMerchant
+                ? `${displayName} 的商家主页`
+                : `${displayName} 的主页`
+            }
+          />
+        </div>
       </div>
     </section>
   );

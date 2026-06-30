@@ -26,6 +26,7 @@ const APPLY_SCRIPTS: string[] = [
   "scripts/apply-post-engagement-v1.ts",
   "scripts/apply-post-views-v1.ts",
   "scripts/apply-notifications-v1.ts",
+  "scripts/apply-chat-v1.ts",
   "scripts/apply-user-home-v1.ts",
   "scripts/apply-profile-edit-v1.ts",
   "scripts/apply-search-users-merchants-v1.ts",

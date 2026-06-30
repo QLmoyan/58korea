@@ -1,3 +1,5 @@
+import type { ChatInboxItem } from "@/lib/chat/types";
+
 export type InboxDetailId = "system" | "interaction" | "like";
 
 export type MessageCenterView = "inbox" | "contacts" | InboxDetailId;
@@ -12,3 +14,8 @@ export interface InboxConversationItem {
   avatarUrl: string | null;
   avatarKind: "system" | "user";
 }
+
+export type UnifiedInboxItem =
+  | ({ kind: "notification" } & InboxConversationItem)
+  | ({ kind: "chat" } & ChatInboxItem);
+
