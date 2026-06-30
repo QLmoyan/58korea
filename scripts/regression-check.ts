@@ -1448,6 +1448,183 @@ async function main() {
     );
   });
 
+  await check("1.6y Chat V1.1 — 轮询刷新与统一未读 (静态)", async () => {
+    const unreadCounts = readFileSync(
+      resolve(process.cwd(), "lib/actions/notification-counts.ts"),
+      "utf8",
+    );
+    assert(
+      unreadCounts.includes("fetchMessageUnreadCountsAction"),
+      "message unread action must exist",
+    );
+    assert(
+      unreadCounts.includes("fetchChatUnreadCountAction"),
+      "unified unread must include chat unread",
+    );
+    assert(
+      unreadCounts.includes("chatUnread"),
+      "unified unread must expose chatUnread",
+    );
+
+    const unreadHook = readFileSync(
+      resolve(process.cwd(), "lib/messages/use-notification-unread-counts.ts"),
+      "utf8",
+    );
+    assert(
+      unreadHook.includes("useVisibilityPolling"),
+      "message unread hook must poll while visible",
+    );
+    assert(
+      unreadHook.includes("fetchMessageUnreadCountsAction"),
+      "message unread hook must load unified counts",
+    );
+
+    const bottomNav = readFileSync(
+      resolve(process.cwd(), "components/home/BottomNav.tsx"),
+      "utf8",
+    );
+    assert(
+      bottomNav.includes("counts.totalUnread > 0"),
+      "bottom nav must use combined totalUnread",
+    );
+
+    const messageCenter = readFileSync(
+      resolve(process.cwd(), "components/messages/MessageCenterContent.tsx"),
+      "utf8",
+    );
+    assert(
+      messageCenter.includes("useVisibilityPolling"),
+      "inbox must poll while visible",
+    );
+    assert(
+      messageCenter.includes("InlineRefreshBar"),
+      "inbox must use inline refresh instead of full-screen loading",
+    );
+    assert(
+      messageCenter.includes("initialLoading"),
+      "inbox must distinguish initial loading from background refresh",
+    );
+    assert(
+      !messageCenter.includes("setInboxItems([])") ||
+        messageCenter.includes("if (!silent)"),
+      "inbox refresh must not clear list during silent refresh",
+    );
+
+    const chatContent = readFileSync(
+      resolve(process.cwd(), "components/chat/ChatConversationContent.tsx"),
+      "utf8",
+    );
+    assert(
+      chatContent.includes("useVisibilityPolling"),
+      "chat detail must poll while visible",
+    );
+    assert(
+      chatContent.includes("OPTIMISTIC_CHAT_MESSAGE_PREFIX"),
+      "chat send must use optimistic message ids",
+    );
+    assert(
+      chatContent.includes('status: "sending"'),
+      "chat send must render optimistic sending state",
+    );
+    assert(
+      chatContent.includes("mergeChatMessages"),
+      "chat detail must merge polled messages with optimistic ones",
+    );
+    assert(
+      chatContent.includes("isNearBottom"),
+      "chat detail must only auto-scroll near bottom",
+    );
+    assert(
+      chatContent.includes("InlineRefreshBar"),
+      "chat detail must not replace content with full-screen loading during refresh",
+    );
+    assert(
+      chatContent.includes("safeHandleSend") &&
+        chatContent.includes('type="button"'),
+      "chat send must use safeHandleSend on explicit button taps",
+    );
+    assert(
+      chatContent.includes("readDraftBody") ||
+        chatContent.includes("textareaRef.current?.value"),
+      "chat send must read draft from textarea DOM for mobile IME",
+    );
+    assert(
+      !chatContent.includes("disabled={sending || !draft.trim()}"),
+      "chat send must not disable button based on stale draft state",
+    );
+    assert(
+      chatContent.includes("sendingRef"),
+      "chat send must guard against duplicate submits",
+    );
+    assert(
+      chatContent.includes("chat-composer") &&
+        (chatContent.includes("z-[60]") || chatContent.includes("z-50")),
+      "chat composer must sit above overlays with elevated z-index",
+    );
+    assert(
+      chatContent.includes("ChatMessageListSkeleton") ||
+        chatContent.includes("chat-message-skeleton"),
+      "chat detail must show message skeleton instead of blocking layout",
+    );
+    assert(
+      !chatContent.includes("waitingForInitialData"),
+      "chat detail must not block layout with full-page initial loading",
+    );
+
+    assert(
+      bottomNav.includes('pathname.startsWith("/messages/chat")'),
+      "bottom nav must hide on chat detail pages",
+    );
+
+    const chatActions = readFileSync(
+      resolve(process.cwd(), "lib/actions/chat.ts"),
+      "utf8",
+    );
+    assert(
+      chatActions.includes("mapChatPeerProfile"),
+      "chat peer fetch must use shared profile mapper",
+    );
+    assert(
+      chatActions.includes("logo_url") && chatActions.includes("avatar_url"),
+      "chat peer fetch must map both profile avatar_url and merchant logo_url",
+    );
+    assert(
+      chatActions.includes("fetchChatConversationPeerAction"),
+      "chat must expose server peer header fetch",
+    );
+
+    const mapPeerProfile = readFileSync(
+      resolve(process.cwd(), "lib/chat/map-peer-profile.ts"),
+      "utf8",
+    );
+    assert(
+      mapPeerProfile.includes("resolveChatAvatarUrl"),
+      "chat avatar resolver must exist",
+    );
+
+    assert(
+      chatContent.includes("fetchChatConversationPeerAction"),
+      "chat detail must fetch peer header from server",
+    );
+    assert(
+      chatContent.includes("mergePeerFromServer"),
+      "chat detail must merge server peer over URL hint",
+    );
+
+    const polling = readFileSync(
+      resolve(process.cwd(), "lib/chat/polling.ts"),
+      "utf8",
+    );
+    assert(
+      polling.includes("CHAT_INBOX_POLL_MS"),
+      "chat inbox poll interval must be defined",
+    );
+    assert(
+      polling.includes("CHAT_DETAIL_POLL_MS"),
+      "chat detail poll interval must be defined",
+    );
+  });
+
   await check("1.6k System Notifications V2 — 系统 Tab 真实数据源 (静态)", async () => {
     const constants = readFileSync(
       resolve(process.cwd(), "lib/messages/constants.ts"),

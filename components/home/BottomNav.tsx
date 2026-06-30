@@ -18,6 +18,10 @@ export default function BottomNav() {
   const { counts } = useNotificationUnreadCounts();
   const showMessageUnreadDot = counts.totalUnread > 0;
 
+  if (pathname.startsWith("/messages/chat")) {
+    return null;
+  }
+
   return (
     <nav className="pointer-events-auto fixed right-0 bottom-0 left-0 z-[100] border-t border-zinc-100 bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-md items-end justify-around px-2 pb-safe">

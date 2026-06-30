@@ -6,10 +6,12 @@ export interface ChatMessageItem {
   createdAt: string;
   time: string;
   isMine: boolean;
+  status?: "sending" | "failed";
 }
 
 export interface ChatConversationPeer {
   userId: string;
+  username: string | null;
   nickname: string;
   avatarUrl: string | null;
   avatarLabel: string;

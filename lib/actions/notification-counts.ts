@@ -1,5 +1,6 @@
 "use server";
 
+import { fetchChatUnreadCountAction } from "@/lib/actions/chat";
 import {
   buildNotificationUnreadCounts,
   EMPTY_NOTIFICATION_UNREAD_COUNTS,
@@ -10,7 +11,7 @@ import {
   getServerAuthUser,
 } from "@/lib/supabase/server";
 
-export async function fetchNotificationUnreadCountsAction(): Promise<NotificationUnreadCounts> {
+export async function fetchMessageUnreadCountsAction(): Promise<NotificationUnreadCounts> {
   const user = await getServerAuthUser();
   if (!user) {
     return EMPTY_NOTIFICATION_UNREAD_COUNTS;
@@ -27,5 +28,17 @@ export async function fetchNotificationUnreadCountsAction(): Promise<Notificatio
     throw new Error(error.message);
   }
 
-  return buildNotificationUnreadCounts(data ?? []);
+  const notificationCounts = buildNotificationUnreadCounts(data ?? []);
+  const chatUnread = await fetchChatUnreadCountAction();
+
+  return {
+    ...notificationCounts,
+    chatUnread,
+    totalUnread: notificationCounts.totalUnread + chatUnread,
+  };
+}
+
+/** @deprecated Use fetchMessageUnreadCountsAction */
+export async function fetchNotificationUnreadCountsAction(): Promise<NotificationUnreadCounts> {
+  return fetchMessageUnreadCountsAction();
 }

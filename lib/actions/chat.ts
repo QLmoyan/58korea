@@ -4,6 +4,11 @@ import {
   getChatPeerUserId,
   normalizeChatParticipants,
 } from "@/lib/chat/normalize-participants";
+import {
+  mapChatPeerProfile,
+  type ChatPeerMerchantRow,
+  type ChatPeerProfileRow,
+} from "@/lib/chat/map-peer-profile";
 import type {
   ChatConversationPeer,
   ChatInboxItem,
@@ -47,25 +52,100 @@ async function assertConversationParticipant(
   return data;
 }
 
-async function fetchPeerProfile(peerUserId: string): Promise<ChatConversationPeer> {
+async function fetchPeerMerchant(
+  peerUserId: string,
+): Promise<ChatPeerMerchantRow | null> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
-    .from("profiles")
-    .select("id, nickname, avatar_url")
-    .eq("id", peerUserId)
+    .from("merchant_profiles")
+    .select("user_id, business_name, logo_url")
+    .eq("user_id", peerUserId)
+    .eq("is_active", true)
     .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const nickname = data?.nickname?.trim() || "用户";
-  return {
-    userId: peerUserId,
-    nickname,
-    avatarUrl: data?.avatar_url ?? null,
-    avatarLabel: nickname.slice(0, 2) || "用户",
-  };
+  return data;
+}
+
+async function fetchPeerMerchantsByUserIds(
+  peerUserIds: string[],
+): Promise<Map<string, ChatPeerMerchantRow>> {
+  if (peerUserIds.length === 0) {
+    return new Map();
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("merchant_profiles")
+    .select("user_id, business_name, logo_url")
+    .in("user_id", peerUserIds)
+    .eq("is_active", true);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return new Map((data ?? []).map((row) => [row.user_id, row]));
+}
+
+async function fetchPeerProfile(peerUserId: string): Promise<ChatConversationPeer> {
+  const supabase = await createSupabaseServerClient();
+  const [profileResult, merchant] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, nickname, username, avatar_url")
+      .eq("id", peerUserId)
+      .maybeSingle(),
+    fetchPeerMerchant(peerUserId),
+  ]);
+
+  if (profileResult.error) {
+    throw new Error(profileResult.error.message);
+  }
+
+  return mapChatPeerProfile(
+    profileResult.data as ChatPeerProfileRow | null,
+    merchant,
+    peerUserId,
+  );
+}
+
+export async function fetchChatUnreadCountAction(): Promise<number> {
+  const user = await getServerAuthUser();
+  if (!user) {
+    return 0;
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: conversations, error: conversationsError } = await supabase
+    .from("chat_conversations")
+    .select("id")
+    .or(`participant_a.eq.${user.id},participant_b.eq.${user.id}`);
+
+  if (conversationsError) {
+    throw new Error(conversationsError.message);
+  }
+
+  const conversationIds = (conversations ?? []).map((row) => row.id);
+  if (conversationIds.length === 0) {
+    return 0;
+  }
+
+  const { count, error } = await supabase
+    .from("chat_messages")
+    .select("id", { count: "exact", head: true })
+    .in("conversation_id", conversationIds)
+    .eq("is_read", false)
+    .neq("sender_id", user.id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return count ?? 0;
 }
 
 export async function getOrCreateConversationAction(targetUserId: string) {
@@ -279,7 +359,7 @@ export async function fetchChatInboxAction(): Promise<ChatInboxItem[]> {
 
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
-    .select("id, nickname, avatar_url")
+    .select("id, nickname, username, avatar_url")
     .in("id", peerIds);
 
   if (profilesError) {
@@ -287,8 +367,9 @@ export async function fetchChatInboxAction(): Promise<ChatInboxItem[]> {
   }
 
   const profileById = new Map(
-    (profiles ?? []).map((profile) => [profile.id, profile]),
+    (profiles ?? []).map((profile) => [profile.id, profile as ChatPeerProfileRow]),
   );
+  const merchantByUserId = await fetchPeerMerchantsByUserIds(peerIds);
 
   const conversationIds = rows.map((row) => row.id);
   const { data: unreadRows, error: unreadError } = await supabase
@@ -314,19 +395,20 @@ export async function fetchChatInboxAction(): Promise<ChatInboxItem[]> {
     .map((row) => {
       const peerUserId = getChatPeerUserId(row, user.id);
       const profile = profileById.get(peerUserId);
-      const nickname = profile?.nickname?.trim() || "用户";
+      const merchant = merchantByUserId.get(peerUserId);
+      const peer = mapChatPeerProfile(profile, merchant, peerUserId);
       const sortAt = row.last_message_at ?? row.created_at;
 
       return {
         conversationId: row.id,
         peerUserId,
-        title: nickname,
+        title: peer.nickname,
         summary: row.last_message?.trim() || "暂无消息",
         time: sortAt ? formatRelativeMessageTime(sortAt) : "",
         sortAt,
         unreadCount: unreadByConversation.get(row.id) ?? 0,
-        avatarLabel: nickname.slice(0, 2) || "用户",
-        avatarUrl: profile?.avatar_url ?? null,
+        avatarLabel: peer.avatarLabel,
+        avatarUrl: peer.avatarUrl,
       };
     })
     .sort(

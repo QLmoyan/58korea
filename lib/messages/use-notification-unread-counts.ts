@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { fetchNotificationUnreadCountsAction } from "@/lib/actions/notification-counts";
+import { MESSAGE_UNREAD_POLL_MS } from "@/lib/chat/polling";
+import { fetchMessageUnreadCountsAction } from "@/lib/actions/notification-counts";
+import { useVisibilityPolling } from "@/lib/hooks/use-visibility-polling";
 import { NOTIFICATION_UNREAD_REFRESH_EVENT } from "@/lib/messages/unread-events";
 import {
   EMPTY_NOTIFICATION_UNREAD_COUNTS,
@@ -22,10 +24,10 @@ export function useNotificationUnreadCounts() {
     }
 
     try {
-      const next = await fetchNotificationUnreadCountsAction();
+      const next = await fetchMessageUnreadCountsAction();
       setCounts(next);
     } catch (error) {
-      console.error("Failed to load notification unread counts:", error);
+      console.error("Failed to load message unread counts:", error);
       setCounts(EMPTY_NOTIFICATION_UNREAD_COUNTS);
     }
   }, [user]);
@@ -44,6 +46,10 @@ export function useNotificationUnreadCounts() {
       window.removeEventListener(NOTIFICATION_UNREAD_REFRESH_EVENT, handleRefresh);
     };
   }, [refresh]);
+
+  useVisibilityPolling(MESSAGE_UNREAD_POLL_MS, Boolean(user), () => {
+    void refresh();
+  });
 
   return { counts, refresh };
 }

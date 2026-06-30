@@ -7,9 +7,14 @@ interface ChatMessageBubbleProps {
 }
 
 export default function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
+  const isPending = message.status === "sending";
+  const isFailed = message.status === "failed";
+
   return (
     <div
-      className={`flex ${message.isMine ? "justify-end" : "justify-start"}`}
+      className={`flex ${message.isMine ? "justify-end" : "justify-start"} ${
+        isPending ? "opacity-70" : ""
+      }`}
       data-chat-message-id={message.id}
     >
       <div
@@ -17,7 +22,7 @@ export default function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
           message.isMine
             ? "rounded-br-md bg-gradient-to-r from-rose-500 to-orange-400 text-white"
             : "rounded-bl-md bg-white text-zinc-800 ring-1 ring-zinc-100"
-        }`}
+        } ${isFailed ? "ring-2 ring-rose-300" : ""}`}
       >
         <p className="whitespace-pre-wrap break-words">{message.body}</p>
         <time
@@ -25,7 +30,7 @@ export default function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
             message.isMine ? "text-white/80" : "text-zinc-400"
           }`}
         >
-          {message.time}
+          {isFailed ? "发送失败" : isPending ? "发送中..." : message.time}
         </time>
       </div>
     </div>

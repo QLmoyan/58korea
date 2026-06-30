@@ -9,7 +9,10 @@ import type {
 interface MessageInboxListProps {
   items: UnifiedInboxItem[];
   onNotificationSelect: (id: InboxDetailId) => void;
-  onChatSelect: (conversationId: string) => void;
+  onChatSelect: (
+    conversationId: string,
+    peer?: { title: string; avatarUrl: string | null; avatarLabel: string },
+  ) => void;
 }
 
 export default function MessageInboxList({
@@ -31,7 +34,11 @@ export default function MessageInboxList({
             item={item}
             onClick={() => {
               if (item.kind === "chat") {
-                onChatSelect(item.conversationId);
+                onChatSelect(item.conversationId, {
+                  title: item.title,
+                  avatarUrl: item.avatarUrl,
+                  avatarLabel: item.avatarLabel,
+                });
                 return;
               }
 

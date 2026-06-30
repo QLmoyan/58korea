@@ -1,5 +1,6 @@
 export interface NotificationUnreadCounts {
   totalUnread: number;
+  chatUnread: number;
   commentUnread: number;
   replyUnread: number;
   likeUnread: number;
@@ -8,6 +9,7 @@ export interface NotificationUnreadCounts {
 
 export const EMPTY_NOTIFICATION_UNREAD_COUNTS: NotificationUnreadCounts = {
   totalUnread: 0,
+  chatUnread: 0,
   commentUnread: 0,
   replyUnread: 0,
   likeUnread: 0,
@@ -46,6 +48,7 @@ export function buildNotificationUnreadCounts(
     replyUnread,
     likeUnread,
     systemUnread,
+    chatUnread: 0,
     totalUnread: commentUnread + replyUnread + likeUnread + systemUnread,
   };
 }

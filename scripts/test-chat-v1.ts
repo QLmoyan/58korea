@@ -63,8 +63,13 @@ async function main() {
   const env = loadEnv();
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
 
-  assert(url && anonKey, "Missing Supabase env vars");
+  assert(url && anonKey && serviceRoleKey, "Missing Supabase env vars");
+
+  const service = createClient<Database>(url, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 
   const stamp = Date.now();
   const password = "Test123456!";
@@ -247,6 +252,67 @@ async function main() {
     body: "路人插话",
   });
   assert(cInsertError, "non-participant must not insert chat_messages");
+
+  const { error: secondMessageError } = await clientA.from("chat_messages").insert({
+    conversation_id: conversationId,
+    sender_id: idA,
+    body: "第二条验收消息",
+  });
+  assert(!secondMessageError, `second message failed: ${secondMessageError?.message}`);
+
+  const { data: bMessagesAfterSecond, error: bMessagesAfterSecondError } =
+    await clientB
+      .from("chat_messages")
+      .select("id, body")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
+
+  assert(!bMessagesAfterSecondError, bMessagesAfterSecondError?.message);
+  assert(
+    (bMessagesAfterSecond ?? []).length >= 2,
+    "B should see new messages on next fetch without re-entering",
+  );
+  assert(
+    (bMessagesAfterSecond ?? []).some((row) => row.body === "第二条验收消息"),
+    "B must receive latest message body",
+  );
+
+  const { count: bUnifiedUnread } = await clientB
+    .from("chat_messages")
+    .select("id", { count: "exact", head: true })
+    .eq("conversation_id", conversationId)
+    .eq("is_read", false)
+    .neq("sender_id", idB);
+
+  assert((bUnifiedUnread ?? 0) === 1, "B unified chat unread must include latest message");
+
+  const merchantLogoUrl = `https://example.com/merchant-logo-${stamp}.png`;
+  const { error: merchantUpsertError } = await service
+    .from("merchant_profiles")
+    .upsert(
+      {
+        user_id: idA,
+        business_name: `聊天商家${String(stamp).slice(-4)}`,
+        logo_url: merchantLogoUrl,
+        is_active: true,
+        is_verified: true,
+      },
+      { onConflict: "user_id" },
+    );
+  assert(!merchantUpsertError, `merchant upsert failed: ${merchantUpsertError?.message}`);
+
+  const { data: bPeerMerchant, error: bPeerMerchantError } = await clientB
+    .from("merchant_profiles")
+    .select("logo_url")
+    .eq("user_id", idA)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  assert(!bPeerMerchantError, bPeerMerchantError?.message);
+  assert(
+    bPeerMerchant?.logo_url === merchantLogoUrl,
+    "B must read peer merchant logo_url for chat avatar fallback",
+  );
 
   console.log("PASS Chat V1 acceptance integration");
   console.log(`  conversationId=${conversationId}`);

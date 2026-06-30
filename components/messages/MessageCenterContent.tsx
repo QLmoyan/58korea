@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BottomNav from "@/components/home/BottomNav";
 import DesktopHomeAside from "@/components/home/DesktopHomeAside";
 import DesktopHomeSidebar from "@/components/home/DesktopHomeSidebar";
@@ -12,13 +12,16 @@ import MessageInboxList from "@/components/messages/MessageInboxList";
 import MessageListItem from "@/components/messages/MessageListItem";
 import MessageLoginPrompt from "@/components/messages/MessageLoginPrompt";
 import AsyncStatePanel from "@/components/ui/AsyncStatePanel";
+import InlineRefreshBar from "@/components/ui/InlineRefreshBar";
 import { CLIENT_FETCH_TIMEOUT_MS, LOADING_UI_DEADLINE_MS } from "@/lib/constants/network";
 import { useLoadingDeadline } from "@/lib/hooks/use-loading-deadline";
+import { useVisibilityPolling } from "@/lib/hooks/use-visibility-polling";
 import { fetchUnifiedInboxAction } from "@/lib/actions/message-inbox";
 import {
   fetchInboxDetailNotificationsAction,
   markAllInboxDetailReadAction,
 } from "@/lib/actions/notifications";
+import { CHAT_INBOX_POLL_MS } from "@/lib/chat/polling";
 import {
   INBOX_DETAIL_EMPTY,
   INBOX_DETAIL_TITLES,
@@ -49,74 +52,122 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
   const [view, setView] = useState<MessageCenterView>("inbox");
   const [inboxItems, setInboxItems] = useState<UnifiedInboxItem[]>([]);
   const [detailItems, setDetailItems] = useState<MessageItem[]>([]);
-  const [fetching, setFetching] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [markingAll, setMarkingAll] = useState(false);
+  const inboxItemsRef = useRef<UnifiedInboxItem[]>([]);
+  const detailItemsRef = useRef<MessageItem[]>([]);
+  inboxItemsRef.current = inboxItems;
+  detailItemsRef.current = detailItems;
 
-  const loadInbox = useCallback(async () => {
-    if (!user) {
-      setInboxItems([]);
-      return;
-    }
+  const loadInbox = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!user) {
+        setInboxItems([]);
+        return;
+      }
 
-    setFetching(true);
-    setError("");
+      const silent = options?.silent ?? inboxItemsRef.current.length > 0;
+      if (silent) {
+        setRefreshing(true);
+      } else {
+        setInitialLoading(true);
+      }
+      setError("");
 
-    try {
-      const data = await withTimeout(
-        fetchUnifiedInboxAction(),
-        CLIENT_FETCH_TIMEOUT_MS,
-        "加载消息超时，请检查网络后重试",
-      );
-      setInboxItems(data);
-    } catch (loadError) {
-      logClientError("messages.inbox.load", loadError);
-      setError(
-        loadError instanceof Error ? loadError.message : "加载消息失败",
-      );
-      setInboxItems([]);
-    } finally {
-      setFetching(false);
-    }
-  }, [user]);
+      try {
+        const data = await withTimeout(
+          fetchUnifiedInboxAction(),
+          CLIENT_FETCH_TIMEOUT_MS,
+          "加载消息超时，请检查网络后重试",
+        );
+        setInboxItems(data);
+      } catch (loadError) {
+        logClientError("messages.inbox.load", loadError);
+        if (!silent) {
+          setError(
+            loadError instanceof Error ? loadError.message : "加载消息失败",
+          );
+          setInboxItems([]);
+        }
+      } finally {
+        setInitialLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [user],
+  );
 
-  const loadDetail = useCallback(async () => {
-    if (!user || !isInboxDetailView(view)) {
-      setDetailItems([]);
-      return;
-    }
+  const loadDetail = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!user || !isInboxDetailView(view)) {
+        setDetailItems([]);
+        return;
+      }
 
-    setFetching(true);
-    setError("");
+      const silent = options?.silent ?? detailItemsRef.current.length > 0;
+      if (silent) {
+        setRefreshing(true);
+      } else {
+        setInitialLoading(true);
+      }
+      setError("");
 
-    try {
-      const data = await withTimeout(
-        fetchInboxDetailNotificationsAction(view),
-        CLIENT_FETCH_TIMEOUT_MS,
-        "加载消息超时，请检查网络后重试",
-      );
-      setDetailItems(data);
-    } catch (loadError) {
-      logClientError("messages.detail.load", loadError, { view });
-      setError(
-        loadError instanceof Error ? loadError.message : "加载消息失败",
-      );
-      setDetailItems([]);
-    } finally {
-      setFetching(false);
-    }
-  }, [user, view]);
+      try {
+        const data = await withTimeout(
+          fetchInboxDetailNotificationsAction(view),
+          CLIENT_FETCH_TIMEOUT_MS,
+          "加载消息超时，请检查网络后重试",
+        );
+        setDetailItems(data);
+      } catch (loadError) {
+        logClientError("messages.detail.load", loadError, { view });
+        if (!silent) {
+          setError(
+            loadError instanceof Error ? loadError.message : "加载消息失败",
+          );
+          setDetailItems([]);
+        }
+      } finally {
+        setInitialLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [user, view],
+  );
 
   useEffect(() => {
+    if (!user) {
+      return;
+    }
+
     if (view === "inbox") {
-      void loadInbox();
+      void loadInbox({ silent: inboxItemsRef.current.length > 0 });
       return;
     }
 
     if (isInboxDetailView(view)) {
-      void loadDetail();
+      void loadDetail({ silent: detailItemsRef.current.length > 0 });
     }
-  }, [view, loadInbox, loadDetail]);
+  }, [view, user, loadInbox, loadDetail]);
+
+  useVisibilityPolling(
+    CHAT_INBOX_POLL_MS,
+    Boolean(user) && view === "inbox",
+    () => {
+      void loadInbox({ silent: true });
+      void refreshUnreadCounts();
+    },
+  );
+
+  useVisibilityPolling(
+    CHAT_INBOX_POLL_MS,
+    Boolean(user) && isInboxDetailView(view),
+    () => {
+      void loadDetail({ silent: true });
+    },
+  );
 
   function handleNotificationRead(id: string) {
     setDetailItems((current) =>
@@ -126,9 +177,7 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
     );
     void refreshUnreadCounts();
     dispatchNotificationUnreadRefresh();
-    if (view === "inbox") {
-      void loadInbox();
-    } else if (isInboxDetailView(view)) {
+    if (isInboxDetailView(view)) {
       setInboxItems((current) =>
         current.map((item) => {
           if (item.kind !== "notification" || item.id !== view) {
@@ -175,8 +224,24 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
     }
   }
 
-  function openChat(conversationId: string) {
-    router.push(`/messages/chat/${conversationId}`);
+  function openChat(
+    conversationId: string,
+    peer?: { title: string; avatarUrl: string | null; avatarLabel: string },
+  ) {
+    const params = new URLSearchParams();
+    if (peer?.title) {
+      params.set("peer", peer.title);
+    }
+    if (peer?.avatarUrl) {
+      params.set("avatar", peer.avatarUrl);
+    }
+    if (peer?.avatarLabel) {
+      params.set("label", peer.avatarLabel);
+    }
+    const query = params.toString();
+    router.push(
+      `/messages/chat/${conversationId}${query ? `?${query}` : ""}`,
+    );
   }
 
   function openDetail(detailId: InboxDetailId) {
@@ -187,7 +252,7 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
   function goBackToInbox() {
     setView("inbox");
     setError("");
-    void loadInbox();
+    void loadInbox({ silent: true });
   }
 
   const detailUnreadCount = isInboxDetailView(view)
@@ -199,13 +264,16 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
     initError ??
     (authLoadingOverdue ? "登录状态加载超时，请检查网络后重试" : null);
   const waitingForAuth = loading && !authError;
-  const waitingForInitialData =
+  const waitingForInitialInbox =
+    Boolean(user) && view === "inbox" && initialLoading && inboxItems.length === 0 && !error;
+  const waitingForInitialDetail =
     Boolean(user) &&
-    fetching &&
-    (view === "inbox" ? inboxItems.length === 0 : detailItems.length === 0) &&
+    isInboxDetailView(view) &&
+    initialLoading &&
+    detailItems.length === 0 &&
     !error;
   const dataLoadingOverdue = useLoadingDeadline(
-    waitingForInitialData,
+    waitingForInitialInbox || waitingForInitialDetail,
     CLIENT_FETCH_TIMEOUT_MS + 3_000,
   );
   const dataError =
@@ -224,6 +292,7 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
 
   return (
     <div className="flex w-full min-h-screen flex-col bg-white lg:min-h-[60vh] lg:rounded-2xl lg:shadow-sm lg:ring-1 lg:ring-zinc-100">
+      <InlineRefreshBar active={refreshing} />
       <div className="border-b border-zinc-100 px-4 py-4 lg:px-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -280,13 +349,13 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
             onOpenSystem={() => openDetail("system")}
             systemUnreadCount={unreadCounts.systemUnread}
           />
-          {dataError ? (
+          {dataError && inboxItems.length === 0 ? (
             <AsyncStatePanel
               message={dataError}
               tone="error"
-              onRetry={() => void loadInbox()}
+              onRetry={() => void loadInbox({ silent: false })}
             />
-          ) : waitingForInitialData ? (
+          ) : waitingForInitialInbox ? (
             <AsyncStatePanel message="加载中..." />
           ) : inboxItems.length === 0 ? (
             <section className="flex flex-col items-center justify-center px-6 py-20 text-center">
@@ -302,13 +371,13 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
             />
           )}
         </>
-      ) : dataError ? (
+      ) : dataError && detailItems.length === 0 ? (
         <AsyncStatePanel
           message={dataError}
           tone="error"
-          onRetry={() => void loadDetail()}
+          onRetry={() => void loadDetail({ silent: false })}
         />
-      ) : waitingForInitialData ? (
+      ) : waitingForInitialDetail ? (
         <AsyncStatePanel message="加载中..." />
       ) : detailItems.length === 0 ? (
         <section className="flex flex-col items-center justify-center px-6 py-20 text-center">
