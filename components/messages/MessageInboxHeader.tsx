@@ -24,21 +24,21 @@ export default function MessageInboxHeader({
     >
       <button
         type="button"
-        onClick={onOpenChat}
-        aria-current={activeTab === "chat" ? "page" : undefined}
-        className={tabClassName(activeTab === "chat")}
-      >
-        <ChatIcon />
-        聊天
-      </button>
-      <button
-        type="button"
         onClick={onOpenContacts}
         aria-current={activeTab === "contacts" ? "page" : undefined}
         className={tabClassName(activeTab === "contacts")}
       >
         <ContactsIcon />
         通讯录
+      </button>
+      <button
+        type="button"
+        onClick={onOpenChat}
+        aria-current={activeTab === "chat" ? "page" : undefined}
+        className={tabClassName(activeTab === "chat")}
+      >
+        <ChatIcon />
+        聊天
       </button>
     </div>
   );
