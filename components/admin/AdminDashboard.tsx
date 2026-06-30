@@ -8,6 +8,7 @@ import {
   listAccessibleAdminPanelTabs,
   type AdminPanelTab,
 } from "@/lib/admin/admin-panel-ui";
+import MerchantApplicationsPanel from "@/components/admin/MerchantApplicationsPanel";
 import ReportQueuePanel from "@/components/admin/ReportQueuePanel";
 import ReviewQueuePanel from "@/components/admin/ReviewQueuePanel";
 import RulesManagementPanel from "@/components/admin/rules/RulesManagementPanel";
@@ -90,6 +91,10 @@ export default function AdminDashboard() {
         ) : null}
         {tab === "reviews" && canAccessAdminPanelTab(permissions, "reviews") ? (
           <ReviewQueuePanel />
+        ) : null}
+        {tab === "merchantApplications" &&
+        canAccessAdminPanelTab(permissions, "merchantApplications") ? (
+          <MerchantApplicationsPanel />
         ) : null}
         {tab === "reports" && canAccessAdminPanelTab(permissions, "reports") ? (
           <ReportQueuePanel />

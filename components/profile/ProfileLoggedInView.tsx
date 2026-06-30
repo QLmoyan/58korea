@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import ProfileHistoryFeed from "@/components/profile/ProfileHistoryFeed";
 import ProfileFavoriteFeed from "@/components/profile/ProfileFavoriteFeed";
 import ProfilePostFeed from "@/components/profile/ProfilePostFeed";
+import MerchantApplySection from "@/components/merchant/MerchantApplySection";
 import ProfileCommentsList from "@/components/profile/ProfileCommentsList";
 import ProfileCouponsList from "@/components/profile/ProfileCouponsList";
 import ProfileHeader from "@/components/profile/ProfileHeader";
@@ -167,11 +168,14 @@ export default function ProfileLoggedInView({
     </div>
   );
 
+  const merchantApply = <MerchantApplySection />;
+
   if (layout === "desktop") {
     return (
       <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-5 py-6 lg:px-8">
         <aside className="w-full max-w-sm shrink-0 lg:w-80">
           {header}
+          {merchantApply}
           {stats}
         </aside>
         <main className="min-w-0 flex-1">{tabsAndContent}</main>
@@ -182,6 +186,7 @@ export default function ProfileLoggedInView({
   return (
     <div className="pb-4">
       {header}
+      {merchantApply}
       {stats}
       {tabsAndContent}
     </div>

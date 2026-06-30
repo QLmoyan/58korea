@@ -32,6 +32,7 @@ const APPLY_SCRIPTS: string[] = [
   "scripts/apply-channel-articles-v1.ts",
   "scripts/apply-square-banners-v1.ts",
   "scripts/apply-merchant-profiles-v1.ts",
+  "scripts/apply-merchant-applications-v1.ts",
   "scripts/apply-merchant-coupons-v1.ts",
   "scripts/apply-post-linked-coupon-v1.ts",
   "scripts/apply-coupon-redemption-v1.ts",

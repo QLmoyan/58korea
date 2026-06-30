@@ -7,7 +7,7 @@ interface CreateNotificationInput {
   userId: string;
   actorId: string | null;
   type: NotificationType;
-  postId: number;
+  postId?: number | null;
   commentId?: string | null;
   title: string;
   body: string;
@@ -27,7 +27,7 @@ export async function createNotification(input: CreateNotificationInput) {
     user_id: input.userId,
     actor_id: input.actorId,
     type: input.type,
-    post_id: input.postId,
+    post_id: input.postId ?? null,
     comment_id: input.commentId ?? null,
     title: input.title,
     body: input.body,
@@ -116,5 +116,24 @@ export async function notifyPostLike(input: {
     postId: input.postId,
     title: "有人点赞了你的帖子",
     body: `${input.actorName} 赞了你的帖子「${trimBody(input.postTitle, 40)}」`,
+  });
+}
+
+export async function notifySystemMessage(input: {
+  userId: string;
+  title: string;
+  body: string;
+}) {
+  if (!input.userId) {
+    return;
+  }
+
+  await createNotification({
+    userId: input.userId,
+    actorId: null,
+    type: "system",
+    postId: null,
+    title: input.title,
+    body: input.body,
   });
 }

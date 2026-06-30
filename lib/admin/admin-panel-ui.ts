@@ -3,6 +3,7 @@ import type { AdminPermission } from "@/lib/types/admin-auth";
 export type AdminPanelTab =
   | "dashboard"
   | "reviews"
+  | "merchantApplications"
   | "reports"
   | "rules"
   | "tester"
@@ -16,6 +17,7 @@ export const ADMIN_PANEL_TABS: Array<{
 }> = [
   { id: "dashboard", label: "Dashboard", permission: "dashboard.read" },
   { id: "reviews", label: "审核队列", permission: "reviews.read" },
+  { id: "merchantApplications", label: "商家认证", permission: "reviews.read" },
   { id: "reports", label: "举报记录", permission: "reports.read" },
   { id: "rules", label: "规则管理", permission: "rules.read" },
   { id: "tester", label: "规则测试器", permission: "rules.test" },

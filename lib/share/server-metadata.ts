@@ -59,6 +59,7 @@ export async function fetchPublicProfileForMetadata(username: string) {
       .select("business_name, description, is_active")
       .eq("user_id", profile.id)
       .eq("is_active", true)
+      .eq("is_verified", true)
       .maybeSingle();
 
     if (merchantError) {

@@ -79,6 +79,7 @@ export async function assertPostLinkedCouponOwner(
     .select("id")
     .eq("user_id", userId)
     .eq("is_active", true)
+    .eq("is_verified", true)
     .maybeSingle();
 
   if (merchantError) {

@@ -34,7 +34,10 @@ export function useProfileData() {
     author: authorName,
     username: displayUsername,
   });
-  const isMerchant = Boolean(merchantSummary) || Boolean(merchantDetails) || legacyMerchant;
+  const isMerchant =
+    Boolean(merchantDetails?.isVerified) ||
+    Boolean(merchantSummary) ||
+    legacyMerchant;
 
   useEffect(() => {
     let cancelled = false;

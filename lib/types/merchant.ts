@@ -3,6 +3,7 @@ export interface MerchantProfile {
   userId: string;
   username: string | null;
   businessName: string;
+  category: string | null;
   logoUrl: string | null;
   description: string | null;
   address: string | null;
@@ -10,6 +11,7 @@ export interface MerchantProfile {
   businessHours: string | null;
   navigationUrl: string | null;
   isActive: boolean;
+  isVerified: boolean;
   createdAt: string;
   updatedAt: string;
 }

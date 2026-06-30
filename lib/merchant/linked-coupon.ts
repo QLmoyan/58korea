@@ -13,7 +13,7 @@ async function getActiveMerchantProfile(userId: string) {
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from("merchant_profiles")
-    .select("id, user_id, is_active")
+    .select("id, user_id, is_active, is_verified")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -21,7 +21,7 @@ async function getActiveMerchantProfile(userId: string) {
     throw new Error(error.message);
   }
 
-  if (!data?.is_active) {
+  if (!data?.is_active || !data.is_verified) {
     return null;
   }
 

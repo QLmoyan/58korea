@@ -93,6 +93,7 @@ export interface Database {
           id: string;
           user_id: string;
           business_name: string;
+          category: string | null;
           logo_url: string | null;
           description: string | null;
           address: string | null;
@@ -100,6 +101,7 @@ export interface Database {
           business_hours: string | null;
           navigation_url: string | null;
           is_active: boolean;
+          is_verified: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -107,6 +109,7 @@ export interface Database {
           id?: string;
           user_id: string;
           business_name: string;
+          category?: string | null;
           logo_url?: string | null;
           description?: string | null;
           address?: string | null;
@@ -114,6 +117,7 @@ export interface Database {
           business_hours?: string | null;
           navigation_url?: string | null;
           is_active?: boolean;
+          is_verified?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -121,6 +125,7 @@ export interface Database {
           id?: string;
           user_id?: string;
           business_name?: string;
+          category?: string | null;
           logo_url?: string | null;
           description?: string | null;
           address?: string | null;
@@ -128,6 +133,7 @@ export interface Database {
           business_hours?: string | null;
           navigation_url?: string | null;
           is_active?: boolean;
+          is_verified?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -136,6 +142,69 @@ export interface Database {
             foreignKeyName: "merchant_profiles_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      merchant_applications: {
+        Row: {
+          id: string;
+          user_id: string;
+          business_name: string;
+          category: string;
+          address: string;
+          contact: string;
+          proof_note: string | null;
+          status: "pending" | "approved" | "rejected";
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          reject_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          business_name: string;
+          category: string;
+          address: string;
+          contact: string;
+          proof_note?: string | null;
+          status?: "pending" | "approved" | "rejected";
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          reject_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          business_name?: string;
+          category?: string;
+          address?: string;
+          contact?: string;
+          proof_note?: string | null;
+          status?: "pending" | "approved" | "rejected";
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          reject_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "merchant_applications_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "merchant_applications_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },

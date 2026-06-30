@@ -80,6 +80,7 @@ function mapMerchantProfileRow(row: {
   id: string;
   user_id: string;
   business_name: string;
+  category: string | null;
   logo_url: string | null;
   description: string | null;
   address: string | null;
@@ -87,6 +88,7 @@ function mapMerchantProfileRow(row: {
   business_hours: string | null;
   navigation_url: string | null;
   is_active: boolean;
+  is_verified: boolean;
   created_at: string;
   updated_at: string;
   profiles?: { username: string | null } | null;
@@ -96,6 +98,7 @@ function mapMerchantProfileRow(row: {
     userId: row.user_id,
     username: row.profiles?.username ?? null,
     businessName: row.business_name,
+    category: row.category ?? null,
     logoUrl: row.logo_url,
     description: row.description,
     address: row.address,
@@ -103,6 +106,7 @@ function mapMerchantProfileRow(row: {
     businessHours: row.business_hours,
     navigationUrl: row.navigation_url,
     isActive: row.is_active,
+    isVerified: row.is_verified,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

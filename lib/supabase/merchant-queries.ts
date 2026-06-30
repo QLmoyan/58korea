@@ -20,7 +20,7 @@ type DbProfile = Database["public"]["Tables"]["profiles"]["Row"];
 type DbPost = Database["public"]["Tables"]["posts"]["Row"];
 
 const PUBLIC_MERCHANT_PROFILE_SELECT =
-  "id, user_id, business_name, logo_url, description, address, business_hours, navigation_url, is_active, created_at, updated_at";
+  "id, user_id, business_name, category, logo_url, description, address, phone, business_hours, navigation_url, is_active, is_verified, created_at, updated_at";
 
 type MerchantProfileRow = DbMerchantProfile & {
   profiles: Pick<DbProfile, "username" | "nickname"> | null;
@@ -32,6 +32,7 @@ function mapMerchantProfile(row: MerchantProfileRow): MerchantProfile {
     userId: row.user_id,
     username: row.profiles?.username ?? null,
     businessName: row.business_name,
+    category: row.category ?? null,
     logoUrl: row.logo_url,
     description: row.description,
     address: row.address,
@@ -39,6 +40,7 @@ function mapMerchantProfile(row: MerchantProfileRow): MerchantProfile {
     businessHours: row.business_hours,
     navigationUrl: row.navigation_url,
     isActive: row.is_active,
+    isVerified: row.is_verified,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -86,7 +88,8 @@ export async function fetchActiveMerchantSummaries(): Promise<MerchantSummary[]>
   const { data: merchants, error } = await supabase
     .from("merchant_profiles")
     .select("id, user_id, business_name")
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .eq("is_verified", true);
 
   if (error) {
     throw new Error(error.message);
@@ -152,6 +155,7 @@ export async function fetchMerchantProfileByUsername(
     .select(PUBLIC_MERCHANT_PROFILE_SELECT)
     .eq("user_id", profile.id)
     .eq("is_active", true)
+    .eq("is_verified", true)
     .maybeSingle();
 
   if (error) {
@@ -201,7 +205,7 @@ export async function fetchMerchantProfileByUserId(
     throw new Error(error.message);
   }
 
-  if (!data?.is_active) {
+  if (!data?.is_active || !data.is_verified) {
     return null;
   }
 
