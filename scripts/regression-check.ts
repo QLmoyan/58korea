@@ -2,7 +2,7 @@
  * Full regression check. Run: npx tsx scripts/regression-check.ts
  * Requires: .env.local, dev server on localhost:3000 for HTTP checks.
  */
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { createBrowserClient, createServerClient } from "@supabase/ssr";
@@ -29,6 +29,7 @@ import {
   verifySessionToken,
 } from "../lib/admin/session";
 import { publishCommentAction, publishPostAction } from "../lib/actions/publish-content";
+import { parseSearchContext } from "../lib/search/parse-search-context";
 import { toInternalEmail } from "../lib/auth/username";
 import type { AdminPermission } from "../lib/types/admin-auth";
 import type { Database } from "../lib/supabase/database.types";
@@ -873,6 +874,202 @@ async function main() {
     );
   });
 
+  await check("1.6s Search Context MVP — 搜索上下文解析 (静态)", async () => {
+    const parserPath = resolve(process.cwd(), "lib/search/parse-search-context.ts");
+    const parserSource = readFileSync(parserPath, "utf8");
+    assert(
+      parserSource.includes("parseSearchContext"),
+      "Search parser module must export parseSearchContext",
+    );
+
+    const queryPlace = parseSearchContext({
+      rawQuery: "江南 韩牛",
+      currentChannel: "推荐",
+      selectedRegion: "首尔",
+    });
+    assert(
+      queryPlace.source === "query-place" &&
+        queryPlace.place === "江南" &&
+        queryPlace.keyword === "韩牛",
+      "江南 韩牛 must parse as query-place",
+    );
+
+    const nearbyContext = parseSearchContext({
+      rawQuery: "韩牛",
+      currentChannel: "附近",
+      selectedRegion: "首尔",
+    });
+    assert(
+      nearbyContext.source === "nearby-context" &&
+        nearbyContext.place === "首尔" &&
+        nearbyContext.keyword === "韩牛",
+      "韩牛 + 附近 + 首尔 must parse as nearby-context",
+    );
+
+    const globalRecommend = parseSearchContext({
+      rawQuery: "韩牛",
+      currentChannel: "推荐",
+      selectedRegion: "首尔",
+    });
+    assert(
+      globalRecommend.source === "global-recommend" &&
+        globalRecommend.place === null &&
+        globalRecommend.keyword === "韩牛",
+      "韩牛 + 推荐 must parse as global-recommend",
+    );
+
+    const placeOnly = parseSearchContext({
+      rawQuery: "江南",
+      currentChannel: "附近",
+      selectedRegion: "首尔",
+    });
+    assert(
+      placeOnly.source === "query-place" &&
+        placeOnly.place === "江南" &&
+        placeOnly.keyword === "",
+      "江南 alone must parse as query-place regardless of tab",
+    );
+
+    const konkuk = parseSearchContext({
+      rawQuery: "建大 麻辣烫",
+      currentChannel: "推荐",
+      selectedRegion: "首尔",
+    });
+    assert(
+      konkuk.place === "建大" && konkuk.keyword === "麻辣烫",
+      "建大 麻辣烫 must extract place and keyword",
+    );
+
+    const href = readFileSync(
+      resolve(process.cwd(), "lib/search/build-search-href.ts"),
+      "utf8",
+    );
+    assert(href.includes('channel", channel)'), "search href must support channel param");
+
+    const emptyMessage = readFileSync(
+      resolve(process.cwd(), "lib/search/search-empty-message.ts"),
+      "utf8",
+    );
+    assert(
+      emptyMessage.includes("buildSearchEmptyMessage"),
+      "context-aware empty message helper must exist",
+    );
+
+    const constants = readFileSync(
+      resolve(process.cwd(), "lib/search/constants.ts"),
+      "utf8",
+    );
+    assert(
+      constants.includes("建大") || constants.includes("江南"),
+      "search placeholder must guide with place examples",
+    );
+
+    const searchPage = readFileSync(
+      resolve(process.cwd(), "components/search/SearchPageContent.tsx"),
+      "utf8",
+    );
+    assert(
+      searchPage.includes("displayLabel"),
+      "search page must show context display label",
+    );
+    assert(
+      !searchPage.includes("km") && !searchPage.includes('distance'),
+      "search page must not show fake distance",
+    );
+
+    const migrationDir = resolve(process.cwd(), "scripts");
+    const sqlFiles = readdirSync(migrationDir).filter((name) =>
+      name.includes("store") || name.includes("place-hub") || name.includes("poi"),
+    );
+    assert(
+      sqlFiles.length === 0,
+      "Search Context MVP must not add POI/Store migration scripts",
+    );
+  });
+
+  await check("1.6t Merchant Apply V1 — 商家认证申请 (静态)", async () => {
+    const migrationSql = readFileSync(
+      resolve(process.cwd(), "scripts/apply-merchant-applications-v1.sql"),
+      "utf8",
+    );
+    assert(
+      migrationSql.includes("CREATE TABLE IF NOT EXISTS public.merchant_applications"),
+      "merchant_applications migration must exist",
+    );
+    assert(
+      migrationSql.includes("merchant_applications_select_own") &&
+        migrationSql.includes("merchant_applications_insert_own") &&
+        migrationSql.includes("merchant_applications_admin_update"),
+      "merchant_applications RLS policies must exist",
+    );
+    assert(
+      migrationSql.includes("is_verified"),
+      "merchant_profiles is_verified column must be added",
+    );
+
+    const applyPage = resolve(process.cwd(), "app/merchant/apply/page.tsx");
+    assert(existsSync(applyPage), "/merchant/apply page must exist");
+
+    const userAction = readFileSync(
+      resolve(process.cwd(), "lib/actions/merchant-application.ts"),
+      "utf8",
+    );
+    assert(
+      userAction.includes('status: "pending"'),
+      "user submit must create pending application",
+    );
+    assert(
+      !userAction.includes(".update("),
+      "user action must not update application status",
+    );
+
+    const adminAction = readFileSync(
+      resolve(process.cwd(), "lib/actions/admin-merchant-applications.ts"),
+      "utf8",
+    );
+    assert(
+      adminAction.includes("approveMerchantApplicationAction") &&
+        adminAction.includes("rejectMerchantApplicationAction"),
+      "admin must approve/reject merchant applications",
+    );
+    assert(
+      adminAction.includes("is_verified: true"),
+      "approve must set merchant_profiles.is_verified",
+    );
+    assert(
+      adminAction.includes('notifySystemMessage'),
+      "approve/reject must write system notifications",
+    );
+
+    const adminPanel = readFileSync(
+      resolve(process.cwd(), "lib/admin/admin-panel-ui.ts"),
+      "utf8",
+    );
+    assert(
+      adminPanel.includes("merchantApplications"),
+      "admin panel must include merchant applications tab",
+    );
+
+    const notifications = readFileSync(
+      resolve(process.cwd(), "lib/notifications/create-notification.ts"),
+      "utf8",
+    );
+    assert(
+      notifications.includes("notifySystemMessage") &&
+        notifications.includes('type: "system"'),
+      "system notification helper must exist",
+    );
+
+    const profileSection = readFileSync(
+      resolve(process.cwd(), "components/merchant/MerchantApplySection.tsx"),
+      "utf8",
+    );
+    assert(
+      profileSection.includes("/merchant/apply"),
+      "profile must link to merchant apply page",
+    );
+  });
+
   await check("1.6k System Notifications V2 — 系统 Tab 真实数据源 (静态)", async () => {
     const constants = readFileSync(
       resolve(process.cwd(), "lib/messages/constants.ts"),
@@ -1353,7 +1550,7 @@ async function main() {
 
   await check("2.8 后台 Tab 正常显示 (owner)", async () => {
     const tabs = listAccessibleAdminPanelTabs(listPermissions("owner"));
-    assert(tabs.length === 7, `owner tabs=${tabs.map((t) => t.id).join(",")}`);
+    assert(tabs.length === 8, `owner tabs=${tabs.map((t) => t.id).join(",")}`);
     assert(tabs[0]?.id === "dashboard", "dashboard should be first tab");
   });
 
@@ -1461,11 +1658,12 @@ async function main() {
     assert(hasPermission("owner", "dashboard.read"), "owner should have dashboard.read");
     assert(hasPermission("moderator", "dashboard.read"), "moderator should have dashboard.read");
     const adminTabs = listAccessibleAdminPanelTabs(listPermissions("admin"));
-    assert(adminTabs.length === 7, "admin should see 7 tabs");
+    assert(adminTabs.length === 8, "admin should see 8 tabs");
     assert(adminTabs[0]?.id === "dashboard", "dashboard should be first tab");
     const modTabs = listAccessibleAdminPanelTabs(listPermissions("moderator"));
     assert(
-      modTabs.map((t) => t.id).join(",") === "dashboard,reviews,reports",
+      modTabs.map((t) => t.id).join(",") ===
+        "dashboard,reviews,merchantApplications,reports",
       `moderator tabs=${modTabs.map((t) => t.id).join(",")}`,
     );
     assert(!hasPermission("admin", "rules.delete"), "admin should lack rules.delete");

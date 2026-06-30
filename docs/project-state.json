@@ -1,12 +1,13 @@
 {
-  "version": "0.2.2",
+  "version": "0.3.0-dev",
   "nextVersion": "0.3.0",
-  "developmentStage": "v0.2.2 / 早期生产",
+  "developmentStage": "v0.3.0-dev / Place Hub 阶段",
   "productName": "韩圈",
   "productTagline": "韩国华人生活社区",
   "lastUpdated": "2026-06-17",
   "currentFocus": [
-    "v0.3.0 规划"
+    "商家认证体验收口",
+    "v0.3.0 release check"
   ],
   "build": {
     "status": "PASS",
@@ -15,8 +16,8 @@
   },
   "regression": {
     "status": "PASS",
-    "passed": 62,
-    "total": 62,
+    "passed": 64,
+    "total": 64,
     "lastVerified": "2026-06-17",
     "command": "npm run regression-check"
   },
@@ -160,6 +161,11 @@
       "id": "publish-location-v1",
       "name": "Publish Location UX V1",
       "summary": "发帖页移除自由输入；post.location 仅来自自动定位或 Bottom Sheet 选区；定位失败不阻塞页面"
+    },
+    {
+      "id": "search-context-mvp",
+      "name": "Search Context MVP",
+      "summary": "搜索继承首页 Tab/地区上下文；地点词典解析；无 AI/无 Store/无假距离"
     }
   ],
   "pendingV2": [],
@@ -230,7 +236,8 @@
       "v0.2.0-release-check",
       "nearby-lite-v1",
       "nearby-auto-region-v1",
-      "publish-location-v1"
+      "publish-location-v1",
+      "search-context-mvp"
     ],
     "deferred": [
       {
@@ -278,6 +285,31 @@
     ]
   },
   "changelog": [
+    {
+      "version": "0.3.0-dev",
+      "date": "2026-06-17",
+      "title": "Merchant Apply V1",
+      "items": [
+        "merchant_applications 表 + RLS：用户仅可查看/创建自己的申请",
+        "merchant_profiles 新增 category / is_verified；公开商家需 is_verified",
+        "/merchant/apply 申请表单；我的页展示认证/审核中/被拒/可申请状态",
+        "Admin「商家认证」Tab：列表、详情、通过/拒绝",
+        "通过 upsert merchant_profiles.is_verified=true；审核结果写入 system 通知",
+        "regression 1.6t；build/regression PASS"
+      ]
+    },
+    {
+      "version": "0.3.0-dev",
+      "date": "2026-06-17",
+      "title": "Search Context MVP",
+      "items": [
+        "parseSearchContext：地点词典 + 首页 Tab/地区上下文",
+        "query-place / nearby-context / global-recommend / global-latest 四种来源",
+        "搜索页展示 displayLabel；首页搜索带 channel/region 参数",
+        "帖子/商家按 place 过滤 location/address；最新 Tab 按时间排序",
+        "无 AI、无 Store/POI、无假距离；regression 1.6s；build/regression 63/63 PASS"
+      ]
+    },
     {
       "version": "0.2.2",
       "date": "2026-06-17",

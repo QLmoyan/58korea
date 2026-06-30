@@ -2,7 +2,7 @@
 
 > 自动生成文件。请勿手改。更新 `docs/project-state.json` 后运行 `npm run sync-docs`。
 
-最后更新：**2026-06-17** · 当前版本 `0.2.2` · 下一目标 `0.3.0`
+最后更新：**2026-06-17** · 当前版本 `0.3.0-dev` · 下一目标 `0.3.0`
 
 ## 已完成（近期收口）
 
@@ -25,6 +25,7 @@
 - ✅ **Nearby Lite V1** (`nearby-lite-v1`)
 - ✅ **Nearby Auto Region V1** (`nearby-auto-region-v1`)
 - ✅ **Publish Location UX V1** (`publish-location-v1`)
+- ✅ **Search Context MVP** (`search-context-mvp`)
 
 ## P1 — 优先（信任与账号基础）
 

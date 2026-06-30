@@ -17,10 +17,13 @@ import SearchTabs from "@/components/search/SearchTabs";
 import SearchUserResultItem from "@/components/search/SearchUserResultItem";
 import {
   SEARCH_DEBOUNCE_MS,
-  SEARCH_EMPTY_MERCHANT_MESSAGE,
-  SEARCH_EMPTY_MESSAGE,
-  SEARCH_EMPTY_USER_MESSAGE,
 } from "@/lib/search/constants";
+import { buildSearchHref } from "@/lib/search/build-search-href";
+import { buildSearchEmptyMessage } from "@/lib/search/search-empty-message";
+import {
+  parseSearchChannelParam,
+  parseSearchRegionParam,
+} from "@/lib/search/parse-search-context";
 import { normalizeSearchQuery } from "@/lib/search/normalize-query";
 import type { SearchTabId } from "@/lib/search/types";
 import { SearchStoreProvider, useSearchStore } from "@/lib/store/search-store";
@@ -29,6 +32,8 @@ function SearchPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryFromUrl = searchParams.get("q") ?? "";
+  const channelFromUrl = parseSearchChannelParam(searchParams.get("channel"));
+  const regionFromUrl = parseSearchRegionParam(searchParams.get("region"));
   const normalizedUrlQuery = useMemo(
     () => normalizeSearchQuery(queryFromUrl),
     [queryFromUrl],
@@ -39,6 +44,7 @@ function SearchPageInner() {
     postResults,
     userResults,
     merchantResults,
+    context,
     loading,
     error,
     searched,
@@ -52,8 +58,17 @@ function SearchPageInner() {
       return;
     }
 
-    void runSearch(normalizedUrlQuery);
-  }, [normalizedUrlQuery, runSearch, resetSearch]);
+    void runSearch(normalizedUrlQuery, {
+      channel: channelFromUrl,
+      selectedRegion: regionFromUrl,
+    });
+  }, [
+    normalizedUrlQuery,
+    channelFromUrl,
+    regionFromUrl,
+    runSearch,
+    resetSearch,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -67,12 +82,12 @@ function SearchPageInner() {
     (nextQuery: string) => {
       const normalized = normalizeSearchQuery(nextQuery);
       const nextUrl = normalized
-        ? `/search?q=${encodeURIComponent(normalized)}`
+        ? buildSearchHref(normalized, channelFromUrl, regionFromUrl)
         : "/search";
 
       router.replace(nextUrl);
     },
-    [router],
+    [channelFromUrl, regionFromUrl, router],
   );
 
   const clearDebounceTimer = useCallback(() => {
@@ -102,6 +117,7 @@ function SearchPageInner() {
   );
 
   const showPrompt = !normalizedUrlQuery && !loading && !searched;
+  const highlightQuery = context?.keyword || normalizedUrlQuery;
 
   const activeResults =
     activeTab === "all"
@@ -110,12 +126,7 @@ function SearchPageInner() {
         ? userResults
         : merchantResults;
 
-  const emptyMessage =
-    activeTab === "users"
-      ? SEARCH_EMPTY_USER_MESSAGE
-      : activeTab === "merchants"
-        ? SEARCH_EMPTY_MERCHANT_MESSAGE
-        : SEARCH_EMPTY_MESSAGE;
+  const emptyMessage = buildSearchEmptyMessage(context, activeTab);
 
   const showEmptyState =
     searched &&
@@ -147,6 +158,12 @@ function SearchPageInner() {
           </div>
         </div>
 
+        {context?.displayLabel ? (
+          <p className="px-4 pb-2 text-center text-xs font-medium text-zinc-600">
+            {context.displayLabel}
+          </p>
+        ) : null}
+
         <div className="px-0 pb-1 lg:px-0">
           <SearchTabs activeTab={activeTab} onChange={setActiveTab} />
         </div>
@@ -160,7 +177,12 @@ function SearchPageInner() {
             <p className="text-xs text-rose-500">{error}</p>
             <button
               type="button"
-              onClick={() => void runSearch(normalizedUrlQuery)}
+              onClick={() =>
+                void runSearch(normalizedUrlQuery, {
+                  channel: channelFromUrl,
+                  selectedRegion: regionFromUrl,
+                })
+              }
               className="text-xs font-medium text-rose-600 underline-offset-2 hover:underline"
             >
               重试
@@ -173,7 +195,7 @@ function SearchPageInner() {
         {showPrompt ? (
           <section className="flex flex-col items-center justify-center px-6 py-16 text-center">
             <p className="text-sm font-medium text-zinc-500">
-              输入关键词，搜索帖子、用户或商家
+              输入地区和内容，搜索更精准
             </p>
           </section>
         ) : null}
@@ -183,7 +205,7 @@ function SearchPageInner() {
             <PostFeed
               posts={postResults}
               emptyMessage={showEmptyState ? emptyMessage : undefined}
-              highlightQuery={normalizedUrlQuery}
+              highlightQuery={highlightQuery}
             />
           </div>
         ) : null}
@@ -200,7 +222,7 @@ function SearchPageInner() {
                   <SearchUserResultItem
                     key={user.id}
                     user={user}
-                    highlightQuery={normalizedUrlQuery}
+                    highlightQuery={highlightQuery}
                   />
                 ))}
               </div>
@@ -220,7 +242,7 @@ function SearchPageInner() {
                   <SearchMerchantResultItem
                     key={merchant.id}
                     merchant={merchant}
-                    highlightQuery={normalizedUrlQuery}
+                    highlightQuery={highlightQuery}
                   />
                 ))}
               </div>

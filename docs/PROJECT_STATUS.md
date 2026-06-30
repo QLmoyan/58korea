@@ -8,15 +8,16 @@
 
 | 项 | 值 |
 |---|---|
-| **Current Version** | `0.2.2` |
+| **Current Version** | `0.3.0-dev` |
 | **Next Version** | `0.3.0` |
-| **Development Stage** | v0.2.2 / 早期生产 |
+| **Development Stage** | v0.3.0-dev / Place Hub 阶段 |
 | **Build** | **PASS**（2026-06-17） |
-| **Regression** | **PASS** 62/62（2026-06-17） |
+| **Regression** | **PASS** 64/64（2026-06-17） |
 
 ## Current Focus
 
-- v0.3.0 规划
+- 商家认证体验收口
+- v0.3.0 release check
 
 验证命令：`npm run build` · `npm run regression-check`
 
@@ -55,6 +56,7 @@
 - **Nearby Lite V1** (`nearby-lite-v1`) — 恢复附近 Tab：按用户选择地区匹配 post.location；hanquan:selected-region；无 GPS/假距离
 - **Nearby Auto Region V1** (`nearby-auto-region-v1`) — 附近 Tab 自动 geolocation 映射地区；hanquan:location-mode auto/manual；不写经纬度入库
 - **Publish Location UX V1** (`publish-location-v1`) — 发帖页移除自由输入；post.location 仅来自自动定位或 Bottom Sheet 选区；定位失败不阻塞页面
+- **Search Context MVP** (`search-context-mvp`) — 搜索继承首页 Tab/地区上下文；地点词典解析；无 AI/无 Store/无假距离
 
 ## 待优化模块（V2）
 

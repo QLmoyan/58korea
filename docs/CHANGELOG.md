@@ -2,7 +2,24 @@
 
 > 自动生成文件。请勿手改。更新 `docs/project-state.json` 后运行 `npm run sync-docs`。
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.2.2**（v0.2.2 / 早期生产）。
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.3.0-dev**（v0.3.0-dev / Place Hub 阶段）。
+
+## [0.3.0-dev] Merchant Apply V1 — 2026-06-17
+
+- merchant_applications 表 + RLS：用户仅可查看/创建自己的申请
+- merchant_profiles 新增 category / is_verified；公开商家需 is_verified
+- /merchant/apply 申请表单；我的页展示认证/审核中/被拒/可申请状态
+- Admin「商家认证」Tab：列表、详情、通过/拒绝
+- 通过 upsert merchant_profiles.is_verified=true；审核结果写入 system 通知
+- regression 1.6t；build/regression PASS
+
+## [0.3.0-dev] Search Context MVP — 2026-06-17
+
+- parseSearchContext：地点词典 + 首页 Tab/地区上下文
+- query-place / nearby-context / global-recommend / global-latest 四种来源
+- 搜索页展示 displayLabel；首页搜索带 channel/region 参数
+- 帖子/商家按 place 过滤 location/address；最新 Tab 按时间排序
+- 无 AI、无 Store/POI、无假距离；regression 1.6s；build/regression 63/63 PASS
 
 ## [0.2.2] Nearby Auto Region V1 + Publish Location UX — 2026-06-17
 

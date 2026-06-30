@@ -1,7 +1,6 @@
 export const SEARCH_DEBOUNCE_MS = 300;
 
-export const SEARCH_PLACEHOLDER =
-  "搜索韩国租房、美食、兼职、留学...";
+export const SEARCH_PLACEHOLDER = "试试：建大 麻辣烫、江南 理发店";
 
 export const SEARCH_EMPTY_MESSAGE = "没有找到相关内容";
 

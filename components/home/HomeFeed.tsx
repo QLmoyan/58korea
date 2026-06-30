@@ -9,6 +9,7 @@ import {
 import { FEED_UI_DEADLINE_MS } from "@/lib/constants/network";
 import { useNearbyLocation } from "@/lib/feed/use-nearby-location";
 import { useSelectedRegion } from "@/lib/feed/use-selected-region";
+import { useHomeSearchContext } from "@/lib/search/home-search-context";
 import { useLoadingDeadline } from "@/lib/hooks/use-loading-deadline";
 import { usePostStore } from "@/lib/store/post-store";
 import CategoryScroll from "./CategoryScroll";
@@ -30,6 +31,8 @@ export default function HomeFeed() {
     selectRegionManually,
     enableAutoMode,
   } = useSelectedRegion();
+  const { setChannel: setSearchChannel, setRegion: setSearchRegion } =
+    useHomeSearchContext();
 
   const handleRegionResolved = useCallback(
     (nextRegion: Parameters<typeof applyAutoRegion>[0]) => {
@@ -54,6 +57,11 @@ export default function HomeFeed() {
   const displayError =
     feedError ??
     (loadingOverdue ? "帖子加载超时，请检查网络后重试" : null);
+
+  useEffect(() => {
+    setSearchChannel(channel);
+    setSearchRegion(region);
+  }, [channel, region, setSearchChannel, setSearchRegion]);
 
   useEffect(() => {
     if (channel !== "附近" || !regionHydrated) {

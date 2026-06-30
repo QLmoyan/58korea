@@ -10,6 +10,8 @@ import {
   type KeyboardEvent,
 } from "react";
 import { SEARCH_PLACEHOLDER } from "@/lib/search/constants";
+import { buildSearchHref } from "@/lib/search/build-search-href";
+import { useHomeSearchContext } from "@/lib/search/home-search-context";
 import { normalizeSearchQuery } from "@/lib/search/normalize-query";
 
 interface HomeSearchBarProps {
@@ -34,6 +36,7 @@ export default function HomeSearchBar({
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState(defaultQuery);
+  const { channel, region } = useHomeSearchContext();
 
   useEffect(() => {
     setQuery(defaultQuery);
@@ -53,9 +56,9 @@ export default function HomeSearchBar({
         return;
       }
 
-      router.push(`/search?q=${encodeURIComponent(normalized)}`);
+      router.push(buildSearchHref(normalized, channel, region));
     },
-    [onSearch, router],
+    [channel, onSearch, region, router],
   );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {

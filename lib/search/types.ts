@@ -1,4 +1,5 @@
 import type { Post } from "@/lib/data/posts";
+import type { ParsedSearchContext } from "@/lib/search/parse-search-context";
 
 export type SearchTabId = "all" | "users" | "merchants";
 
@@ -24,6 +25,7 @@ export interface SearchMerchantResult {
 
 export interface SearchState {
   query: string;
+  context: ParsedSearchContext | null;
   postResults: Post[];
   userResults: SearchUserResult[];
   merchantResults: SearchMerchantResult[];
