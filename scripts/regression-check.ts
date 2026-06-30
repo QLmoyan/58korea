@@ -1183,6 +1183,135 @@ async function main() {
     );
   });
 
+  await check("1.6w Messages Inbox V1 — 会话列表聚合 (静态)", async () => {
+    const messageCenter = readFileSync(
+      resolve(process.cwd(), "components/messages/MessageCenterContent.tsx"),
+      "utf8",
+    );
+    assert(
+      messageCenter.includes("MessageInboxList"),
+      "MessageCenter must render inbox conversation list",
+    );
+    assert(
+      messageCenter.includes("MessageInboxHeader"),
+      "MessageCenter must render inbox header shortcuts",
+    );
+    assert(
+      messageCenter.includes('fetchMessageInboxAction'),
+      "MessageCenter must load inbox from server action",
+    );
+    assert(
+      messageCenter.includes("fetchInboxDetailNotificationsAction"),
+      "MessageCenter must open detail lists from notifications",
+    );
+    assert(
+      !messageCenter.includes("MessageTabs"),
+      "MessageCenter must use inbox-first layout instead of tab strip",
+    );
+    assert(
+      !messageCenter.includes("假好友") &&
+        !messageCenter.includes("mockChat") &&
+        !messageCenter.includes("fakeChat"),
+      "MessageCenter must not render fake chat or friends",
+    );
+
+    const inboxHeader = readFileSync(
+      resolve(process.cwd(), "components/messages/MessageInboxHeader.tsx"),
+      "utf8",
+    );
+    assert(
+      inboxHeader.includes("通讯录"),
+      "inbox header must include contacts shortcut",
+    );
+    assert(
+      inboxHeader.includes("系统通知"),
+      "inbox header must include system notification shortcut",
+    );
+    assert(
+      !inboxHeader.includes("新朋友"),
+      "inbox header must not show friend request shortcut yet",
+    );
+
+    const buildInbox = readFileSync(
+      resolve(process.cwd(), "lib/messages/build-inbox.ts"),
+      "utf8",
+    );
+    assert(
+      buildInbox.includes('"system"') &&
+        buildInbox.includes('"interaction"') &&
+        buildInbox.includes('"like"'),
+      "inbox must aggregate system, interaction, and like categories",
+    );
+    assert(
+      buildInbox.includes('types: ["comment", "reply"]') ||
+        buildInbox.includes('interaction: ["comment", "reply"]') ||
+        (buildInbox.includes("interaction") &&
+          buildInbox.includes('"comment"') &&
+          buildInbox.includes('"reply"')),
+      "interaction inbox must merge comment and reply notifications",
+    );
+
+    const messageInboxAction = readFileSync(
+      resolve(process.cwd(), "lib/actions/message-inbox.ts"),
+      "utf8",
+    );
+    assert(
+      messageInboxAction.includes('from("notifications")'),
+      "inbox summaries must load from notifications table",
+    );
+    assert(
+      messageInboxAction.includes("buildInboxConversations"),
+      "inbox action must aggregate notifications into conversation items",
+    );
+
+    const inboxItem = readFileSync(
+      resolve(process.cwd(), "components/messages/MessageInboxItem.tsx"),
+      "utf8",
+    );
+    assert(
+      inboxItem.includes("rounded-full"),
+      "inbox item avatars must be circular",
+    );
+    assert(
+      inboxItem.includes("truncate"),
+      "inbox item summary must truncate to one line",
+    );
+    assert(
+      inboxItem.includes("unreadCount"),
+      "inbox item must show unread badge from real counts",
+    );
+
+    const contactsEmpty = readFileSync(
+      resolve(process.cwd(), "components/messages/MessageContactsEmpty.tsx"),
+      "utf8",
+    );
+    const inboxConstants = readFileSync(
+      resolve(process.cwd(), "lib/messages/inbox-constants.ts"),
+      "utf8",
+    );
+    assert(
+      inboxConstants.includes('MESSAGE_CONTACTS_EMPTY = "暂无联系人"'),
+      "contacts view must show honest empty state",
+    );
+    assert(
+      contactsEmpty.includes("MESSAGE_CONTACTS_EMPTY"),
+      "contacts empty component must render honest empty copy",
+    );
+
+    const notificationsAction = readFileSync(
+      resolve(process.cwd(), "lib/actions/notifications.ts"),
+      "utf8",
+    );
+    assert(
+      notificationsAction.includes("fetchInboxDetailNotificationsAction"),
+      "notifications action must support inbox detail fetch",
+    );
+    assert(
+      notificationsAction.includes('system: ["system"]'),
+      "system notifications must still query notifications.type = system",
+    );
+  });
+
   await check("1.6k System Notifications V2 — 系统 Tab 真实数据源 (静态)", async () => {
     const constants = readFileSync(
       resolve(process.cwd(), "lib/messages/constants.ts"),

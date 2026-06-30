@@ -12,12 +12,12 @@
 | **Next Version** | `0.3.0` |
 | **Development Stage** | v0.3.0-dev / Place Hub 阶段 |
 | **Build** | **PASS**（2026-06-17） |
-| **Regression** | **PASS** 64/64（2026-06-17） |
+| **Regression** | **PASS** 67/67（2026-06-17） |
 
 ## Current Focus
 
-- 商家认证体验收口
-- v0.3.0 release check
+- Chat V1
+- Post Edit V1
 
 验证命令：`npm run build` · `npm run regression-check`
 

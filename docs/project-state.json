@@ -6,8 +6,8 @@
   "productTagline": "韩国华人生活社区",
   "lastUpdated": "2026-06-17",
   "currentFocus": [
-    "商家认证体验收口",
-    "v0.3.0 release check"
+    "Chat V1",
+    "Post Edit V1"
   ],
   "build": {
     "status": "PASS",
@@ -16,8 +16,8 @@
   },
   "regression": {
     "status": "PASS",
-    "passed": 64,
-    "total": 64,
+    "passed": 67,
+    "total": 67,
     "lastVerified": "2026-06-17",
     "command": "npm run regression-check"
   },
@@ -285,6 +285,18 @@
     ]
   },
   "changelog": [
+    {
+      "version": "0.3.0-dev",
+      "date": "2026-06-17",
+      "title": "Messages Inbox V1",
+      "items": [
+        "/messages 重做：顶部通讯录/系统通知入口 + 会话列表",
+        "notifications 聚合为系统通知、评论和回复、收到的赞三类会话",
+        "头像/昵称摘要/时间/未读数；点击进入对应通知详情列表",
+        "无私信表、无假好友/假聊天；通讯录诚实空态「暂无联系人」",
+        "regression 1.6w；build/regression PASS"
+      ]
+    },
     {
       "version": "0.3.0-dev",
       "date": "2026-06-17",

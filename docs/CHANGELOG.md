@@ -4,6 +4,14 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.3.0-dev**（v0.3.0-dev / Place Hub 阶段）。
 
+## [0.3.0-dev] Messages Inbox V1 — 2026-06-17
+
+- /messages 重做：顶部通讯录/系统通知入口 + 会话列表
+- notifications 聚合为系统通知、评论和回复、收到的赞三类会话
+- 头像/昵称摘要/时间/未读数；点击进入对应通知详情列表
+- 无私信表、无假好友/假聊天；通讯录诚实空态「暂无联系人」
+- regression 1.6w；build/regression PASS
+
 ## [0.3.0-dev] Merchant Apply V1 — 2026-06-17
 
 - merchant_applications 表 + RLS：用户仅可查看/创建自己的申请

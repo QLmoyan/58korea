@@ -67,3 +67,19 @@ export function getUnreadCountForTab(
       return 0;
   }
 }
+
+export function getUnreadCountForInboxDetail(
+  counts: NotificationUnreadCounts,
+  detailId: "system" | "interaction" | "like",
+) {
+  switch (detailId) {
+    case "system":
+      return counts.systemUnread;
+    case "interaction":
+      return counts.commentUnread + counts.replyUnread;
+    case "like":
+      return counts.likeUnread;
+    default:
+      return 0;
+  }
+}

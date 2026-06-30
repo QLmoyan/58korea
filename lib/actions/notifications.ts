@@ -1,6 +1,7 @@
 "use server";
 
 import { formatRelativeMessageTime } from "@/lib/messages/format-time";
+import type { InboxDetailId } from "@/lib/messages/inbox-types";
 import type { MessageItem, MessageTabId } from "@/lib/messages/types";
 import {
   createSupabaseServerClient,
@@ -15,6 +16,12 @@ const TAB_TYPES: Record<MessageTabId, DbNotification["type"][]> = {
   reply: ["reply"],
   like: ["like"],
   system: ["system"],
+};
+
+const INBOX_DETAIL_TYPES: Record<InboxDetailId, DbNotification["type"][]> = {
+  system: ["system"],
+  interaction: ["comment", "reply"],
+  like: ["like"],
 };
 
 function getAvatarLabel(body: string, actorId: string | null) {
@@ -67,15 +74,14 @@ function mapSystemNotification(row: DbNotification): MessageItem | null {
   };
 }
 
-export async function fetchNotificationsByTabAction(
-  tab: MessageTabId,
+async function fetchNotificationsByTypes(
+  types: DbNotification["type"][],
 ): Promise<MessageItem[]> {
   const user = await getServerAuthUser();
   if (!user) {
     throw new Error("请先登录");
   }
 
-  const types = TAB_TYPES[tab];
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("notifications")
@@ -88,7 +94,10 @@ export async function fetchNotificationsByTabAction(
     throw new Error(error.message);
   }
 
-  if (tab === "system") {
+  const isSystemOnly =
+    types.length === 1 && types[0] === "system";
+
+  if (isSystemOnly) {
     const items: MessageItem[] = [];
     for (const row of data ?? []) {
       const item = mapSystemNotification(row);
@@ -147,6 +156,18 @@ export async function fetchNotificationsByTabAction(
   return items;
 }
 
+export async function fetchNotificationsByTabAction(
+  tab: MessageTabId,
+): Promise<MessageItem[]> {
+  return fetchNotificationsByTypes(TAB_TYPES[tab]);
+}
+
+export async function fetchInboxDetailNotificationsAction(
+  detailId: InboxDetailId,
+): Promise<MessageItem[]> {
+  return fetchNotificationsByTypes(INBOX_DETAIL_TYPES[detailId]);
+}
+
 export async function markNotificationReadAction(notificationId: string) {
   const user = await getServerAuthUser();
   if (!user) {
@@ -166,12 +187,21 @@ export async function markNotificationReadAction(notificationId: string) {
 }
 
 export async function markAllNotificationsReadAction(tab: MessageTabId) {
+  return markAllNotificationsReadByTypes(TAB_TYPES[tab]);
+}
+
+export async function markAllInboxDetailReadAction(detailId: InboxDetailId) {
+  return markAllNotificationsReadByTypes(INBOX_DETAIL_TYPES[detailId]);
+}
+
+async function markAllNotificationsReadByTypes(
+  types: DbNotification["type"][],
+) {
   const user = await getServerAuthUser();
   if (!user) {
     throw new Error("请先登录");
   }
 
-  const types = TAB_TYPES[tab];
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase
     .from("notifications")
