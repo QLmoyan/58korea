@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { assertAdminPermission } from "@/lib/admin/assert-admin-access";
 import { mapMerchantApplication } from "@/lib/merchant/map-application";
 import { notifySystemMessage } from "@/lib/notifications/create-notification";
@@ -113,6 +114,24 @@ export async function approveMerchantApplicationAction(applicationId: string) {
     throw new Error(profileError.message);
   }
 
+  const { data: verifiedProfile, error: verifyError } = await supabase
+    .from("merchant_profiles")
+    .select("id, user_id, is_active, is_verified, business_name")
+    .eq("user_id", application.user_id)
+    .maybeSingle();
+
+  if (verifyError) {
+    throw new Error(verifyError.message);
+  }
+
+  if (
+    !verifiedProfile?.is_verified ||
+    !verifiedProfile.is_active ||
+    !verifiedProfile.business_name?.trim()
+  ) {
+    throw new Error("商家资料写入失败，请重试审核");
+  }
+
   const { error: updateError } = await supabase
     .from("merchant_applications")
     .update({
@@ -134,6 +153,10 @@ export async function approveMerchantApplicationAction(applicationId: string) {
     title: "商家认证已通过",
     body: `你的商家认证申请已通过审核。店铺「${application.business_name}」现已开通认证商家身份。`,
   });
+
+  revalidatePath("/profile");
+  revalidatePath("/publish");
+  revalidatePath("/merchant/apply");
 
   return { ok: true as const };
 }

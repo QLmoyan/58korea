@@ -51,12 +51,13 @@ export async function fetchPublicProfileForMetadata(username: string) {
     business_name: string;
     description: string | null;
     is_active: boolean;
+    is_verified: boolean;
   } | null = null;
 
   if (profile?.id) {
     const { data: merchantRow, error: merchantError } = await supabase
       .from("merchant_profiles")
-      .select("business_name, description, is_active")
+      .select("business_name, description, is_active, is_verified")
       .eq("user_id", profile.id)
       .eq("is_active", true)
       .eq("is_verified", true)
@@ -81,7 +82,7 @@ export async function fetchPublicProfileForMetadata(username: string) {
     merchant?.description?.trim() ||
     profile?.bio?.trim() ||
     `${displayName} 的${SITE_NAME}主页`;
-  const isMerchant = Boolean(merchant?.is_active);
+  const isMerchant = Boolean(merchant?.is_active && merchant?.is_verified);
 
   return {
     username: normalized,

@@ -85,12 +85,26 @@ export function MerchantStoreProvider({
       }
     }
 
-    loadMerchants();
+    void loadMerchants();
 
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    function handleRefresh() {
+      void refreshMerchants();
+    }
+
+    window.addEventListener("focus", handleRefresh);
+    document.addEventListener("visibilitychange", handleRefresh);
+
+    return () => {
+      window.removeEventListener("focus", handleRefresh);
+      document.removeEventListener("visibilitychange", handleRefresh);
+    };
+  }, [refreshMerchants]);
 
   const resolveMerchant = useCallback(
     (post: { author: string; authorId?: string | null }) =>
