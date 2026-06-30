@@ -244,6 +244,16 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
     );
   }
 
+  function openInbox() {
+    setView("inbox");
+    setError("");
+  }
+
+  function openContacts() {
+    setView("contacts");
+    setError("");
+  }
+
   function openDetail(detailId: InboxDetailId) {
     setView(detailId);
     setError("");
@@ -287,6 +297,9 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
         ? INBOX_DETAIL_TITLES[view]
         : "消息";
 
+  const showInboxHeader = view === "inbox" || view === "contacts";
+  const inboxHeaderTab = view === "contacts" ? "contacts" : "chat";
+
   const showMarkAllRead =
     user && isInboxDetailView(view) && hasUnreadInDetail;
 
@@ -296,7 +309,7 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
       <div className="border-b border-zinc-100 px-4 py-4 lg:px-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            {view !== "inbox" ? (
+            {isInboxDetailView(view) ? (
               <button
                 type="button"
                 onClick={goBackToInbox}
@@ -305,7 +318,7 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
               >
                 <BackIcon />
               </button>
-            ) : showBackButton ? (
+            ) : showBackButton && view === "inbox" ? (
               <Link
                 href="/"
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-700 transition-colors hover:bg-zinc-100"
@@ -340,16 +353,16 @@ function MessagePanel({ showBackButton = false }: { showBackButton?: boolean }) 
         />
       ) : !user ? (
         <MessageLoginPrompt />
-      ) : view === "contacts" ? (
-        <MessageContactsEmpty />
-      ) : view === "inbox" ? (
+      ) : showInboxHeader ? (
         <>
           <MessageInboxHeader
-            onOpenContacts={() => setView("contacts")}
-            onOpenSystem={() => openDetail("system")}
-            systemUnreadCount={unreadCounts.systemUnread}
+            activeTab={inboxHeaderTab}
+            onOpenChat={openInbox}
+            onOpenContacts={openContacts}
           />
-          {dataError && inboxItems.length === 0 ? (
+          {view === "contacts" ? (
+            <MessageContactsEmpty />
+          ) : dataError && inboxItems.length === 0 ? (
             <AsyncStatePanel
               message={dataError}
               tone="error"

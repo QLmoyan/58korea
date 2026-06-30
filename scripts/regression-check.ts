@@ -1220,12 +1220,16 @@ async function main() {
       "utf8",
     );
     assert(
+      inboxHeader.includes("聊天"),
+      "inbox header must include chat shortcut",
+    );
+    assert(
       inboxHeader.includes("通讯录"),
       "inbox header must include contacts shortcut",
     );
     assert(
-      inboxHeader.includes("系统通知"),
-      "inbox header must include system notification shortcut",
+      !inboxHeader.includes("系统通知"),
+      "inbox header must not include top system notification shortcut",
     );
     assert(
       !inboxHeader.includes("新朋友"),
