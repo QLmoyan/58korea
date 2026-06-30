@@ -31,6 +31,14 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+.pb-form-sticky {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pb-form-sticky-merchant {
+  padding-bottom: calc(12rem + env(safe-area-inset-bottom, 0px));
+}
+
 @keyframes image-viewer-fade-in {
   from {
     opacity: 0;

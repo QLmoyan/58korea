@@ -6,15 +6,14 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import PageHeader from "@/components/layout/PageHeader";
 import PublishLocationSection from "@/components/posts/PublishLocationSection";
 import PublishCouponSettings from "@/components/posts/PublishCouponSettings";
-import { isVerifiedMerchantAccount } from "@/lib/merchant/identify";
 import {
   clearPublishDraft,
   loadPublishDraft,
   savePublishDraft,
 } from "@/lib/merchant/publish-draft";
+import { useVerifiedMerchant } from "@/lib/merchant/use-verified-merchant";
 import { validatePublishCouponBinding } from "@/lib/merchant/validate-publish-coupon";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { useMerchantStoreOptional } from "@/lib/store/merchant-store";
 import { usePostStore } from "@/lib/store/post-store";
 import { createClientId } from "@/lib/utils/create-client-id";
 import {
@@ -52,7 +51,7 @@ function formatPublishError(error: unknown): string {
 export default function PublishForm() {
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuthStore();
-  const merchantStore = useMerchantStoreOptional();
+  const { isVerifiedMerchant, merchantProfileId } = useVerifiedMerchant(user?.id);
   const { addPost } = usePostStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileInputId = useId();
@@ -77,14 +76,10 @@ export default function PublishForm() {
 
   const displayUsername = getDisplayUsername(user);
   const authorName = resolveAuthorNameFromAuth(user, profile);
-  const merchantProfile = user?.id
-    ? merchantStore?.getMerchantByUserId(user.id) ?? null
-    : null;
-  const legacyMerchant = isVerifiedMerchantAccount({
-    author: authorName,
-    username: displayUsername,
-  });
-  const showCouponSettings = Boolean(merchantProfile?.merchantProfileId);
+  const showCouponSettings = isVerifiedMerchant && Boolean(merchantProfileId);
+  const formBottomPaddingClass = showCouponSettings
+    ? "pb-form-sticky-merchant lg:pb-24"
+    : "pb-form-sticky lg:pb-20";
 
   useEffect(() => {
     const draft = loadPublishDraft();
@@ -263,10 +258,10 @@ export default function PublishForm() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-zinc-50 pb-32 pb-safe">
+    <div className="mx-auto min-h-screen max-w-md bg-zinc-50 lg:pb-10">
       <PageHeader title="发布帖子" backHref="/" />
 
-      <main className="px-4 pt-20">
+      <main className={`px-4 pt-20 ${formBottomPaddingClass}`}>
         {draftRestored ? (
           <p className="mb-4 rounded-xl bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-700 ring-1 ring-sky-100">
             已恢复上次未发布的文字内容（图片需重新选择）

@@ -1070,6 +1070,119 @@ async function main() {
     );
   });
 
+  await check("1.6u Merchant Verified Capability — 审核后商家能力统一 (静态)", async () => {
+    const verifiedHook = readFileSync(
+      resolve(process.cwd(), "lib/merchant/use-verified-merchant.ts"),
+      "utf8",
+    );
+    assert(
+      verifiedHook.includes("fetchMerchantProfileByUserId"),
+      "verified merchant hook must read merchant_profiles by user id",
+    );
+    assert(
+      verifiedHook.includes("isVerifiedMerchant"),
+      "verified merchant hook must expose isVerifiedMerchant",
+    );
+
+    const publishForm = readFileSync(
+      resolve(process.cwd(), "components/posts/PublishForm.tsx"),
+      "utf8",
+    );
+    assert(
+      publishForm.includes("useVerifiedMerchant"),
+      "publish form must use verified merchant hook",
+    );
+    assert(
+      publishForm.includes("showCouponSettings = isVerifiedMerchant"),
+      "publish coupon entry must depend on isVerifiedMerchant",
+    );
+
+    const profileData = readFileSync(
+      resolve(process.cwd(), "components/profile/useProfileData.ts"),
+      "utf8",
+    );
+    assert(
+      profileData.includes("useVerifiedMerchant"),
+      "profile page must use verified merchant hook for badge",
+    );
+
+    const adminAction = readFileSync(
+      resolve(process.cwd(), "lib/actions/admin-merchant-applications.ts"),
+      "utf8",
+    );
+    assert(
+      adminAction.includes("verifiedProfile?.is_verified"),
+      "approve must verify merchant_profiles.is_verified after upsert",
+    );
+
+    const linkedCoupon = readFileSync(
+      resolve(process.cwd(), "lib/merchant/linked-coupon.ts"),
+      "utf8",
+    );
+    assert(
+      linkedCoupon.includes("is_verified"),
+      "server coupon binding must require is_verified",
+    );
+
+    const merchantQueries = readFileSync(
+      resolve(process.cwd(), "lib/supabase/merchant-queries.ts"),
+      "utf8",
+    );
+    assert(
+      merchantQueries.includes('.eq("is_verified", true)'),
+      "public merchant queries must filter is_verified=true",
+    );
+  });
+
+  await check("1.6v Publish Coupon Layout — 发帖页优惠券不被遮挡 (静态)", async () => {
+    const globalsCss = readFileSync(
+      resolve(process.cwd(), "app/globals.css"),
+      "utf8",
+    );
+    assert(
+      globalsCss.includes("pb-form-sticky") &&
+        globalsCss.includes("env(safe-area-inset-bottom"),
+      "publish form must use safe-area aware sticky padding utility",
+    );
+
+    const publishForm = readFileSync(
+      resolve(process.cwd(), "components/posts/PublishForm.tsx"),
+      "utf8",
+    );
+    assert(
+      publishForm.includes("pb-form-sticky"),
+      "PublishForm main must use pb-form-sticky padding",
+    );
+    assert(
+      publishForm.includes("pb-form-sticky-merchant"),
+      "merchant publish form must use larger bottom padding",
+    );
+    assert(
+      !publishForm.includes("pb-32 pb-safe"),
+      "PublishForm must not use conflicting pb-32 pb-safe padding",
+    );
+    assert(
+      publishForm.includes("PublishCouponSettings"),
+      "merchant coupon settings component must exist in publish form",
+    );
+    assert(
+      publishForm.includes("showCouponSettings = isVerifiedMerchant"),
+      "coupon settings must only show for verified merchants",
+    );
+    assert(
+      !/<main className="[^"]*overflow-hidden/.test(publishForm),
+      "publish main must not use overflow-hidden",
+    );
+    assert(
+      !/min-h-screen[^"]*overflow-hidden/.test(publishForm),
+      "publish page container must not block scrolling",
+    );
+    assert(
+      publishForm.includes('form id="publish-form"'),
+      "publish form must keep sticky submit bar linked via form id",
+    );
+  });
+
   await check("1.6k System Notifications V2 — 系统 Tab 真实数据源 (静态)", async () => {
     const constants = readFileSync(
       resolve(process.cwd(), "lib/messages/constants.ts"),
