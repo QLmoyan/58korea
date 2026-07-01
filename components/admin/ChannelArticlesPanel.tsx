@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createChannelArticleAction,
   listAdminChannelArticlesAction,
@@ -10,6 +10,10 @@ import {
   type AdminChannelArticleItem,
 } from "@/lib/actions/admin-channel-articles";
 import {
+  buildMarkdownImageSnippet,
+  insertTextAtSelection,
+} from "@/lib/channels/markdown-images";
+import {
   CHANNEL_ARTICLE_STATUS_LABELS,
   type Channel,
   type ChannelArticleStatus,
@@ -17,9 +21,11 @@ import {
 import { formatChannelArticleDate } from "@/lib/channels/format";
 import {
   uploadChannelArticleCoverToStorage,
+  uploadChannelArticleInlineImageToStorage,
 } from "@/lib/supabase/storage";
 
 const STATUS_OPTIONS: ChannelArticleStatus[] = ["draft", "published", "hidden"];
+const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/*";
 
 interface ArticleFormState {
   channelId: string;
@@ -43,9 +49,11 @@ export default function ChannelArticlesPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingInlineImage, setUploadingInlineImage] = useState(false);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ArticleFormState>(EMPTY_FORM);
+  const contentMarkdownRef = useRef<HTMLTextAreaElement>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -107,6 +115,51 @@ export default function ChannelArticlesPanel() {
       setError(uploadError instanceof Error ? uploadError.message : "封面上传失败");
     } finally {
       setUploadingCover(false);
+    }
+  }
+
+  function insertMarkdownSnippet(snippet: string) {
+    const textarea = contentMarkdownRef.current;
+    const selectionStart = textarea?.selectionStart ?? form.contentMarkdown.length;
+    const selectionEnd = textarea?.selectionEnd ?? selectionStart;
+
+    setForm((current) => ({
+      ...current,
+      contentMarkdown: insertTextAtSelection(
+        current.contentMarkdown,
+        snippet,
+        selectionStart,
+        selectionEnd,
+      ),
+    }));
+
+    window.requestAnimationFrame(() => {
+      if (!textarea) {
+        return;
+      }
+
+      const nextCursor = selectionStart + snippet.length;
+      textarea.focus();
+      textarea.setSelectionRange(nextCursor, nextCursor);
+    });
+  }
+
+  async function handleInlineImageUpload(file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    setUploadingInlineImage(true);
+    setError("");
+
+    try {
+      const uploaded = await uploadChannelArticleInlineImageToStorage(file);
+      const caption = window.prompt("图片说明（可选）", "") ?? "";
+      insertMarkdownSnippet(buildMarkdownImageSnippet(uploaded.publicUrl, caption));
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "正文图片上传失败");
+    } finally {
+      setUploadingInlineImage(false);
     }
   }
 
@@ -247,7 +300,7 @@ export default function ChannelArticlesPanel() {
           <h3 className="text-sm font-semibold text-zinc-900">
             {editingId ? "编辑文章" : "创建文章"}
           </h3>
-          <p className="mt-1 text-xs text-zinc-500">正文支持 Markdown</p>
+          <p className="mt-1 text-xs text-zinc-500">正文支持 Markdown 图文混排</p>
         </div>
 
         <label className="block space-y-1">
@@ -319,9 +372,26 @@ export default function ChannelArticlesPanel() {
           </select>
         </label>
 
-        <label className="block space-y-1">
-          <span className="text-xs font-medium text-zinc-600">正文 Markdown</span>
+        <div className="block space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-zinc-600">正文 Markdown</span>
+            <label className="inline-flex cursor-pointer items-center rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200">
+              {uploadingInlineImage ? "上传中..." : "插入正文图片"}
+              <input
+                type="file"
+                accept={IMAGE_ACCEPT}
+                className="hidden"
+                disabled={uploadingInlineImage || saving}
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  void handleInlineImageUpload(file);
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          </div>
           <textarea
+            ref={contentMarkdownRef}
             value={form.contentMarkdown}
             onChange={(event) =>
               setForm((current) => ({
@@ -331,15 +401,20 @@ export default function ChannelArticlesPanel() {
             }
             rows={14}
             className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm leading-6"
-            placeholder={"## 小标题\n\n正文段落\n\n**加粗**\n\n[链接文字](https://example.com)\n\n![图片说明](https://example.com/image.jpg)"}
+            placeholder={
+              "## 小标题\n\n正文段落\n\n**加粗**\n\n[链接文字](https://example.com)\n\n![图片说明](https://example.com/image.jpg)"
+            }
             required
           />
-        </label>
+          <p className="text-[11px] leading-5 text-zinc-400">
+            上传正文图片后会自动插入 `![说明](图片URL)` 语法
+          </p>
+        </div>
 
         <div className="flex gap-2">
           <button
             type="submit"
-            disabled={saving || uploadingCover}
+            disabled={saving || uploadingCover || uploadingInlineImage}
             className="rounded-full bg-rose-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
           >
             {saving ? "保存中..." : editingId ? "保存修改" : "创建文章"}

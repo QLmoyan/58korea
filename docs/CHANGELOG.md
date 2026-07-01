@@ -4,6 +4,13 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。当前主版本：**0.3.0-dev**（v0.3.0-dev / Place Hub 阶段）。
 
+## [0.3.0-dev] Chat V1.1 Polling + Unified Unread — 2026-06-17
+
+- 消息入口未读 = notifications + chat_messages 未读合并
+- Inbox / 聊天详情页可见时轻量轮询，后台刷新不白屏
+- 聊天发送乐观 UI + 底部附近自动滚动
+- regression 1.6y；build/regression/chat test PASS
+
 ## [0.3.0-dev] Chat V1 — 2026-06-17
 
 - chat_conversations / chat_messages / chat_user_blocks 表 + RLS

@@ -1,23 +1,20 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import AdminDashboard from "@/components/admin/AdminDashboard";
+import DiscoveryContentPanel from "@/components/admin/DiscoveryContentPanel";
 import { AdminCapabilitiesProvider } from "@/components/admin/AdminCapabilitiesProvider";
 import { SITE_NAME } from "@/lib/share/constants";
 
 export const metadata: Metadata = {
-  title: `运营后台 - ${SITE_NAME}`,
+  title: `发现页内容编辑 - 运营后台 - ${SITE_NAME}`,
   robots: {
     index: false,
     follow: false,
   },
 };
 
-export default function AdminPage() {
+export default function AdminDiscoveryContentPage() {
   return (
     <AdminCapabilitiesProvider>
-      <Suspense fallback={<div className="p-6 text-sm text-zinc-400">加载中...</div>}>
-        <AdminDashboard />
-      </Suspense>
+      <DiscoveryContentPanel />
     </AdminCapabilitiesProvider>
   );
 }

@@ -6,8 +6,13 @@ import type {
   ChannelArticleStatus,
   ChannelArticleSummary,
   ChannelWithArticles,
+  DiscoveryNewsArticleItem,
 } from "@/lib/types/channel-articles";
+import { DISCOVERY_NEWS_CHANNEL_SLUG } from "@/lib/channels/constants";
+import { extractDiscoveryArticleSummaryExcerpt } from "@/lib/channels/discovery-article-content";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+export { DISCOVERY_NEWS_CHANNEL_SLUG };
 
 const CHANNEL_SELECT =
   "id, slug, name, description, cover_url, sort_order, is_active, created_at, updated_at";
@@ -132,6 +137,44 @@ export async function fetchPublishedArticlesByChannelSlug(
     channel,
     articles: (data ?? []).map((row) => mapArticleSummary(row as ChannelArticleSummary)),
   };
+}
+
+export async function fetchPublishedDiscoveryNewsArticles(): Promise<DiscoveryNewsArticleItem[]> {
+  const channel = await fetchChannelBySlug(DISCOVERY_NEWS_CHANNEL_SLUG);
+  if (!channel) {
+    return [];
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("channel_articles")
+    .select(
+      "id, channel_id, title, cover_url, published_at, created_at, content_markdown",
+    )
+    .eq("channel_id", channel.id)
+    .eq("status", "published")
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(24);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row) => {
+    const article = row as ChannelArticleSummary & { content_markdown: string };
+    return {
+      id: article.id,
+      channel_id: article.channel_id,
+      title: article.title,
+      cover_url: article.cover_url,
+      published_at: article.published_at,
+      created_at: article.created_at,
+      summaryExcerpt: extractDiscoveryArticleSummaryExcerpt(
+        article.content_markdown,
+      ),
+    };
+  });
 }
 
 export async function fetchPublishedArticleById(

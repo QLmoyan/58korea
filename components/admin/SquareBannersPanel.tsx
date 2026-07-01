@@ -9,6 +9,7 @@ import {
   updateSquareBannerAction,
   type AdminSquareBannerItem,
 } from "@/lib/actions/admin-square-banners";
+import { uploadSquareBannerImageToStorage } from "@/lib/supabase/storage";
 
 interface BannerFormState {
   title: string;
@@ -26,10 +27,13 @@ const EMPTY_FORM: BannerFormState = {
   isActive: true,
 };
 
+const BANNER_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/*";
+
 export default function SquareBannersPanel() {
   const [banners, setBanners] = useState<AdminSquareBannerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<BannerFormState>(EMPTY_FORM);
@@ -68,8 +72,32 @@ export default function SquareBannersPanel() {
     });
   }
 
+  async function handleImageUpload(file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    setUploadingImage(true);
+    setError("");
+
+    try {
+      const uploaded = await uploadSquareBannerImageToStorage(file);
+      setForm((current) => ({ ...current, imageUrl: uploaded.publicUrl }));
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "图片上传失败");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!form.imageUrl.trim()) {
+      setError("请上传 Banner 图片");
+      return;
+    }
+
     setSaving(true);
     setError("");
 
@@ -169,28 +197,37 @@ export default function SquareBannersPanel() {
                 className="rounded-2xl border border-zinc-100 bg-white p-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-zinc-900">{banner.title}</p>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          banner.is_active
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "bg-zinc-100 text-zinc-500"
-                        }`}
-                      >
-                        {banner.is_active ? "已启用" : "已停用"}
-                      </span>
-                      <span className="text-[11px] text-zinc-400">
-                        排序 {banner.sort_order}
-                      </span>
+                  <div className="flex min-w-0 flex-1 gap-3">
+                    <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={banner.image_url}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
                     </div>
-                    <p className="mt-1 truncate text-xs text-zinc-500">{banner.image_url}</p>
-                    {banner.link_url ? (
-                      <p className="mt-1 truncate text-xs text-zinc-400">
-                        链接 {banner.link_url}
-                      </p>
-                    ) : null}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-zinc-900">{banner.title}</p>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                            banner.is_active
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "bg-zinc-100 text-zinc-500"
+                          }`}
+                        >
+                          {banner.is_active ? "已启用" : "已停用"}
+                        </span>
+                        <span className="text-[11px] text-zinc-400">
+                          排序 {banner.sort_order}
+                        </span>
+                      </div>
+                      {banner.link_url ? (
+                        <p className="mt-1 truncate text-xs text-zinc-400">
+                          链接 {banner.link_url}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
@@ -232,7 +269,7 @@ export default function SquareBannersPanel() {
           <h3 className="text-sm font-semibold text-zinc-900">
             {editingId ? "编辑 Banner" : "新建 Banner"}
           </h3>
-          <p className="mt-1 text-xs text-zinc-500">图片请填写可访问的 image_url</p>
+          <p className="mt-1 text-xs text-zinc-500">上传图片后将自动写入 image_url</p>
         </div>
 
         <label className="block space-y-1.5">
@@ -247,18 +284,37 @@ export default function SquareBannersPanel() {
           />
         </label>
 
-        <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-zinc-600">图片 URL</span>
-          <input
-            value={form.imageUrl}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, imageUrl: event.target.value }))
-            }
-            className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-rose-300"
-            placeholder="https://..."
-            required
-          />
-        </label>
+        <div className="space-y-2">
+          <span className="text-xs font-medium text-zinc-600">Banner 图片</span>
+          <label className="inline-flex cursor-pointer items-center rounded-full bg-zinc-100 px-4 py-2 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200">
+            {uploadingImage ? "上传中..." : form.imageUrl ? "重新上传" : "选择图片"}
+            <input
+              type="file"
+              accept={BANNER_IMAGE_ACCEPT}
+              className="hidden"
+              disabled={uploadingImage || saving}
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null;
+                void handleImageUpload(file);
+                event.target.value = "";
+              }}
+            />
+          </label>
+          {form.imageUrl ? (
+            <div className="overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50">
+              <div className="relative aspect-[5/2] w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={form.imageUrl}
+                  alt="Banner 预览"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-400">请上传 JPG、PNG 或 WebP 图片</p>
+          )}
+        </div>
 
         <label className="block space-y-1.5">
           <span className="text-xs font-medium text-zinc-600">链接 URL（可选）</span>
@@ -298,7 +354,7 @@ export default function SquareBannersPanel() {
         <div className="flex gap-2">
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploadingImage || !form.imageUrl.trim()}
             className="rounded-full bg-rose-500 px-4 py-2 text-sm font-medium text-white hover:bg-rose-600 disabled:opacity-60"
           >
             {saving ? "保存中..." : editingId ? "保存修改" : "创建 Banner"}

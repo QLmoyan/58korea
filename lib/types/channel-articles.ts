@@ -40,6 +40,10 @@ export interface ChannelArticleSummary {
   created_at: string;
 }
 
+export interface DiscoveryNewsArticleItem extends ChannelArticleSummary {
+  summaryExcerpt: string;
+}
+
 export interface ChannelWithArticles extends Channel {
   recentArticles: ChannelArticleSummary[];
 }

@@ -6,9 +6,7 @@
   "productTagline": "韩国华人生活社区",
   "lastUpdated": "2026-06-17",
   "currentFocus": [
-    "Chat V1 验收",
-    "Share V2",
-    "Post Edit V1"
+    "Chat V1.1 验收"
   ],
   "build": {
     "status": "PASS",
@@ -17,8 +15,8 @@
   },
   "regression": {
     "status": "PASS",
-    "passed": 68,
-    "total": 68,
+    "passed": 69,
+    "total": 69,
     "lastVerified": "2026-06-17",
     "command": "npm run regression-check"
   },
@@ -286,6 +284,17 @@
     ]
   },
   "changelog": [
+    {
+      "version": "0.3.0-dev",
+      "date": "2026-06-17",
+      "title": "Chat V1.1 Polling + Unified Unread",
+      "items": [
+        "消息入口未读 = notifications + chat_messages 未读合并",
+        "Inbox / 聊天详情页可见时轻量轮询，后台刷新不白屏",
+        "聊天发送乐观 UI + 底部附近自动滚动",
+        "regression 1.6y；build/regression/chat test PASS"
+      ]
+    },
     {
       "version": "0.3.0-dev",
       "date": "2026-06-17",

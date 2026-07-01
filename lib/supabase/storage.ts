@@ -216,6 +216,62 @@ export async function uploadChannelArticleCoverToStorage(
   };
 }
 
+export async function uploadChannelArticleInlineImageToStorage(
+  file: File,
+): Promise<{ storagePath: string; publicUrl: string }> {
+  const { buildChannelArticleInlineImageStoragePath } = await import(
+    "@/lib/channels/inline-image-storage"
+  );
+  const storagePath = buildChannelArticleInlineImageStoragePath(
+    createStorageFileName(file),
+  );
+  const supabase = getSupabaseClient();
+
+  const { error: uploadError } = await supabase.storage
+    .from(COMMUNITY_MEDIA_BUCKET)
+    .upload(storagePath, file, {
+      cacheControl: "3600",
+      contentType: file.type || "image/jpeg",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw new Error(uploadError.message);
+  }
+
+  return {
+    storagePath,
+    publicUrl: getPublicUrl(storagePath),
+  };
+}
+
+export async function uploadSquareBannerImageToStorage(
+  file: File,
+): Promise<{ storagePath: string; publicUrl: string }> {
+  const { buildSquareBannerImageStoragePath } = await import(
+    "@/lib/square/banner-storage"
+  );
+  const storagePath = buildSquareBannerImageStoragePath(createStorageFileName(file));
+  const supabase = getSupabaseClient();
+
+  const { error: uploadError } = await supabase.storage
+    .from(COMMUNITY_MEDIA_BUCKET)
+    .upload(storagePath, file, {
+      cacheControl: "3600",
+      contentType: file.type || "image/jpeg",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw new Error(uploadError.message);
+  }
+
+  return {
+    storagePath,
+    publicUrl: getPublicUrl(storagePath),
+  };
+}
+
 export async function uploadCommentImagesToStorage(
   userId: string,
   commentId: string,

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { logoutAdminAction } from "@/lib/actions/admin-auth";
 import {
@@ -20,10 +21,21 @@ import { useAdminCapabilities } from "@/components/admin/AdminCapabilitiesProvid
 
 export default function AdminDashboard() {
   const { permissions } = useAdminCapabilities();
+  const searchParams = useSearchParams();
   const accessibleTabs = listAccessibleAdminPanelTabs(permissions);
   const [tab, setTab] = useState<AdminPanelTab>("dashboard");
   const [loggingOut, setLoggingOut] = useState(false);
   const canManageAdmins = permissions.includes("admins.manage");
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (
+      tabParam &&
+      canAccessAdminPanelTab(permissions, tabParam as AdminPanelTab)
+    ) {
+      setTab(tabParam as AdminPanelTab);
+    }
+  }, [permissions, searchParams]);
 
   useEffect(() => {
     if (accessibleTabs.length === 0) {
@@ -59,6 +71,14 @@ export default function AdminDashboard() {
                 className="rounded-full bg-zinc-900 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-800"
               >
                 管理员管理
+              </Link>
+            ) : null}
+            {permissions.includes("channel_articles.read") ? (
+              <Link
+                href="/admin/discovery-content"
+                className="rounded-full bg-zinc-100 px-4 py-2 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200"
+              >
+                发现页内容编辑
               </Link>
             ) : null}
             <button

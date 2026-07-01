@@ -270,12 +270,64 @@ async function main() {
     assert(res.ok, `GET /square status=${res.status}`);
     const html = await res.text();
     assert(!html.includes("广场功能开发中"), "square page still placeholder");
-    assert(!html.includes("暂无动态，去发布第一条吧"), "square should not show post feed");
-    assert(html.includes("韩国新闻") || html.includes("官方公告"), "square should show channel modules");
-    assert(html.includes("进入频道"), "square should link to channel pages");
+    assert(
+      !html.includes("韩国生活导航中心"),
+      "square must not render legacy discovery header subtitle",
+    );
+    assert(
+      !html.includes("全部频道"),
+      "square must not render legacy channels shortcut",
+    );
+    assert(
+      html.includes("推荐帖子") || html.includes("square-recommended-feed"),
+      "square must keep recommended post feed",
+    );
+    assert(
+      html.includes("discovery-category-tabs") || html.includes("不动产"),
+      "square must render discovery category tabs",
+    );
+    assert(
+      !html.includes("data-discovery-section"),
+      "square must not render life navigation section cards",
+    );
     assert(
       !html.includes("picsum.photos/seed/square-banner"),
       "square page must not render hardcoded picsum banners",
+    );
+
+    const discoveryHub = readFileSync(
+      resolve(process.cwd(), "components/square/DiscoveryHubContent.tsx"),
+      "utf8",
+    );
+    assert(
+      discoveryHub.includes("DiscoveryHubBody"),
+      "discovery hub must render banner, category tabs and recommended feed",
+    );
+    assert(
+      !discoveryHub.includes("韩国生活导航中心"),
+      "discovery hub must not render legacy header copy",
+    );
+
+    const discoveryHubBody = readFileSync(
+      resolve(process.cwd(), "components/square/DiscoveryHubBody.tsx"),
+      "utf8",
+    );
+    assert(
+      discoveryHubBody.includes("<SquareBanner banners={banners} />"),
+      "discovery hub must render SquareBanner above category tabs",
+    );
+
+    const squarePostList = readFileSync(
+      resolve(process.cwd(), "components/square/SquarePostList.tsx"),
+      "utf8",
+    );
+    assert(
+      squarePostList.includes("SquareNearbyRecommendStrip"),
+      "square post list must support nearby recommend strip",
+    );
+    assert(
+      !discoveryHub.includes("<DiscoverySectionCard"),
+      "discovery hub must not render section cards",
     );
   });
 
@@ -1736,6 +1788,10 @@ async function main() {
       adminPanel.includes("listAdminSquareBannersAction"),
       "admin square banner panel must exist",
     );
+    assert(
+      adminPanel.includes("uploadSquareBannerImageToStorage"),
+      "admin square banner panel must support image upload",
+    );
 
     const adminUi = readFileSync(
       resolve(process.cwd(), "lib/admin/admin-panel-ui.ts"),
@@ -1744,6 +1800,124 @@ async function main() {
     assert(
       adminUi.includes('"squareBanners"'),
       "admin panel must expose squareBanners tab",
+    );
+  });
+
+  await check("1.6l2 Channel Article Rich Content V1 (静态)", async () => {
+    const markdownContent = readFileSync(
+      resolve(process.cwd(), "components/channels/MarkdownContent.tsx"),
+      "utf8",
+    );
+    assert(
+      markdownContent.includes("<figure"),
+      "channel article markdown must render image figures",
+    );
+    assert(
+      markdownContent.includes("figcaption"),
+      "channel article markdown must render image captions",
+    );
+
+    const channelArticlesPanel = readFileSync(
+      resolve(process.cwd(), "components/admin/ChannelArticlesPanel.tsx"),
+      "utf8",
+    );
+    assert(
+      channelArticlesPanel.includes("uploadChannelArticleInlineImageToStorage"),
+      "channel articles admin must upload inline images",
+    );
+    assert(
+      channelArticlesPanel.includes("buildMarkdownImageSnippet"),
+      "channel articles admin must insert markdown image syntax",
+    );
+
+    const storage = readFileSync(
+      resolve(process.cwd(), "lib/supabase/storage.ts"),
+      "utf8",
+    );
+    assert(
+      storage.includes("uploadChannelArticleInlineImageToStorage"),
+      "storage must expose channel article inline image upload",
+    );
+  });
+
+  await check("1.6l3 Discovery Content Editor (静态)", async () => {
+    const pageSource = readFileSync(
+      resolve(process.cwd(), "app/admin/discovery-content/page.tsx"),
+      "utf8",
+    );
+    assert(
+      pageSource.includes("DiscoveryContentPanel"),
+      "admin discovery content page must exist",
+    );
+
+    const panel = readFileSync(
+      resolve(process.cwd(), "components/admin/DiscoveryContentPanel.tsx"),
+      "utf8",
+    );
+    assert(
+      panel.includes("createChannelArticleAction"),
+      "discovery editor must create channel articles manually",
+    );
+    assert(
+      panel.includes("assembleDiscoveryArticleMarkdown"),
+      "discovery editor must support summary and source fields",
+    );
+    assert(
+      panel.includes("uploadChannelArticleInlineImageToStorage"),
+      "discovery editor must support inline image upload",
+    );
+    assert(
+      !panel.includes("OPENAI"),
+      "discovery editor must not depend on OpenAI",
+    );
+
+    const discoveryContent = readFileSync(
+      resolve(process.cwd(), "lib/channels/discovery-article-content.ts"),
+      "utf8",
+    );
+    assert(
+      discoveryContent.includes("assembleDiscoveryArticleMarkdown"),
+      "discovery article markdown helper must exist",
+    );
+
+    const squarePage = readFileSync(
+      resolve(process.cwd(), "app/square/page.tsx"),
+      "utf8",
+    );
+    assert(
+      squarePage.includes("fetchPublishedDiscoveryNewsArticles"),
+      "square page must load published discovery news articles",
+    );
+
+    const squareList = readFileSync(
+      resolve(process.cwd(), "components/square/SquarePostList.tsx"),
+      "utf8",
+    );
+    assert(
+      squareList.includes("SquareNewsArticleListItem"),
+      "square list must render channel news articles",
+    );
+
+    const newsItem = readFileSync(
+      resolve(process.cwd(), "components/square/SquareNewsArticleListItem.tsx"),
+      "utf8",
+    );
+    assert(
+      newsItem.includes("/articles/"),
+      "discovery news items must link to article detail",
+    );
+
+    const dashboard = readFileSync(
+      resolve(process.cwd(), "components/admin/AdminDashboard.tsx"),
+      "utf8",
+    );
+    assert(
+      dashboard.includes("/admin/discovery-content"),
+      "admin dashboard must link to discovery content editor",
+    );
+    assert(
+      !dashboard.includes("/admin/news-assistant"),
+      "news assistant entry must be removed",
     );
   });
 

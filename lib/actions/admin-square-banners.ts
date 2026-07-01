@@ -53,7 +53,7 @@ export async function createSquareBannerAction(
     throw new Error("请填写标题");
   }
   if (!imageUrl) {
-    throw new Error("请填写图片 URL");
+    throw new Error("请上传 Banner 图片");
   }
 
   const supabase = getSupabaseAdminClient();
@@ -89,7 +89,7 @@ export async function updateSquareBannerAction(
     throw new Error("请填写标题");
   }
   if (!imageUrl) {
-    throw new Error("请填写图片 URL");
+    throw new Error("请上传 Banner 图片");
   }
 
   const supabase = getSupabaseAdminClient();

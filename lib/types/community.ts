@@ -15,7 +15,7 @@ export const publishCategoryChoices: PublishCategorySelection[] = [
 ];
 
 export const publishCategoryLabels: Record<PublishCategorySelection, string> = {
-  [AI_AUTO_CATEGORY]: "AI自动分类（推荐）",
+  [AI_AUTO_CATEGORY]: "自动分类",
   探店: "探店",
   求助: "求助",
   房屋: "房屋",
